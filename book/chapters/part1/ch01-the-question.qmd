@@ -1,0 +1,238 @@
+# The Question, the Bet, and the Plan {#sec-question}
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. State, in one sentence, what transversal STAR is for and what limits it.
+2. Derive why the useful size of a STAR simulation scales as $1/(\alpha p)^2$,
+   and what that implies for halving one physical error channel.
+3. Say what QuEra's two STAR papers already establish, and the one thing
+   they leave open that this book measures.
+4. Explain why the first experiment in this book asks nothing new.
+:::
+
+## The gate that costs the most is the smallest one
+
+In a fault-tolerant quantum computer the expensive operation is not the
+two-qubit gate. It is the small single-qubit rotation. Clifford gates —
+Hadamard, phase, CNOT — can be applied to encoded qubits cheaply, often
+*transversally*, one physical gate per physical qubit of the code. A
+rotation by an arbitrary small angle cannot: no code that corrects errors
+can implement a universal gate set transversally, so the non-Clifford part
+has to be smuggled in another way. The standard way is to approximate each
+rotation by a sequence of $T$ gates and to *distil* each $T$ gate in a
+factory that consumes many noisy copies to produce one clean one. A
+rotation to a useful precision costs tens of $T$ gates, and a $T$ gate costs
+a factory's worth of qubits and time.
+
+The STAR proposal [@akahoshi2024star] takes a different trade. Instead of
+building a rotation out of distilled $T$ gates, it applies a small rotation
+*directly* to a few physical qubits of an encoded patch, checks the
+stabilizers, and throws the attempt away if they object. What survives is
+an encoded state rotated by a small logical angle — not perfectly, but with
+an error that grows with the angle. For algorithms made of many *small*
+rotations, which is what a Trotterized simulation of a lattice Hamiltonian
+is, that is a much better deal than paying full price for every rotation.
+
+Chapter 2 derives exactly how the trick works. This chapter is about why it
+matters and what is still unknown.
+
+## What QuEra has already shown
+
+Two recent papers by QuEra and collaborators adapt STAR to neutral atoms.
+@ismail2026transversal makes it *transversal*: the Clifford gates between
+code patches become single parallel layers of physical gates, which a
+reconfigurable atom array implements by moving whole rows of atoms at once.
+@ismail2026highrate replaces most surface-code patches with high-rate
+codes, so many logical qubits share one block. Between them they give:
+
+- A model for the error of one teleported rotation by angle $\theta$:
+  $$p_L(\theta) \approx \alpha \, p \, \theta,$$
+  where $p$ is a single physical error rate and $\alpha$ is a coefficient
+  fitted from circuit-level simulation.
+- A budget: if a whole computation rotates by a total angle
+  $\Theta = \sum_a |\theta_a|$, its failure probability is about
+  $\alpha p \Theta$, so it can afford $\Theta \lesssim 1/(\alpha p)$.
+- An application of that budget to Trotterized simulation of local
+  lattice models, with end-to-end resource estimates for an $8 \times 8$
+  transverse-field Ising model and for Fermi–Hubbard dynamics.
+
+Both papers use detailed, hardware-derived noise models: separate error
+rates for preparation, single-qubit gates, the Rydberg CZ gate and its
+correlated $ZZ$ component, atom moves, atom loss and measurement. But to
+draw their curves and state their budgets they scale all of these together
+by one number, $p$.
+
+## The gap
+
+A hardware programme does not improve "$p$". It improves a laser, a
+trap, an imaging system, a transport protocol — one physical channel at a
+time, at very different costs. The question it has to answer is which
+channel to work on next, and the STAR papers do not answer it, because
+nothing in them varies one channel while holding the others fixed.
+
+So this book asks:
+
+> **Which physical noise channel limits transversal STAR on neutral atoms,
+> and how much simulation volume would halving each one buy?**
+
+It is a narrow question on purpose. It can be answered in two weeks with
+public circuits and public tools, every step of it can be checked, and its
+answer is a ranking that someone deciding where to spend engineering effort
+could actually use.
+
+## Why one channel can be worth a factor of four
+
+The reason the question has teeth is that the budget is *quadratic* in the
+coefficient. This is the derivation the rest of the book leans on, so it is
+the chapter's whiteboard.
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — From one channel to simulation volume"}
+**Set-up.** Write $\varepsilon = \alpha p$ for the error per radian of
+injected rotation. A Trotterized simulation of $N_s$ sites for time $T$,
+with a Hamiltonian whose terms have total weight $\ell_1$ per site, rotates
+by a total angle $\Theta = \ell_1 N_s T$ [@ismail2026transversal].
+
+**Step 1 — the budget.** Demanding total failure $\varepsilon \Theta
+\lesssim 1$ gives
+$$N_s \, T \lesssim \frac{1}{\ell_1 \varepsilon}.$$
+
+**Step 2 — the volume.** Holding the Trotter error fixed ties the number of
+Trotter steps $N_{tr}$ to $T$, and the paper's simulation volume
+$V = N_s N_{tr}$ then scales as
+$$V \sim \frac{w}{(\ell_1 \varepsilon)^2},$$
+with $w$ the Trotter norm per site. The square is the whole point: the
+budget limits sites *and* steps, and both are paid for by $\varepsilon$.
+
+**Step 3 — one channel.** To first order in small error rates, independent
+channels add: $\varepsilon = \sum_c \varepsilon_c$. Call
+$f_c = \varepsilon_c / \varepsilon$ channel $c$'s *share*. Halving channel
+$c$ alone gives $\varepsilon' = \varepsilon (1 - f_c/2)$, so the volume
+grows by
+$$G_c = \frac{V'}{V} = \frac{1}{(1 - f_c/2)^2}.$$
+
+**Read it off.** A channel with the whole share is worth $4\times$; half
+the share, $1.78\times$; a fifth, $1.23\times$. The ranking of channels by
+$f_c$ *is* the ranking by value, and measuring $f_c$ is what Part III does.
+:::
+
+Two cautions keep this honest. First, the additive model is a first-order
+approximation and will be tested, not assumed: Part III measures the effect
+of halving each channel directly, and compares it with what the shares
+predict. Second, volume is not the only currency. A channel can also lower
+the post-selection *acceptance* — the fraction of injection attempts that
+survive — which costs time, not volume. Part III reports both.
+
+## The bet
+
+Before any measurement, here is what this book expects to find, so that
+the measurements can embarrass it. The formal versions, with numbers and
+kill criteria, are registered as protocols before each experiment runs.
+
+1. **The floor and the slope answer to different channels.** At very small
+   angles a STAR injection's error is dominated by the surface-code memory
+   it lives in, and memory error is governed by two-qubit gates and
+   measurement. The *angle-dependent* part — the part $\alpha$ describes —
+   comes from errors in the short window around the physical rotations.
+   The bet is that the channel ranking for $\alpha$ is not the ranking for
+   memory.
+2. **Acceptance follows the busiest channel.** Acceptance falls roughly
+   exponentially in the expected number of faults inside the post-selected
+   window, so it should be governed by whichever channel fires most often
+   there, which is expected to be the CZ gate.
+3. **The uniform model misleads in a specific direction.**
+   @ismail2026transversal reports that a uniform noise model performs about
+   three times worse than its hardware-aware model, largely because it
+   overstates single-qubit errors. If that is right, single-qubit gate
+   errors should carry a small share $f_c$ under hardware-aware noise even
+   though they look important under uniform noise.
+
+## The plan
+
+The work runs in four steps, each gated on the one before.
+
+1. **Reproduce.** Run QuEra's published STAR circuits, at QuEra's published
+   noise, through this book's pipeline, and match QuEra's published curve
+   (Protocol P01, Chapter 6). This asks nothing new, which is why it comes
+   first: if the pipeline cannot reproduce a known answer, nothing it
+   produces later is evidence.
+2. **Re-noise.** Strip the uniform noise from the same circuits and attach
+   channel-resolved, hardware-aware noise, checking that the re-noiser
+   recovers P01 exactly when every channel is set to the uniform value
+   (Protocol P02, Chapter 7).
+3. **Scan.** Halve and double each channel in turn, measuring the
+   injection error, its angle dependence, and acceptance (Protocol P03,
+   Chapter 8).
+4. **Propagate.** Turn the measured shares into volume gains with the
+   whiteboard above, and check the first-order model against the direct
+   measurements (Chapter 9). Then list every way the answer could be wrong
+   (Chapter 10).
+
+The dated schedule is in `OUTLINE.md`. Results freeze on 4 November 2026.
+
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 1"}
+| What a paper says | What it is |
+|---|---|
+| *megaquop regime* | machines that can run about $10^6$ logical operations before failing |
+| *Clifford gate* | a gate an error-correcting code can apply cheaply; not universal on its own |
+| *non-Clifford rotation* | the gate that makes the set universal, and the expensive one |
+| *magic state distillation* | making one clean $T$ resource from many noisy ones |
+| *STAR* | space–time efficient analog rotation: inject a small angle directly, post-select |
+| *transversal gate* | one physical gate per physical qubit, applied in parallel across a code block |
+| *post-selection* / *acceptance* | discarding attempts whose checks fire / the fraction kept |
+| *simulation volume* | sites × Trotter steps a simulation can afford within its error budget |
+:::
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 1"}
+**Delegated to the agent (Claude, 2026-10-26).** The literature search that
+found the two STAR papers and the ETH QHack circuits; reading the papers
+through an automated summariser; drafting this chapter's prose and the
+whiteboard derivation; checking every arXiv title and DOI against the arXiv
+API.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] The budget formulas in Steps 1–2 against @ismail2026transversal,
+  Sec. II (the agent read the paper through a summariser, not the PDF).
+- [ ] The claim that neither paper varies physical channels one at a time,
+  against the full text of both papers, including every appendix.
+- [ ] The "uniform model about 3× worse, largely single-qubit errors"
+  statement against @ismail2026transversal, App. G.3.
+- [ ] Step 3 of the whiteboard, reproduced on paper without notes.
+
+**Caught.** The agent's first project for this application — a Qualtran
+resource estimate for $10 \times 10$ Fermi–Hubbard — turned out to
+duplicate @ismail2026highrate, which the agent had not found. Two
+independent reviews caught it; this book exists because of that catch.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **Why is a small rotation more expensive than a CNOT in a fault-tolerant
+   machine?** Answer in terms of what can and cannot be transversal.
+2. **Where does the square in $V \propto 1/(\alpha p)^2$ come from?** Derive
+   it without notes.
+3. **If measurement error carries 40% of the STAR error budget, what is
+   halving it worth?** Give the number, then say what the first-order model
+   is ignoring.
+4. **Why should anyone trust your first experiment?** (Because it is the
+   one with a known answer.)
+:::
+
+::: {.callout-caution title="💪 Exercises"}
+1. **Shares to gains.** Tabulate $G_c$ for $f_c = 0.1, 0.2, \dots, 1.0$.
+   For which share does halving a channel first buy more than $2\times$?
+2. **Two channels.** Two channels have shares $f_a = 0.5$ and $f_b = 0.3$.
+   Compare halving both with eliminating $a$ entirely. Which is worth more?
+3. **Beyond first order.** Suppose $\varepsilon$ is not additive but
+   $\varepsilon = \sqrt{\sum_c \varepsilon_c^2}$. Redo Step 3. Which
+   ranking changes, and what experiment in Part III would tell the two
+   models apart?
+4. **The acceptance currency.** If acceptance is $e^{-\lambda}$ with
+   $\lambda = \sum_c \lambda_c$, what does halving channel $c$ do to the
+   expected number of attempts per accepted injection? Express it in terms
+   of $\lambda_c$.
+5. **Read the budget.** At $\alpha = 3.8$ and $p = 10^{-3}$, what total
+   rotation angle can a computation afford? How many Trotter steps of an
+   $8 \times 8$ lattice is that, if one step rotates by a total of
+   $\ell_1 N_s \, \delta t = 64 \times 4 \times 0.03$?
+:::

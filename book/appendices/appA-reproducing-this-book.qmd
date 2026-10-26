@@ -1,0 +1,48 @@
+# Reproducing This Book {#sec-reproduce}
+
+Every number in this book can be regenerated from the repository. This
+appendix records how, and what the numbers were produced with.
+
+## From a clean checkout
+
+```bash
+python -m venv ~/.venvs/star-book && source ~/.venvs/star-book/bin/activate
+pip install -r requirements.txt
+pip install --no-deps bloqade-circuit==0.15.3   # no pyqrack: see README
+pip install -e .
+python tools/install_kernel.py   # registers the `star-book` kernel
+make fetch                       # QuEra's circuits, pinned + hash-checked
+make check                       # every offline guard
+make book                        # website + PDF into book/_book/
+```
+
+Expensive measurements are not re-run by a render. Each is produced once by
+a `tools/measure_*.py` script that executes a registered protocol, and is
+committed under `data/results/` with its date, seed and environment. A
+chapter reads those files; `tools/check_results.py` refuses any that lack
+their provenance, and `tools/check_protocols.py` refuses any older than the
+protocol that describes them.
+
+## The environment that produced the numbers
+
+```{python}
+#| echo: false
+import json
+import pathlib
+
+root = pathlib.Path.cwd()
+root = next(p for p in (root, *root.parents) if (p / "starlab").is_dir())
+capture = json.loads((root / "data/environment-capture.json").read_text())
+print(f"{'python':<18}{capture['python']}  ({capture['captured']})")
+for group, packages in capture["packages"].items():
+    for name, version in packages.items():
+        print(f"{name:<18}{version or 'not installed'}")
+```
+
+## Protocols
+
+| Protocol | Question | Chapter | Registered |
+|---|---|---|---|
+| P01 | Does the pipeline reproduce QuEra's uniform-noise STAR curve? | 6 | 2026-10-26 |
+| P02 | Does the re-noiser reproduce P01 at uniform settings, and what changes under hardware-aware noise? | 7 | planned |
+| P03 | How does each physical channel move α and acceptance? | 8 | planned |

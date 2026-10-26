@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Quarto
+book/_book/
+book/.quarto/
+/_book/
+/.quarto/
+**/*.quarto_ipynb
+
+# Quarto's execution cache. Deliberately ignored: a stale freeze must never
+# survive into a release.
+book/_freeze/
+_freeze/
+
+# QuEra's circuits and reference plot. Fetched at a pinned commit and
+# hash-checked by tools/fetch_star_circuits.py; never redistributed, because
+# the upstream repository carries no license.
+data/external/
+
+# Application material: drafts, reviews, the superseded project spec. Local
+# only -- this repository is public, and these are not part of the book.
+application/
+
+# Scratch. Expensive sweeps are committed deliberately under data/results/,
+# never left to accumulate here.
+scratch/
+*.tmp
+
+# Editors and OS
+.DS_Store
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Local figure previews
+code/*/figures/
+code/*/_preview/

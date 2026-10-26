@@ -1,0 +1,120 @@
+{
+  "source": "QuEraComputing/ETH_QHACK_2026 assets/star_sim.svg",
+  "svg_sha256": "76f1e49eba4673bebc504e21e26444cdd551bbc505d3e4825f87235908d96eb4",
+  "noise": "uniform depolarizing p = 1e-3 (as in the published .stim)",
+  "y_quantity": "logical error rate / distance",
+  "theta_grid_log10": [
+    -4.0,
+    -3.4,
+    -2.8,
+    -2.2,
+    -1.6,
+    -1.0,
+    -0.4,
+    0.2
+  ],
+  "curves": {
+    "d=3": [
+      {
+        "theta_rad": 0.0001,
+        "logical_error_per_distance": 0.0020005984580270643
+      },
+      {
+        "theta_rad": 0.00039810717245018193,
+        "logical_error_per_distance": 0.002042917713169635
+      },
+      {
+        "theta_rad": 0.0015848931698085988,
+        "logical_error_per_distance": 0.0020421855378258713
+      },
+      {
+        "theta_rad": 0.00630957338468108,
+        "logical_error_per_distance": 0.0019653882331178876
+      },
+      {
+        "theta_rad": 0.025118864195423113,
+        "logical_error_per_distance": 0.002068587457751539
+      },
+      {
+        "theta_rad": 0.1000000000000001,
+        "logical_error_per_distance": 0.002471380036696574
+      },
+      {
+        "theta_rad": 0.3981071629667586,
+        "logical_error_per_distance": 0.0032271496439840778
+      },
+      {
+        "theta_rad": 1.5848931698086004,
+        "logical_error_per_distance": 0.010416666159440403
+      }
+    ],
+    "d=5": [
+      {
+        "theta_rad": 0.0001,
+        "logical_error_per_distance": 2.5318462616186167e-05
+      },
+      {
+        "theta_rad": 0.00039810717245018193,
+        "logical_error_per_distance": 2.4943944224062434e-05
+      },
+      {
+        "theta_rad": 0.0015848931698085988,
+        "logical_error_per_distance": 3.4202992889184596e-05
+      },
+      {
+        "theta_rad": 0.00630957338468108,
+        "logical_error_per_distance": 3.0360217870023177e-05
+      },
+      {
+        "theta_rad": 0.025118864195423113,
+        "logical_error_per_distance": 3.4243910210553505e-05
+      },
+      {
+        "theta_rad": 0.1000000000000001,
+        "logical_error_per_distance": 0.00014456433500231795
+      },
+      {
+        "theta_rad": 0.3981071629667586,
+        "logical_error_per_distance": 0.0019684307888901834
+      },
+      {
+        "theta_rad": 1.5848931698086004,
+        "logical_error_per_distance": 0.013214396942395592
+      }
+    ],
+    "d=7": [
+      {
+        "theta_rad": 0.0001,
+        "logical_error_per_distance": 1.682884757198608e-06
+      },
+      {
+        "theta_rad": 0.00039810717245018193,
+        "logical_error_per_distance": 1.5210405456488037e-06
+      },
+      {
+        "theta_rad": 0.0015848931698085988,
+        "logical_error_per_distance": 2.6506935929046735e-06
+      },
+      {
+        "theta_rad": 0.00630957338468108,
+        "logical_error_per_distance": 1.926668139063792e-06
+      },
+      {
+        "theta_rad": 0.025118864195423113,
+        "logical_error_per_distance": 1.2267119048446165e-05
+      },
+      {
+        "theta_rad": 0.1000000000000001,
+        "logical_error_per_distance": 0.00018622160775638597
+      },
+      {
+        "theta_rad": 0.3981071629667586,
+        "logical_error_per_distance": 0.002475968497645793
+      },
+      {
+        "theta_rad": 1.5848931698086004,
+        "logical_error_per_distance": 0.016799323434076578
+      }
+    ]
+  }
+}

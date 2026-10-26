@@ -1,0 +1,262 @@
+# One Small Rotation: STAR Injection from First Principles {#sec-star}
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Derive, at a whiteboard, the acceptance probability and the logical
+   angle of a STAR injection on $k$ physical qubits.
+2. Explain why the sign of the physical angle alternates with
+   $(k-1)/2$, and recover QuEra's `physical_angle` function from scratch.
+3. Show why every partial $Z$-string is caught by the stabilizers, using
+   the layout of a rotated surface code.
+4. Verify all of it against QuEra's own circuits, noiselessly, with tsim.
+:::
+
+```{python}
+#| include: false
+import math
+import pathlib
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.style.use("../../styles/star.mplstyle")
+sys.path.insert(0, "../../styles")
+import palette
+
+_here = pathlib.Path.cwd()
+sys.path.insert(0, str(next(p for p in (_here, *_here.parents)
+                            if (p / "starlab").is_dir())))
+import starlab
+```
+
+## The idea in one paragraph
+
+Take a surface-code patch holding logical $|+\rangle$. Its logical $Z$
+operator is a string of physical $Z$s along one column — $k = d$ qubits.
+Rotate each of those $k$ physical qubits by the same small angle $\theta^*$
+about $Z$. Most of what that does is garbage: it creates superpositions of
+*partial* $Z$-strings, which are not logical operators and which the
+stabilizers will flag. But two terms in the expansion are not garbage —
+"do nothing" and "apply the whole string", which is $Z_L$. Measure the
+stabilizers, keep the attempt only if none fires, and what is left is a
+logical rotation. That is STAR [@akahoshi2024star]. The rest of the chapter
+makes each clause of that paragraph exact.
+
+## The expansion
+
+Write $c = \cos(\theta^*/2)$ and $s = \sin(\theta^*/2)$, so that one
+physical rotation is $R_Z(\theta^*) = c\,I - i s\,Z$. On $k$ qubits,
+
+$$\bigotimes_{j=1}^{k} (c\,I - i s\,Z_j)
+  = \sum_{S \subseteq \{1..k\}} c^{\,k-|S|} (-is)^{|S|} \, Z_S ,$$
+
+a sum over every subset $S$ of the rotated qubits, where $Z_S$ applies $Z$
+to the qubits in $S$. The empty set gives $I$ with weight $c^k$; the full
+set gives $Z_L$ with weight $(-is)^k$. Everything else is a partial string.
+
+## Why every partial string is caught
+
+A partial string $Z_S$ survives post-selection only if it commutes with
+every $X$-type stabilizer. Look at the logical column of a distance-3
+rotated patch — in QuEra's circuit, data qubits 0, 3 and 6 at
+$x = 0.5$. The $X$-check measured by ancilla 13 covers qubits
+$\{0, 1, 3, 4\}$, so it watches the pair $(0, 3)$; the weight-two boundary
+check measured by ancilla 15 covers $\{3, 6\}$. Every vertically adjacent
+pair on the column is watched by exactly one $X$-check.
+
+Now take any $S$ that is neither empty nor the whole column. Walking down
+the column, there is a first place where membership in $S$ changes — an
+adjacent pair with one qubit in $S$ and one not. The check watching that
+pair overlaps $Z_S$ on exactly one qubit, so it anticommutes with $Z_S$ and
+fires. Every partial string is detected; only $I$ and $Z_L$ are not.
+
+## The derivation
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — STAR acceptance and logical angle"}
+**After post-selection** only two terms of the expansion remain:
+$$I\, c^k + Z_L\, (-is)^k .$$
+
+**Acceptance.** Acting on $|+\rangle_L$, the two terms produce $|+\rangle_L$
+and $Z_L|+\rangle_L = |-\rangle_L$, which are orthogonal. So the probability
+that no stabilizer fires is the sum of the squared weights:
+$$P_{\mathrm{acc}} = c^{2k} + s^{2k}
+  = \cos^{2k}\frac{\theta^*}{2} + \sin^{2k}\frac{\theta^*}{2}.$$
+
+**The angle.** For odd $k$, $(-i)^k = -i\,(-1)^{(k-1)/2}$. Normalising,
+the surviving operator is
+$$\cos\varphi \; I \; - \; i\,(-1)^{(k-1)/2} \sin\varphi \; Z_L,
+  \qquad \tan\varphi = \frac{s^k}{c^k} = \tan^k\frac{\theta^*}{2},$$
+which is a logical $R_Z(\theta_L)$ with
+$$\tan\frac{\theta_L}{2} = (-1)^{(k-1)/2} \tan^k\frac{\theta^*}{2}.$$
+
+**Invert it** to get the physical angle a target $\theta_L$ needs:
+$\theta^* = \pm 2 \arctan\big(\tan(\theta_L/2)^{1/k}\big)$, negative
+exactly when $(k-1)/2$ is odd — that is, when $k \equiv 3 \pmod 4$, which is
+QuEra's `(k + 1) % 4 == 0`.
+:::
+
+Two consequences are worth stopping on. First, **the physical angle is
+much larger than the logical one**: the $k$-th root does that. A logical
+rotation of $0.01\pi$ on $k = 3$ qubits needs physical rotations of
+$0.156\pi$ each. Second, **acceptance therefore falls fast with $k$**.
+For small $\theta_L$, $P_{\mathrm{acc}} \approx 1 - k\,(\theta_L/2)^{2/k}$,
+and the exponent $2/k$ is the problem: the larger $k$, the closer
+$(\theta_L/2)^{2/k}$ gets to one. In QuEra's published circuits $k = d$, so
+even with no noise at all, a bigger code accepts less often.
+
+```{python}
+#| label: tbl-star-angles
+#| tbl-cap: "Physical angle and noiseless acceptance for one logical angle."
+theta_l = 0.01 * math.pi
+print(f"logical angle {theta_l:.4f} rad")
+print(f"{'k':>3}{'theta* (units of pi)':>23}{'P_acc':>9}")
+for k in (1, 3, 5, 7, 9):
+    phys = starlab.physical_angle(theta_l / math.pi, k)
+    acc = starlab.ideal_acceptance(phys, k)
+    print(f"{k:>3}{phys:>23.6f}{acc:>9.4f}")
+```
+
+The $k = 3, 5, 7, 9$ rows reproduce, to every printed digit, the angles
+QuEra wrote into its published circuit files (`tests/test_starlab.py`
+checks this to twelve significant figures).
+
+```{python}
+#| label: fig-acceptance
+#| fig-cap: "Noiseless STAR acceptance falls with the number of rotated qubits k. Each curve is the closed form; QuEra's circuits use k = d."
+thetas = np.logspace(-4, 0.2, 200)
+fig, ax = plt.subplots(figsize=(6.4, 3.6))
+roles = {1: "classical", 3: "quantum", 5: "phase", 7: "cost"}
+for k, role in roles.items():
+    acc = [starlab.ideal_acceptance(
+        starlab.physical_angle(t / math.pi, k), k) for t in thetas]
+    st = palette.style(role)
+    ax.plot(thetas, acc, color=st["color"], dashes=st["dashes"],
+            label=f"k = {k}")
+    ax.annotate(f"k = {k}", (thetas[60], acc[60]), color=st["color"],
+                textcoords="offset points", xytext=(0, 6), fontsize=9)
+ax.set_xscale("log")
+ax.set_xlabel(r"logical angle $\theta_L$ (rad)")
+ax.set_ylabel("noiseless acceptance")
+ax.set_ylim(0, 1.02)
+plt.show()
+```
+
+## Checking it against QuEra's circuits
+
+The derivation predicts two things a noiseless simulation can test
+directly. Every accepted shot should leave the patch exactly rotated by
+$\theta_L$ — so after QuEra's perfect "unrotation" the logical $X$
+measurement should read 0 every time — and the fraction accepted should
+equal $P_{\mathrm{acc}}$. Here are both, with tsim [@haenel2026tsim]
+sampling QuEra's own distance-3 and distance-5 circuits with the noise
+stripped out.
+
+```{python}
+#| label: tbl-noiseless-check
+#| tbl-cap: "Noiseless STAR on QuEra's circuits: measured acceptance against the closed form, and logical failures among accepted shots."
+shots = 20_000
+print(f"{'d':>2}{'theta_L':>9}{'measured':>10}{'closed form':>13}"
+      f"{'z':>7}{'failures':>10}")
+for d in (3, 5):
+    for theta in (0.01, 0.1, 0.4):
+        circ = starlab.star_circuit(d, theta, noiseless=True)
+        sampler = circ.compile_detector_sampler(seed=11)
+        dets, obs = sampler.sample(shots, separate_observables=True)
+        dets, obs = np.asarray(dets, bool), np.asarray(obs, bool)
+        keep = ~dets[:, :starlab.n_postselected(d)].any(axis=1)
+        want = starlab.ideal_acceptance(
+            starlab.physical_angle(theta / math.pi, d), d)
+        z = (keep.mean() - want) / math.sqrt(want * (1 - want) / shots)
+        print(f"{d:>2}{theta:>9.2f}{keep.mean():>10.4f}{want:>13.4f}"
+              f"{z:>7.2f}{int(obs[keep, 0].sum()):>10}")
+```
+
+Every measured acceptance sits within a few standard errors of the closed
+form (the $z$ column), and no accepted shot fails. The derivation and the
+circuits agree. Two things are now trusted that everything later depends
+on: `starlab.with_angle` sets QuEra's circuits to any angle correctly, and
+the post-selection rule — the first $3(d^2 - 1)$ detectors — is the right
+one.
+
+## Where noise will enter
+
+With noise, two new things happen, and @ismail2026transversal gives their
+scaling. A *correlated* error that happens to complete a partial string into
+the full $Z_L$ — the paper's "$ZZ$-error" term — slips through
+post-selection, but needs about $k$ faults, so it is suppressed as $p^k$.
+And an error that changes the effective rotation without tripping a
+check produces a *coherent misrotation*, which the paper finds scales as
+$p\,\theta_L^{2(1 - 1/k)}$ for the injected state, and as $\alpha p \theta$
+once the rotation is teleported into a computation. Which physical channels
+feed those terms is exactly the question of Part III. Chapter 5 connects
+the injected-state error to the teleported $\alpha$.
+
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 2"}
+| What a paper says | What it is |
+|---|---|
+| *logical operator* $Z_L$ | a string of physical $Z$s that commutes with every check but is not itself a check |
+| *partial string* | a proper subset of that string; always flagged by some check |
+| *post-selection* | keep the shot only if every listed detector reads 0 |
+| *physical angle* $\theta^*$ | the angle applied to each of the $k$ atoms |
+| *logical angle* $\theta_L$ | the rotation the encoded qubit actually receives |
+| *perfect unrotation* | a simulation-only inverse rotation used to read out the injection error |
+:::
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 2"}
+**Delegated to the agent (Claude, 2026-10-26).** Writing `starlab.circuits`
+(re-angling QuEra's circuits), the tests that pin it to QuEra's published
+angles, the noiseless tsim check, the figure, and this chapter's prose and
+derivation.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] The whiteboard derivation, reproduced on paper, cold, on two
+  different days.
+- [ ] The partial-string argument, checked against the qubit coordinates in
+  `star_d=3.stim` (ancillas 13 and 15) by reading the file, not this text.
+- [ ] The small-angle approximation
+  $P_{\mathrm{acc}} \approx 1 - k(\theta_L/2)^{2/k}$, derived independently.
+- [ ] How @ismail2026transversal realises $k < d$ on a distance-$d$ patch.
+  The paper (read through a summariser) says $k$ may be chosen between 1
+  and $d$; Drill 4 and Exercise 4 assume that, and the mechanism has not
+  been checked.
+
+**Caught.** The agent's first unit test asserted that the Wilson lower
+bound at zero failures is exactly 0.0; it is zero only up to rounding, as
+the template's own results guard already allows. The test was wrong, not
+the library, and was fixed. Separately, tsim refuses to decompose the
+detector error model of a circuit with a non-deterministic observable, so
+the agent's first decoder crashed; the fix (decode with the circuit's
+Clifford proxy) is explained in Chapter 3 and registered in P01.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **Derive the STAR acceptance probability.** Then explain why it is
+   $c^{2k} + s^{2k}$ and not $(c^2 + s^2)^k$.
+2. **Why is QuEra's physical angle negative for $d = 3$ and $d = 7$ but
+   positive for $d = 5$ and $d = 9$?**
+3. **Why does every partial $Z$-string get caught?** Use the layout of the
+   rotated surface code, not an appeal to "stabilizers".
+4. **The published circuits use $k = d$. Why might you choose $k < d$?**
+   Name the term that gets worse.
+:::
+
+::: {.callout-caution title="💪 Exercises"}
+1. **Small-angle expansion.** Derive
+   $P_{\mathrm{acc}} \approx 1 - k(\theta_L/2)^{2/k}$ and find the $\theta_L$
+   at which it is off from the closed form by 1% for $k = 3$.
+2. **Even $k$.** Redo the derivation for $k = 2$. What goes wrong with the
+   logical operator, and why do the circuits only use odd $k$?
+3. **A wrong angle.** Suppose one of the $k$ rotations is applied with
+   $-\theta^*$ instead of $\theta^*$ (an $X$ error before the rotation does
+   exactly this). Which terms survive post-selection now, and what logical
+   rotation results?
+4. **Choosing k.** For $\theta_L = 0.03$, find the $k \in \{1, 3, 5, 7\}$
+   that maximises acceptance, and explain why $k = 1$ is not the answer
+   once noise is present.
+5. **Read the circuit.** In `star_d=5.stim`, identify the logical column
+   and the $X$-checks watching each adjacent pair on it, from the
+   `QUBIT_COORDS` lines alone.
+:::

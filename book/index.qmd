@@ -1,0 +1,97 @@
+# Preface {.unnumbered}
+
+## What this book is
+
+This is a research log and a course at the same time, and it is honest
+about being both.
+
+The research is one question about one architecture. QuEra Computing's
+*transversal STAR* proposal [@ismail2026transversal; @ismail2026highrate]
+is a plan for the first useful fault-tolerant machines — the
+"megaquop" regime of about a million reliable operations — in which the
+expensive non-Clifford gates are not distilled but *injected*: a small
+rotation is applied directly to a handful of physical atoms, and the
+attempts that went wrong are thrown away. The reach of that plan is capped
+by a single coefficient, α, in the error of each injected rotation. The
+papers that propose it fold all physical noise into one knob. This book
+asks which physical channel the coefficient actually answers to, and what
+halving each one would buy.
+
+The course is everything its author needed to learn to ask that question
+properly: what a STAR injection is, algebraically; how a surface-code
+memory is decoded; what a neutral-atom machine physically does and how it
+fails; and how a rotation budget becomes a simulation. It is written for a
+reader who knows quantum circuits and some error correction, and wants to
+reach the point where every number in a paper like
+@ismail2026transversal can be re-derived at a whiteboard.
+
+## How it keeps itself honest
+
+The book is built around six commitments, each enforced by a program that
+fails the build when it is broken. They are listed in `OUTLINE.md`; the
+three that shape the reading are these.
+
+**Experiments are pre-registered.** Every measurement in Part III comes from
+a protocol committed to git before the measurement existed. A guard reads
+the commit history and the date stamped inside every result file, and fails
+if a result is older than its protocol. A protocol written afterwards is a
+description; only the history can tell the two apart.
+
+**Validation comes before novelty.** The first experiment does not ask
+anything new. It asks whether this book's pipeline reproduces the curve
+QuEra itself published for these circuits, under QuEra's own noise model.
+Nothing later is evidence unless that passes.
+
+**Every chapter discloses its AI use.** This book was written with an AI
+coding agent, deliberately and heavily. Each chapter ends its main text with
+a 🤖 **Agent Log** stating what the agent did, what the author verified by
+hand, and what the agent got wrong. The log is a disclosure, not a badge,
+and it is the part of each chapter its author must be able to defend
+without notes.
+
+## How to read a chapter
+
+Every chapter keeps the same contract, and `tools/check_structure.py`
+checks that it does:
+
+| Box | What it is for |
+|---|---|
+| 🎯 **Learning Goals** | what you can do at the end that you could not at the start |
+| 🧑‍🏫 **Whiteboard** | a derivation to reproduce cold — no notes, no agent |
+| 🔬 **Evidence** | a measured number, with shots, interval, seed and environment |
+| 🤖 **Agent Log** | delegated · verified by hand · caught |
+| 🎤 **Interview Drill** | what someone hiring for this work would ask |
+| 💪 **Exercises** | practice that builds the whiteboard skill |
+
+The Whiteboard boxes are the spine. A derivation counts as mastered when it
+has been reproduced correctly, on paper, on two different days.
+
+## The inputs this book does not own
+
+The STAR circuits and the reference plot that Part III measures against were
+published by QuEra Computing for the ETH QHack 2026 challenge. That
+repository carries no license, so this book never redistributes them:
+`make fetch` downloads them at one pinned commit and checks every file
+against a SHA-256 recorded in `tools/fetch_star_circuits.py`.
+
+```{python}
+#| echo: false
+import hashlib
+import pathlib
+
+root = pathlib.Path.cwd()
+root = next(p for p in (root, *root.parents) if (p / "starlab").is_dir())
+inputs = sorted((root / "data/external/eth_qhack_2026").glob("*"))
+print(f"{'fetched input':<22}{'SHA-256 (first 16 hex)':>26}")
+for path in inputs:
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+    print(f"{path.name:<22}{digest:>26}")
+```
+
+## Acknowledgements
+
+The STAR idea is due to Akahoshi and collaborators [@akahoshi2024star]; its
+transversal, neutral-atom form to Ismail and collaborators at QuEra
+[@ismail2026transversal]. The circuits measured here, the tsim simulator
+[@haenel2026tsim] and the bloqade noise models are QuEra's public work. The
+design system and the guards are shared with this book's sister volumes.

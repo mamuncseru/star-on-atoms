@@ -1,0 +1,26 @@
+{
+  "captured": "2026-10-26",
+  "kernel": "star-book",
+  "interpreter": "/home/tut46184/.venvs/star-book/bin/python",
+  "python": "3.11.12",
+  "platform": "Linux-4.18.0-553.8.1.el8_10.x86_64-x86_64-with-glibc2.28",
+  "packages": {
+    "core, needed by every part": {
+      "numpy": "2.2.6",
+      "scipy": "1.17.1",
+      "matplotlib": "3.11.2",
+      "stim": "1.16.0",
+      "pymatching": "2.4.0",
+      "bloqade-tsim": "0.1.5"
+    },
+    "Part III (noise models and instruments)": {
+      "bloqade-circuit": "0.15.3",
+      "cirq-core": "1.7.0",
+      "sinter": "1.16.0"
+    },
+    "tooling": {
+      "jupyter-client": "8.10.0",
+      "ipykernel": "7.4.0"
+    }
+  }
+}

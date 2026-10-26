@@ -1,0 +1,117 @@
+/*-- scss:defaults --*/
+
+// Brand — dark mode. Steps selected against the dark surface, not flipped
+// from the light ones. Matched to the sister volumes' dark themes.
+$primary: #3987e5;
+$link-color: #6da7ec;
+$body-bg: #14151a;
+$body-color: #d6d5cf;
+$headings-color: #e8e9f2;
+$code-block-bg: #1d1f26;
+$code-color: #9085e9;
+$font-size-root: 17px;
+
+/*-- scss:rules --*/
+
+$callout-colors: (
+  "note":      #3987e5,
+  "important": #9085e9,
+  "tip":       #199e70,
+  "warning":   #c98500,
+  "caution":   #d55181,
+);
+
+@each $type, $color in $callout-colors {
+  div.callout-#{$type}.callout {
+    border-left-color: $color;
+    border-radius: 8px;
+  }
+  div.callout-#{$type}.callout-style-default > .callout-header {
+    background-color: rgba($color, 0.14);
+    font-weight: 600;
+  }
+}
+
+.callout { margin: 1.4rem 0; }
+
+// The five roles on the dark surface. These mirror the `DARK` table in
+// book/styles/palette.py.
+$role-quantum-dark:   #3987e5;
+$role-classical-dark: #a8a69f;
+$role-phase-dark:     #c98500;
+$role-cost-dark:      #e8615f;
+$role-signal-dark:    #2fbf8b;
+
+div.callout.whiteboard {
+  border-left-color: #9085e9;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba(#9085e9, 0.16); }
+}
+
+div.callout.evidence {
+  border-left-color: $role-signal-dark;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba($role-signal-dark, 0.16); }
+  font-variant-numeric: tabular-nums;
+}
+
+div.callout.agentlog {
+  border-left-color: $role-phase-dark;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba($role-phase-dark, 0.16); }
+}
+
+div.callout.drill {
+  border-left-color: $role-cost-dark;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba($role-cost-dark, 0.14); }
+}
+
+div.callout.rosetta {
+  border-left-color: $role-classical-dark;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba($role-classical-dark, 0.14); }
+  table { margin: 0.2rem 0 0; width: 100%; }
+  th { font-weight: 650; }
+  td:first-child { font-style: italic; color: #a8a69f; }
+  td code { white-space: nowrap; }
+}
+
+.role {
+  font-weight: 700;
+  font-size: 0.86em;
+  letter-spacing: 0.04em;
+  padding: 0.12em 0.5em;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.role-quantum   { color: #14151a; background: $role-quantum-dark; }
+.role-classical { color: #14151a; background: $role-classical-dark; }
+.role-phase     { color: #e0aa4a; background: rgba(201, 133, 0, 0.22); }
+.role-cost      { color: #14151a; background: $role-cost-dark; }
+.role-signal    { color: #7fd9b6; background: rgba(47, 191, 139, 0.20); }
+
+.quarto-title-block h1.title {
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+h1, h2 { letter-spacing: -0.015em; }
+
+h2 {
+  border-bottom: 1px solid #2a2b33;
+  padding-bottom: 0.35rem;
+}
+
+div.sourceCode {
+  border: 1px solid #2a2b33;
+  border-radius: 8px;
+}
+
+.figure-caption, figcaption {
+  color: #a8a69f;
+  font-size: 0.88em;
+}
+
+table { font-variant-numeric: tabular-nums; }

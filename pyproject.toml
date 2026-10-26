@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "starlab"
+version = "0.1.0"
+description = "The code library behind 'STAR on Atoms': QuEra's STAR injection circuits, re-noised, sampled and measured"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Md Abdullah Al Mamun" }]
+dependencies = [
+    "numpy>=1.24",
+    "stim>=1.15",
+    "pymatching>=2.2",
+    "bloqade-tsim>=0.1.5",
+]
+
+[project.optional-dependencies]
+# Everything the chapters need beyond the library itself.
+book = [
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+    "jupyter",
+    "pyyaml",
+]
+# Part III: bloqade's Gemini noise models and their Cirq route. Install
+# bloqade-circuit with --no-deps on hosts without a pyqrack wheel (glibc
+# < 2.35): this book never uses the PyQrack simulator. See README.
+noise = [
+    "cirq-core[contrib]>=1.4.1",
+    "sinter>=1.13",
+]
+
+[tool.setuptools]
+packages = ["starlab"]

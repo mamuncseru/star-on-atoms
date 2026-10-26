@@ -1,0 +1,177 @@
+/*-- scss:defaults --*/
+
+// Brand — light mode. Deliberately identical to the sister volumes (Qiskit,
+// PennyLane, QML-Measured, QC and Algorithms) so the series reads as one
+// set of books rather than five that happen to share a subject.
+$primary: #256abf;
+$link-color: #1c5cab;
+$body-color: #1d1d1f;
+$headings-color: #16214d;
+$code-block-bg: #f6f8fa;
+$code-color: #4a3aa7;
+$font-size-root: 17px;
+
+/*-- scss:rules --*/
+
+// ---------------------------------------------------------------------------
+// Callout design system.
+//
+// Five native Quarto callout types carry the series' five shared callouts.
+// Native types matter: a custom `.callout-whatever` div is not a callout at
+// all, so it renders as a bare paragraph in HTML and vanishes entirely from
+// the Typst PDF. Everything here is a real callout with the emoji and label
+// in its `title=`.
+//
+//   note      → 🎯 Learning Goals      (blue)
+//   important → 📐 Math Box            (violet)
+//   tip       → 🔬 Under the Hood      (aqua)
+//   warning   → ⚠️ Gotcha              (amber)
+//   caution   → 💪 Exercise            (magenta)
+//
+// This book adds five of its own, which ride on a native type for structure
+// and are recoloured by an extra class:
+//
+//   .whiteboard → 🧑‍🏫 Whiteboard: derive it without notes   (on important)
+//   .evidence   → 🔬 Evidence: a measured number + provenance (on tip)
+//   .agentlog   → 🤖 Agent Log: delegated / verified / caught (on warning)
+//   .drill      → 🎤 Interview Drill                          (on note)
+//   .rosetta    → 🔤 Vocabulary: the word, and what it is     (on tip)
+// ---------------------------------------------------------------------------
+
+$callout-colors: (
+  "note":      #2a78d6,
+  "important": #4a3aa7,
+  "tip":       #1baf7a,
+  "warning":   #eda100,
+  "caution":   #d55181,
+);
+
+@each $type, $color in $callout-colors {
+  div.callout-#{$type}.callout {
+    border-left-color: $color;
+    border-radius: 8px;
+  }
+  div.callout-#{$type}.callout-style-default > .callout-header {
+    background-color: rgba($color, 0.09);
+    font-weight: 600;
+  }
+}
+
+.callout {
+  margin: 1.4rem 0;
+  box-shadow: 0 1px 3px rgba(22, 33, 77, 0.06);
+}
+
+// ---------------------------------------------------------------------------
+// The role palette. Colour is semantic in every figure in this book, and the
+// five roles below are the whole vocabulary. `book/styles/palette.py` is the
+// single source of truth; `verify_scss()` there fails the build if these
+// five values and its own drift apart.
+// ---------------------------------------------------------------------------
+
+$role-quantum:   #2a78d6;   // the quantum code; bit-flip (X) sector
+$role-classical: #52514e;   // the classical code or decoder, always
+$role-phase:     #eda100;   // the phase-flip (Z) sector
+$role-cost:      #e34948;   // qubits, logical failure, decoder latency
+$role-signal:    #1baf7a;   // the syndrome: detection events
+
+// The book's own callouts, recoloured on top of their native base.
+
+// A derivation the reader must be able to reproduce at a whiteboard, with no
+// notes and no agent. The book's central mastery device.
+div.callout.whiteboard {
+  border-left-color: #4a3aa7;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba(#4a3aa7, 0.10); }
+}
+
+// A number that was measured, printed with what it needs to be trusted.
+div.callout.evidence {
+  border-left-color: $role-signal;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba($role-signal, 0.10); }
+  font-variant-numeric: tabular-nums;
+}
+
+// What an AI agent did in this chapter, what was verified by hand, and what
+// the agent got wrong. Deliberately amber: it is a disclosure, not a badge.
+div.callout.agentlog {
+  border-left-color: $role-phase;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba($role-phase, 0.12); }
+}
+
+div.callout.drill {
+  border-left-color: $role-cost;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba($role-cost, 0.08); }
+}
+
+div.callout.rosetta {
+  border-left-color: $role-classical;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba($role-classical, 0.09); }
+  table { margin: 0.2rem 0 0; width: 100%; }
+  th { font-weight: 650; }
+  td:first-child { font-style: italic; color: #52514e; }
+  td code { white-space: nowrap; }
+}
+
+// Inline role badges, for use in prose and table cells.
+.role {
+  font-weight: 700;
+  font-size: 0.86em;
+  letter-spacing: 0.04em;
+  padding: 0.12em 0.5em;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.role-quantum   { color: #fff;    background: $role-quantum; }
+.role-classical { color: #fff;    background: $role-classical; }
+.role-phase     { color: #8a5d00; background: rgba(237, 161, 0, 0.20); }
+.role-cost      { color: #fff;    background: $role-cost; }
+.role-signal    { color: #0c6b4a; background: rgba(27, 175, 122, 0.18); }
+
+// ---------------------------------------------------------------------------
+// Typography and chrome, matched to the sister volumes.
+// ---------------------------------------------------------------------------
+
+.quarto-title-block h1.title {
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+h1, h2 {
+  letter-spacing: -0.015em;
+}
+
+h2 {
+  border-bottom: 1px solid #e1e0d9;
+  padding-bottom: 0.35rem;
+}
+
+div.sourceCode {
+  border: 1px solid #e1e0d9;
+  border-radius: 8px;
+}
+
+p code:not(.sourceCode), li code:not(.sourceCode) {
+  background-color: rgba(74, 58, 167, 0.07);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+}
+
+.sidebar-item .chapter-number { color: #898781; }
+.sidebar-item-container .active { font-weight: 650; }
+
+.figure img, .quarto-figure img { border-radius: 6px; }
+
+.figure-caption, figcaption {
+  color: #52514e;
+  font-size: 0.88em;
+}
+
+table {
+  font-variant-numeric: tabular-nums;   // so costs line up down a column
+}

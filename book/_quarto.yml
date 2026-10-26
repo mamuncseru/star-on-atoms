@@ -1,0 +1,70 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "STAR on Atoms"
+  subtitle: "Small-Angle Rotations Under Real Neutral-Atom Noise — A Research Log and a Mastery Course"
+  author: "Md Abdullah Al Mamun"
+  date: today
+  page-navigation: true
+  search: true
+  downloads: [pdf]
+
+  # Chapters are added here as they are drafted. The full plan lives in
+  # ../OUTLINE.md, which is the contract this file implements; this file is
+  # what has shipped. Reading order and drafting order must agree, because
+  # Quarto numbers chapters by position.
+  chapters:
+    - index.qmd
+    - part: "Part I — The Question"
+      chapters:
+        - chapters/part1/ch01-the-question.qmd
+    - part: "Part II — Foundations"
+      chapters:
+        - chapters/part2/ch02-one-small-rotation.qmd
+
+  appendices:
+    - appendices/appA-reproducing-this-book.qmd
+
+  page-footer:
+    left: "© 2026 · STAR on Atoms"
+    right: "Text: CC BY 4.0 · Code: MIT"
+
+bibliography: bib/references.bib
+
+# The emoji in each callout title carries the identity; Quarto's own icon
+# beside it is noise, and the sister volumes turn it off too.
+callout-icon: false
+
+# Pin the kernel explicitly (registered by tools/install_kernel.py).
+jupyter: star-book
+
+execute:
+  freeze: auto      # expensive sweeps are read from data/results/, not re-run
+  warning: false
+  message: false
+
+format:
+  html:
+    theme:
+      light: [cosmo, styles/theme-light.scss]
+      dark: [darkly, styles/theme-dark.scss]
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-overflow: scroll
+    highlight-style: github
+    fig-align: center
+    link-external-newwindow: true
+    grid:
+      sidebar-width: 290px
+      body-width: 780px
+
+  typst:
+    # Page geometry, font size, leading and accent colour are set in the
+    # partial below; Quarto's stock book template ignores those keys.
+    template-partials:
+      - styles/typst-show.typ
+    toc: true
+    toc-depth: 2
