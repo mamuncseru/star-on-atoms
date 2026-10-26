@@ -7,6 +7,12 @@
 QUARTO ?= $(shell command -v quarto 2>/dev/null || echo $(HOME)/opt/quarto-1.10.18/bin/quarto)
 PYTHON ?= $(shell test -x $(HOME)/.venvs/star-book/bin/python && echo $(HOME)/.venvs/star-book/bin/python || echo python3)
 
+# Run Quarto's Jupyter engine from the book's own environment. Left to find
+# `python3` on PATH, it started from a shared lab environment and the
+# chapters could not import tsim, although the star-book kernelspec was
+# correct (found on the first render, 2026-10-26).
+export QUARTO_PYTHON := $(PYTHON)
+
 .PHONY: help check release fetch reference citations math structure citekeys \
         results protocols test code kernel book html pdf clean
 

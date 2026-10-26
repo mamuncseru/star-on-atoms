@@ -107,8 +107,6 @@ $(\theta_L/2)^{2/k}$ gets to one. In QuEra's published circuits $k = d$, so
 even with no noise at all, a bigger code accepts less often.
 
 ```{python}
-#| label: tbl-star-angles
-#| tbl-cap: "Physical angle and noiseless acceptance for one logical angle."
 theta_l = 0.01 * math.pi
 print(f"logical angle {theta_l:.4f} rad")
 print(f"{'k':>3}{'theta* (units of pi)':>23}{'P_acc':>9}")
@@ -118,24 +116,23 @@ for k in (1, 3, 5, 7, 9):
     print(f"{k:>3}{phys:>23.6f}{acc:>9.4f}")
 ```
 
-The $k = 3, 5, 7, 9$ rows reproduce, to every printed digit, the angles
+In the table above, the $k = 3, 5, 7, 9$ rows reproduce, to every printed digit, the angles
 QuEra wrote into its published circuit files (`tests/test_starlab.py`
 checks this to twelve significant figures).
 
 ```{python}
 #| label: fig-acceptance
-#| fig-cap: "Noiseless STAR acceptance falls with the number of rotated qubits k. Each curve is the closed form; QuEra's circuits use k = d."
+#| fig-cap: "Noiseless STAR acceptance falls with the number of rotated qubits k. Each curve is the closed form; QuEra's circuits use k = d. All four are the same quantity, so all four are STAR blue, told apart by dash pattern and label."
 thetas = np.logspace(-4, 0.2, 200)
+at = int(np.argmin(abs(np.log10(thetas) + 2)))     # label at 1e-2 rad
 fig, ax = plt.subplots(figsize=(6.4, 3.6))
-roles = {1: "classical", 3: "quantum", 5: "phase", 7: "cost"}
-for k, role in roles.items():
+dashes = {1: (None, None), 3: (6, 2), 5: (3, 1.5), 7: (1, 1.5)}
+for k, dash in dashes.items():
     acc = [starlab.ideal_acceptance(
         starlab.physical_angle(t / math.pi, k), k) for t in thetas]
-    st = palette.style(role)
-    ax.plot(thetas, acc, color=st["color"], dashes=st["dashes"],
-            label=f"k = {k}")
-    ax.annotate(f"k = {k}", (thetas[60], acc[60]), color=st["color"],
-                textcoords="offset points", xytext=(0, 6), fontsize=9)
+    ax.plot(thetas, acc, color=palette.STAR, dashes=dash)
+    ax.annotate(f"k = {k}", (thetas[at], acc[at]), color=palette.STAR,
+                textcoords="offset points", xytext=(4, 5), fontsize=9)
 ax.set_xscale("log")
 ax.set_xlabel(r"logical angle $\theta_L$ (rad)")
 ax.set_ylabel("noiseless acceptance")
@@ -154,8 +151,6 @@ sampling QuEra's own distance-3 and distance-5 circuits with the noise
 stripped out.
 
 ```{python}
-#| label: tbl-noiseless-check
-#| tbl-cap: "Noiseless STAR on QuEra's circuits: measured acceptance against the closed form, and logical failures among accepted shots."
 shots = 20_000
 print(f"{'d':>2}{'theta_L':>9}{'measured':>10}{'closed form':>13}"
       f"{'z':>7}{'failures':>10}")

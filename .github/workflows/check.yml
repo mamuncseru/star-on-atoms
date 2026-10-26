@@ -1,0 +1,42 @@
+name: Check
+
+# `make check` on every push: the same offline guards that must pass before
+# a commit locally. Publishing the rendered book to GitHub Pages is added at
+# the results freeze (OUTLINE.md), when the repository goes public.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history — the protocol guard reads commit dates)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the pinned stack
+        run: |
+          pip install -r requirements.txt
+          pip install --no-deps bloqade-circuit==0.15.3
+          pip install -e .
+
+      - name: Set up Quarto (pandoc + typst for the math guard)
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.10.18
+
+      - name: Fetch QuEra's circuits (pinned + hash-checked)
+        run: make fetch PYTHON=python
+
+      - name: Run every offline guard
+        run: make check PYTHON=python
