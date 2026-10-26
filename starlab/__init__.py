@@ -3,9 +3,9 @@
 Small on purpose. Each module is the instrument one chapter builds and
 explains:
 
-    circuits   QuEra's STAR injection circuits, at any angle   (Chapter 2)
-    stats      Wilson intervals for rare events                (Chapter 3)
-    sampling   sample, post-select, decode, count              (Chapter 3)
+    circuits   QuEra's STAR injection circuits, at any angle   (Chapter 6)
+    stats      Wilson intervals for rare events                (Chapter 7)
+    sampling   sample, post-select, decode, count              (Chapter 7)
 """
 
 from .circuits import (DISTANCES, ideal_acceptance, logical_angle,

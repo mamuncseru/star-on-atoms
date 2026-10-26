@@ -1,7 +1,7 @@
 # Protocol P01: reproduce QuEra's uniform-noise STAR curve
 
 - **Status:** RUN
-- **Chapter:** 6
+- **Chapter:** 10
 - **Registered:** 2026-10-26
 - **Artifacts:** p01_uniform_star_d3, p01_uniform_star_d5
 
@@ -151,3 +151,10 @@ under Deviations.
   put to QuEra as a direct question. The narrowing is recorded here, today,
   before R3 and R4 exist, so it cannot become "whatever made the result
   look right".
+
+### 2026-10-26 — renumbering only
+
+A four-chapter crash course (Part II) was inserted ahead of the STAR
+chapters. P01's chapter is now 10 (was 6), and the threats-to-validity
+chapter named in the entry above is now 14 (was 10). Nothing about the
+method, the criteria, the budget or the gate changed.

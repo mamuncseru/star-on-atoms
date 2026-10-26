@@ -34,7 +34,7 @@ an error that grows with the angle. For algorithms made of many *small*
 rotations, which is what a Trotterized simulation of a lattice Hamiltonian
 is, that is a much better deal than paying full price for every rotation.
 
-Chapter 2 derives exactly how the trick works. This chapter is about why it
+@sec-star derives exactly how the trick works. This chapter is about why it
 matters and what is still unknown.
 
 ## What QuEra has already shown
@@ -153,22 +153,33 @@ The work runs in four steps, each gated on the one before.
 
 1. **Reproduce.** Run QuEra's published STAR circuits, at QuEra's published
    noise, through this book's pipeline, and match QuEra's published curve
-   (Protocol P01, Chapter 6). This asks nothing new, which is why it comes
+   (Protocol P01, Chapter 10). This asks nothing new, which is why it comes
    first: if the pipeline cannot reproduce a known answer, nothing it
    produces later is evidence.
 2. **Re-noise.** Strip the uniform noise from the same circuits and attach
    channel-resolved, hardware-aware noise, checking that the re-noiser
    recovers P01 exactly when every channel is set to the uniform value
-   (Protocol P02, Chapter 7).
+   (Protocol P02, Chapter 11).
 3. **Scan.** Halve and double each channel in turn, measuring the
    injection error, its angle dependence, and acceptance (Protocol P03,
-   Chapter 8).
+   Chapter 12).
 4. **Propagate.** Turn the measured shares into volume gains with the
    whiteboard above, and check the first-order model against the direct
-   measurements (Chapter 9). Then list every way the answer could be wrong
-   (Chapter 10).
+   measurements (Chapter 13). Then list every way the answer could be wrong
+   (Chapter 14).
 
 The dated schedule is in `OUTLINE.md`. Results freeze on 4 November 2026.
+
+## If this is all new to you
+
+Part II is a crash course in the four subjects an interview about this
+work will probe, written for a reader starting from very little: codes and
+transversal gates (@sec-codes), magic states (@sec-magic), the
+neutral-atom hardware (@sec-atoms), and lattice simulation (@sec-trotter).
+Each takes about ninety minutes, ends with a ⏱️ **60-Second Answer** — what
+to say out loud when asked — and a drill with model answers. Read them in
+order, one a day, before the STAR chapters of Part III, which assume all
+four.
 
 ::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 1"}
 | What a paper says | What it is |

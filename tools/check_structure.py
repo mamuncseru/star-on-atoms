@@ -12,8 +12,14 @@ Chapter 2 and lapses in Chapter 9 is worse than one never made:
                       hand, and what the agent got wrong
   🎤 Interview Drill  at least one box, at least three numbered questions
   💪 Exercises        one callout, at least four numbered items
-  🔬 Evidence         at least one in every Part III chapter, where the
+  🔬 Evidence         at least one in every Part IV chapter, where the
                       experiment lives: a measured number with its provenance
+
+The crash course (Part II) is written for a reader starting from very
+little, against an interview in two weeks, so its chapters owe two more:
+
+  ⏱️ 60-Second Answer at least one: what to say, out loud, when asked
+  Model answers       a `## Model answers` section answering the drill
 
 Whiteboard, Exercises and Evidence may be waived by a chapter that
 genuinely has none, with the reason recorded in the source:
@@ -35,13 +41,19 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # Parts whose chapters report measurements and must carry Evidence.
-EVIDENCE_PARTS = {"part3"}
+EVIDENCE_PARTS = {"part4"}
+
+# The crash course: chapters must also carry a 60-second answer and model
+# answers to their drill.
+CRASH_PARTS = {"part2"}
 
 LEARNING = re.compile(r'\{\.callout-note\s+title="🎯')
 WHITEBOARD = re.compile(r'\{[^}]*\.whiteboard[^}]*\}')
 AGENTLOG = re.compile(r'\{[^}]*\.agentlog[^}]*\}')
 DRILL = re.compile(r'\{[^}]*\.drill[^}]*\}')
 EVIDENCE = re.compile(r'\{[^}]*\.evidence[^}]*\}')
+SIXTY = re.compile(r'\{[^}]*\.sixty[^}]*\}')
+MODEL_ANSWERS = re.compile(r"^## Model answers", re.M)
 EXERCISES = re.compile(r'\{\.callout-caution\s+title="💪')
 NUMBERED = re.compile(r"^\s*(\d+)\.\s+\*\*", re.M)
 
@@ -194,6 +206,12 @@ def main() -> int:
                 waived.append((rel, label, waivers[kind]))
             else:
                 problems.append((rel, f"no {label} box"))
+
+        if part in CRASH_PARTS:
+            if not SIXTY.search(text):
+                problems.append((rel, "no ⏱️ 60-Second Answer box"))
+            if not MODEL_ANSWERS.search(text):
+                problems.append((rel, "no '## Model answers' section"))
 
         count = numbered_in(text, EXERCISES)
         if count < MIN_EXERCISES:

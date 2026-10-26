@@ -39,7 +39,7 @@ def physical_angle(logical_angle_in_pi: float, k: int) -> float:
     QuEra's function from the challenge statement, unchanged: rotating each
     of k qubits on a logical-Z string by theta* and post-selecting on the
     stabilizers leaves the logical rotation tan(theta/2) = tan^k(theta*/2),
-    with a sign that alternates with (k - 1)/2 (Chapter 2 derives it).
+    with a sign that alternates with (k - 1)/2 (Chapter 6 derives it).
     """
     assert k % 2 == 1 and k > 0, "k must be a positive odd integer"
     sign = -1 if (k + 1) % 4 == 0 else 1

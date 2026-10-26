@@ -36,6 +36,7 @@ $font-size-root: 17px;
 //   .agentlog   → 🤖 Agent Log: delegated / verified / caught (on warning)
 //   .drill      → 🎤 Interview Drill                          (on note)
 //   .rosetta    → 🔤 Vocabulary: the word, and what it is     (on tip)
+//   .sixty      → ⏱️ 60-Second Answer (crash course)         (on note)
 // ---------------------------------------------------------------------------
 
 $callout-colors: (
@@ -105,6 +106,13 @@ div.callout.drill {
   border-left-color: $role-cost;
   border-left-width: 6px;
   > .callout-header { background-color: rgba($role-cost, 0.08); }
+}
+
+// What to say out loud when asked: the crash course's compression device.
+div.callout.sixty {
+  border-left-color: $role-quantum;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba($role-quantum, 0.08); }
 }
 
 div.callout.rosetta {

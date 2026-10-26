@@ -11,8 +11,10 @@ small-angle rotation injection for the early-fault-tolerant "megaquop"
 regime — using QuEra's own published circuits and open-source tools
 (tsim, bloqade, stim).
 
-> **Status:** 🚧 started 2026-10-26. Chapters 1–2 drafted; Protocol P01
-> (reproduce QuEra's uniform-noise STAR curve) registered and running.
+> **Status:** 🚧 started 2026-10-26. Chapters 1–7 drafted, including a
+> four-chapter crash course (codes, magic states, Rydberg atoms, Trotter and
+> Jordan–Wigner). Protocol P01 (reproduce QuEra's uniform-noise STAR curve)
+> has run; its diagnosis is open.
 > [OUTLINE.md](OUTLINE.md) is the plan and the schedule;
 > [LEDGER.md](LEDGER.md) records every verdict.
 

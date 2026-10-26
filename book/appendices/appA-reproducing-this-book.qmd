@@ -43,6 +43,6 @@ for group, packages in capture["packages"].items():
 
 | Protocol | Question | Chapter | Registered |
 |---|---|---|---|
-| P01 | Does the pipeline reproduce QuEra's uniform-noise STAR curve? | 6 | 2026-10-26 |
-| P02 | Does the re-noiser reproduce P01 at uniform settings, and what changes under hardware-aware noise? | 7 | planned |
-| P03 | How does each physical channel move α and acceptance? | 8 | planned |
+| P01 | Does the pipeline reproduce QuEra's uniform-noise STAR curve? | 10 | 2026-10-26 |
+| P02 | Does the re-noiser reproduce P01 at uniform settings, and what changes under hardware-aware noise? | 11 | planned |
+| P03 | How does each physical channel move α and acceptance? | 12 | planned |

@@ -1,0 +1,337 @@
+# Codes You Must Be Able to Draw: Surface, Color, and Transversal Gates {#sec-codes}
+
+> **Time:** about 90 minutes. **You need:** the Pauli matrices $X, Y, Z$,
+> and the idea that measuring a parity does not disturb the information a
+> code protects. Everything else is built here.
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Draw the distance-3 rotated surface code and the Steane code from
+   memory, mark their checks, and state their $[[n, k, d]]$.
+2. Say what a *transversal* gate is, and why it is fault-tolerant for free.
+3. Prove that transversal CNOT works on any CSS code, and say which other
+   gates are transversal on the surface code and on the color code.
+4. State the Eastin–Knill theorem in one sentence and say why it is the
+   reason Chapters 3 and 6 exist.
+5. Explain why reconfigurable atom arrays make transversal gates the
+   natural way to compute.
+:::
+
+```{python}
+#| include: false
+import itertools
+import pathlib
+import sys
+
+import numpy as np
+import pymatching
+import stim
+
+_here = pathlib.Path.cwd()
+sys.path.insert(0, str(next(p for p in (_here, *_here.parents)
+                            if (p / "starlab").is_dir())))
+import starlab
+```
+
+## The picture in five minutes
+
+A quantum error-correcting code stores a few *logical* qubits in many
+*physical* ones. It does so by fixing a set of **checks** — products of
+Paulis, called *stabilizers* — whose value is $+1$ on every valid code
+state. The checks are measured over and over. An error that anticommutes
+with a check flips its outcome; the pattern of flipped checks, the
+*syndrome*, goes to a classical *decoder*, which guesses what happened.
+Measuring a check never reveals the logical information, because the
+logical operators commute with every check.
+
+Three numbers summarise a code: $[[n, k, d]]$ — $n$ physical qubits, $k$
+logical qubits, and **distance** $d$, the weight of the smallest error that
+changes the logical state without tripping any check. A distance-$d$ code
+corrects any $\lfloor (d-1)/2 \rfloor$ errors.
+
+Two code families matter at QuEra. The **surface code** puts qubits on a
+square grid and uses only nearest-neighbour checks of weight four. The
+**color code** [@bombin2006color] puts them on a lattice of three-coloured
+faces; its smallest member is the seven-qubit Steane code [@steane1996].
+They differ in the one property that decides how you compute with them:
+which gates are **transversal** — applied as the same physical gate on every
+qubit, all at once. Transversal gates cannot spread one physical fault into
+two in the same block, so they are fault-tolerant without any further
+design. And no code can make *every* gate transversal [@eastin2009restrictions],
+which is why magic states (Chapter 3) and STAR (@sec-star) exist.
+
+## Stabilizer codes in one page
+
+A **CSS code** has two kinds of checks: $X$-type (products of $X$s), which
+detect $Z$ errors, and $Z$-type (products of $Z$s), which detect $X$ errors.
+Write the supports as rows of two binary matrices, $H_X$ and $H_Z$. Two checks
+commute exactly when their supports overlap on an even number of qubits, so
+the whole code is consistent iff
+$$H_X H_Z^{T} = 0 \pmod 2 .$$
+A $Z$ error with support $e$ trips the $X$-checks $H_X e$; it is invisible
+iff $H_X e = 0$. An invisible error that is not itself a product of
+checks is a *logical* operator, and the smallest such weight is $d$.
+
+## The Steane code: the smallest color code
+
+Take the $[7, 4, 3]$ Hamming code's parity-check matrix and use it twice —
+once for $X$-checks and once for $Z$-checks. That is the Steane code. Drawn as
+a color code, its seven qubits sit on a triangle split into three faces, and
+each face carries one weight-four $X$-check and one weight-four $Z$-check on
+the same four qubits.
+
+```{python}
+HAMMING = np.array([[0, 0, 0, 1, 1, 1, 1],
+                    [0, 1, 1, 0, 0, 1, 1],
+                    [1, 0, 1, 0, 1, 0, 1]])
+HX = HZ = HAMMING
+print("H_X H_Z^T mod 2 =", (HX @ HZ.T % 2).ravel().tolist())
+
+# Distance: the lightest Z error invisible to every X-check that is not a
+# product of Z-checks.
+rowspace = {tuple(np.array(c) @ HZ % 2)
+            for c in itertools.product([0, 1], repeat=3)}
+lightest = min(sum(e) for e in itertools.product([0, 1], repeat=7)
+               if any(e) and not (HX @ np.array(e) % 2).any()
+               and tuple(e) not in rowspace)
+print("distance =", lightest)
+```
+
+The checks commute, and the distance is 3: the Steane code is $[[7, 1, 3]]$.
+Its logical operators can be taken as $X^{\otimes 7}$ and $Z^{\otimes 7}$.
+
+## The rotated surface code
+
+Lay $d \times d$ data qubits on a grid. Between them sit $d^2 - 1$ checks in a
+checkerboard of $X$-type and $Z$-type plaquettes — weight four in the bulk,
+weight two on the edges [@fowler2012surface]. Logical $Z$ runs down a
+column; logical $X$ runs across a row. That is $[[d^2, 1, d]]$. QuEra's STAR circuits (@sec-star) are
+exactly this code for $d = 3, 5, 7, \dots$
+
+Its selling point is a high **threshold**: below a physical error rate of
+about 1% (for standard circuit noise), every increase in $d$ suppresses the
+logical error further; above it, a bigger code is *worse*. Here is that
+crossover, measured with stim [@gidney2021stim] on its standard surface-code
+memory circuit, decoded by matching [@higgott2025sparse]:
+
+```{python}
+def per_round(p, d, shots=200_000):
+    circ = stim.Circuit.generated(
+        "surface_code:rotated_memory_z", distance=d, rounds=d,
+        after_clifford_depolarization=p, after_reset_flip_probability=p,
+        before_measure_flip_probability=p,
+        before_round_data_depolarization=p)
+    dem = circ.detector_error_model(decompose_errors=True)
+    m = pymatching.Matching.from_detector_error_model(dem)
+    sampler = circ.compile_detector_sampler(seed=1)
+    dets, obs = sampler.sample(shots, separate_observables=True)
+    fails = int((m.decode_batch(dets)[:, 0] != obs[:, 0]).sum())
+    return 1 - (1 - fails / shots) ** (1 / d)
+
+print(f"{'p':>8}{'d=3':>11}{'d=5':>11}{'d=7':>11}   (per round)")
+for p in (1e-3, 1.5e-2):
+    row = [per_round(p, d) for d in (3, 5, 7)]
+    print(f"{p:>8.1e}" + "".join(f"{x:>11.2e}" for x in row))
+```
+
+At $p = 10^{-3}$ each step from $d = 3$ to $d = 5$ to $d = 7$ buys a large
+reduction (the $d = 7$ figure rests on few failures; its interval is wide).
+At $p = 1.5 \times 10^{-2}$ the order reverses. Everything this book does
+lives on the left of that line.
+
+## Transversal gates
+
+A gate is **transversal** if it acts as a product of physical gates, each
+touching at most one qubit of each code block — "qubit $j$ of block A with
+qubit $j$ of block B". The reason this matters: a single fault on one
+physical qubit can only spread to the *same position* in other blocks,
+never to a second qubit of its own block, so a distance-$d$ code still
+sees at most one fault.
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — Transversal CNOT works on every CSS code"}
+**Set-up.** Two blocks A and B of the same CSS code. Apply CNOT from qubit
+$j$ of A to qubit $j$ of B, for every $j$.
+
+**Propagation rules.** A CNOT copies $X$ forward and $Z$ backward:
+$X_A \mapsto X_A X_B$, $\; X_B \mapsto X_B$, $\; Z_A \mapsto Z_A$,
+$\; Z_B \mapsto Z_A Z_B$.
+
+**Checks map to checks.** An $X$-check $S_X$ on block A becomes
+$S_X^{(A)} S_X^{(B)}$ — a product of two $X$-checks, still in the
+stabilizer group. A $Z$-check on B becomes $S_Z^{(A)} S_Z^{(B)}$, also in
+the group. Checks on the other sides are untouched. The code space is
+preserved.
+
+**Logicals map like a CNOT.** $\bar X_A \mapsto \bar X_A \bar X_B$ and
+$\bar Z_B \mapsto \bar Z_A \bar Z_B$ — exactly the action of a logical CNOT.
+
+**Faults stay put.** A fault on qubit $j$ of A reaches only qubit $j$ of B.
+Each block sees at most one fault: fault tolerance for free.
+:::
+
+The Steane code goes further. Because its $X$- and $Z$-checks have the same
+supports, transversal $H$ swaps them into each other and is a logical $H$.
+And because every check has weight divisible by four, transversal $S$ also
+preserves the code — though it implements the logical $S^\dagger$, a sign
+worth checking rather than trusting:
+
+```{python}
+gens = [stim.PauliString("".join("X" if b else "_" for b in r))
+        for r in HAMMING]
+gens += [stim.PauliString("".join("Z" if b else "_" for b in r))
+         for r in HAMMING]
+group = {}
+for bits in itertools.product([0, 1], repeat=6):
+    g = stim.PauliString(7)
+    for b, s in zip(bits, gens):
+        g = g * s if b else g
+    group[str(g)] = g
+XL, ZL = stim.PauliString("X" * 7), stim.PauliString("Z" * 7)
+named = [("X_L", XL), ("Z_L", ZL), ("Y_L", XL * ZL * 1j)]
+
+def logical_name(p):
+    for name, op in named:
+        for s in group.values():
+            if op * s == p:
+                return "+" + name
+            if op * s == -p:
+                return "-" + name
+
+for gate in ("H", "S"):
+    layer = stim.Circuit(f"{gate} 0 1 2 3 4 5 6")
+    kept = all(str(g.after(layer)) in group for g in gens)
+    print(f"transversal {gate}: checks preserved = {kept};  "
+          f"X_L -> {logical_name(XL.after(layer))},  "
+          f"Z_L -> {logical_name(ZL.after(layer))}")
+```
+
+Transversal $H$ sends $\bar X \to \bar Z$ and $\bar Z \to \bar X$: a logical
+$H$. Transversal $S$ sends $\bar X \to -\bar Y$, which is what $S^\dagger$
+does. With CNOT, $H$ and $S$ all transversal, the 2D color code has the
+whole **Clifford group** transversally. The surface code has only CNOT
+(and $H$ up to rotating the patch by 90°); its $S$ needs extra machinery.
+
+Neither code has a transversal $T$, and the Eastin–Knill theorem
+[@eastin2009restrictions] says none can have a transversal gate set that
+is universal. The non-Clifford part always has to come from somewhere
+else. Chapter 3 is the standard answer; @sec-star is QuEra's.
+
+## Why atoms make transversal gates natural
+
+In a superconducting chip, qubits are wired to fixed neighbours, and a
+gate between two code blocks is usually *lattice surgery*: merge the
+blocks along a boundary for $d$ rounds, then split them. In a
+reconfigurable neutral-atom array the blocks can simply be *moved*. An
+acousto-optic deflector shifts a whole block of atoms at once until each
+atom sits beside its partner in the other block, and one global laser pulse
+then applies a CZ to every pair simultaneously [@bluvstein2024logical]. A
+transversal CNOT costs one move and one pulse, whatever the distance.
+
+That changes the bill for a whole algorithm. With transversal gates and a
+decoder that looks at the correlated history of all the blocks, @zhou2025aft
+show that about one round of syndrome extraction per logical layer
+suffices, instead of $d$ rounds — a speed-up of order $d$. This is the
+"transversal" in *transversal STAR*.
+
+::: {.callout-note .sixty title="⏱️ 60-Second Answer — What is a transversal gate, and why does QuEra care?"}
+"A transversal gate applies the same physical gate qubit-by-qubit across a
+code block, or pairwise between two blocks. Because no physical gate
+touches two qubits of the same block, one fault can't become two, so the
+gate is fault-tolerant without extra work. On any CSS code, CNOT is
+transversal; on the 2D color code the whole Clifford group is. Eastin–Knill
+says no code makes a universal set transversal, so the non-Clifford gate
+has to come from magic states or something like STAR. Neutral atoms make
+transversal gates cheap: you physically move one block onto another and hit
+every pair with one Rydberg pulse, and with correlated decoding you need
+about one syndrome round per logical layer instead of $d$."
+:::
+
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 2"}
+| What a paper says | What it is |
+|---|---|
+| *stabilizer* / *check* | a Pauli product that is $+1$ on every code state; measured repeatedly |
+| *syndrome* | the pattern of checks that flipped |
+| *$[[n, k, d]]$* | physical qubits, logical qubits, distance |
+| *CSS code* | a code whose checks are all-$X$ or all-$Z$ |
+| *threshold* | the physical error rate below which bigger codes do better |
+| *transversal gate* | one physical gate per qubit (or per pair across blocks), in parallel |
+| *Clifford group* | gates generated by $H$, $S$, CNOT; cheap, but not universal |
+| *color code* | a CSS code on a 3-colourable face lattice; Steane is the smallest |
+| *lattice surgery* | gates between surface-code patches by merging and splitting boundaries |
+:::
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 2"}
+**Delegated to the agent (Claude, 2026-10-26).** Choosing what to teach,
+writing the prose, the CNOT whiteboard, and the code that checks the
+Steane code's distance, its transversal $H$ and $S$, and the surface-code
+threshold crossover. Every number in this chapter is printed by a cell
+that computed it.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] Draw the $d = 3$ rotated surface code and the Steane triangle from
+  memory, with every check, twice on different days.
+- [ ] The transversal CNOT whiteboard, cold.
+- [ ] Why transversal $S$ gives $S^\dagger$ on Steane: derive it from
+  $X^{\otimes 7} \mapsto Y^{\otimes 7}$ and $Y^{\otimes 7} = -i\,X^{\otimes 7}
+  Z^{\otimes 7}$.
+- [ ] The "one syndrome round per layer" claim, against @zhou2025aft
+  (read by the agent through a summariser).
+
+**Caught.** The agent's first threshold demo used $p = 5 \times 10^{-3}$ and
+$10^{-2}$, which both sit below this noise model's threshold, so bigger
+codes never lost; it moved the second point to $1.5 \times 10^{-2}$ after
+checking.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **What does $[[d^2, 1, d]]$ mean for the rotated surface code, and how
+   many checks does it have?**
+2. **Why is a transversal gate fault-tolerant?**
+3. **Which gates are transversal on the surface code, and on the 2D color
+   code?** Why does that matter for a neutral-atom architecture?
+4. **What does Eastin–Knill say, and what does it force on you?**
+5. **How does a neutral-atom machine perform a transversal CNOT between
+   two code blocks, and why does it only need about one syndrome round?**
+:::
+
+## Model answers
+
+1. $d^2$ physical qubits, one logical qubit, distance $d$ — the smallest
+   undetected logical error has weight $d$. There are $d^2 - 1$ checks, half
+   $X$-type and half $Z$-type, in a checkerboard: weight four in the bulk,
+   two on the boundary.
+2. Each physical gate touches at most one qubit per block, so a single
+   fault can only reach the same position in other blocks. Each block sees
+   at most one fault from it, which a distance-3 or larger code corrects.
+3. Surface code: CNOT between patches (and $H$ up to rotating the patch).
+   2D color code: the full Clifford group, $H$, $S$ and CNOT. On atoms,
+   transversal gates are a move plus one global pulse, so a code with more
+   transversal Cliffords means more of the program runs in that cheap mode.
+4. No quantum error-correcting code has a universal set of transversal
+   gates. Some non-Clifford gate must come from elsewhere: distilled or
+   cultivated magic states, or STAR-style injection.
+5. AODs move one block so each atom sits next to its partner; a global
+   Rydberg pulse applies CZ to every pair; single-qubit $H$ layers turn
+   that into CNOT. With transversal gates, errors stay local and a decoder
+   that reads all blocks' syndromes jointly ("correlated decoding") can
+   correct after about one round per logical layer, instead of the $d$
+   rounds lattice surgery needs [@zhou2025aft].
+
+::: {.callout-caution title="💪 Exercises"}
+1. **Draw $d = 5$.** Draw the $d = 5$ rotated surface code. Count the
+   weight-four and weight-two checks and confirm there are $24$ in all.
+2. **Commutation.** Show that an $X$-plaquette and a $Z$-plaquette of the
+   surface code always overlap on 0 or 2 qubits.
+3. **Transversal CZ.** Repeat the CNOT whiteboard for transversal CZ
+   between two Steane blocks. Which check types get multiplied together?
+4. **Why not $T$?** Using $T X T^\dagger = (X + Y)/\sqrt{2}$, write out what
+   $T^{\otimes 4}$ does to one weight-four $X$-check of the Steane code. Is
+   the result a single Pauli product? What does that say about whether
+   $T^{\otimes 7}$ can map checks to checks? (This is why stim, a Clifford
+   simulator, cannot even represent the question — and why tsim exists.)
+5. **Threshold.** Rerun the threshold cell at $p = 1.2 \times 10^{-2}$.
+   Which way does $d$ help now? Estimate the threshold to one significant
+   figure.
+:::

@@ -1,0 +1,333 @@
+# Magic: Distillation and Cultivation {#sec-magic}
+
+> **Time:** about 90 minutes. **You need:** @sec-codes, and two-qubit state
+> vectors.
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Say why Clifford gates alone are not enough, and why $T$ is the gate
+   that costs.
+2. Teleport a $T$ gate into a qubit by consuming a magic state, and derive
+   the correction it needs.
+3. Derive the $35p^3$ output error of 15-to-1 distillation by counting
+   codewords.
+4. Describe magic state cultivation in three stages, with its headline
+   numbers, and say why it threatens to make distillation unnecessary.
+5. Place STAR on the same map: what it makes, how its error scales, and
+   when it wins.
+:::
+
+```{python}
+#| include: false
+import itertools
+from collections import Counter
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.style.use("../../styles/star.mplstyle")
+import sys
+sys.path.insert(0, "../../styles")
+import palette
+```
+
+## The picture in five minutes
+
+Clifford circuits — $H$, $S$, CNOT, Pauli measurements — are cheap on an
+error-corrected machine (@sec-codes) and, for the same reason, efficiently
+simulable on a classical computer: stim does it for thousands of qubits
+[@gidney2021stim]. To compute anything a classical machine cannot, you need
+one more gate. The standard choice is
+$$T = \begin{pmatrix} 1 & 0 \\ 0 & e^{i\pi/4} \end{pmatrix},$$
+and Clifford $+ \, T$ is universal: any rotation can be approximated by a
+sequence of them, at a cost of tens of $T$ gates per rotation at useful
+precision.
+
+But $T$ is not transversal on the surface code, and Eastin–Knill says some
+gate never will be. The standard workaround has three steps:
+
+1. Prepare a **magic state** $|T\rangle = T|+\rangle$ — noisily, because
+   there is no fault-tolerant way to make it directly.
+2. **Purify** it: distil many noisy copies into one good one (the old way),
+   or cultivate one copy until it is good (the new way).
+3. **Consume** it to apply $T$ to a data qubit by gate teleportation, using
+   only Clifford operations and a measurement.
+
+Step 3 is the same in every scheme. Step 2 is where the cost lives.
+
+## Spending a magic state: gate teleportation
+
+Put the data qubit $|\psi\rangle$ next to a magic state $|T\rangle$, apply a
+CNOT from data to magic, and measure the magic qubit in the $Z$ basis.
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — Teleporting a T gate"}
+**Start.** $|\psi\rangle = a|0\rangle + b|1\rangle$ and
+$|T\rangle = (|0\rangle + \omega|1\rangle)/\sqrt{2}$ with
+$\omega = e^{i\pi/4}$.
+
+**CNOT, data → magic.**
+$$\frac{1}{\sqrt 2}\Big[a|0\rangle(|0\rangle + \omega|1\rangle)
+ + b|1\rangle(|1\rangle + \omega|0\rangle)\Big].$$
+
+**Measure the magic qubit.** Outcome 0 leaves $a|0\rangle + \omega b|1\rangle
+= T|\psi\rangle$. Done. Outcome 1 leaves $\omega a|0\rangle + b|1\rangle
+\propto a|0\rangle + \omega^{-1} b|1\rangle = T^\dagger|\psi\rangle$.
+
+**Correct.** Since $S = T^2$, applying $S$ to $T^\dagger|\psi\rangle$ gives
+$T|\psi\rangle$. The correction is Clifford — cheap — but it is
+*conditional on a measurement*. On a real machine you must measure, decode,
+and only then decide; that wait is the **reaction time**, and on neutral
+atoms, where measurement takes hundreds of microseconds (Chapter 4), it can
+set the clock of the whole computation.
+:::
+
+```{python}
+rng = np.random.default_rng(0)
+omega = np.exp(1j * np.pi / 4)
+T = np.diag([1, omega])
+S = np.diag([1, 1j])
+psi = rng.normal(size=2) + 1j * rng.normal(size=2)
+psi /= np.linalg.norm(psi)
+magic = np.array([1, omega]) / np.sqrt(2)
+
+# CNOT with control = qubit 0 (data), target = qubit 1 (magic).
+state = np.kron(psi, magic).reshape(2, 2)
+state = np.array([state[0], state[1][::-1]])
+for outcome in (0, 1):
+    left = state[:, outcome] / np.linalg.norm(state[:, outcome])
+    fixed = left if outcome == 0 else S @ left
+    fidelity = abs(np.vdot(T @ psi, fixed)) ** 2
+    print(f"outcome {outcome}: fidelity with T|psi> after correction "
+          f"= {fidelity:.12f}")
+```
+
+## Distillation: fifteen noisy in, one better out
+
+Bravyi and Kitaev's 15-to-1 protocol [@bravyi2005universal] runs fifteen
+noisy magic states through a code that *does* have a transversal $T$ — the
+$[[15, 1, 3]]$ quantum Reed–Muller code — and measures four parity checks.
+If every check passes, one output state is kept.
+
+The error model that makes it analysable: after a cheap twirl, each input
+has an independent $Z$-type error with probability $p$. An error pattern $e
+\in \{0,1\}^{15}$ passes the checks iff it is a codeword of the $[15, 11]$
+Hamming code — the code whose parity-check matrix has the numbers $1$ to
+$15$, in binary, as its columns. Passing patterns of *even* weight are
+harmless (they are stabilizers of the quantum code); passing patterns of
+*odd* weight flip the output.
+
+```{python}
+CHECKS = np.array([[(j >> b) & 1 for j in range(1, 16)]
+                   for b in range(4)])
+codewords = [w for w in itertools.product([0, 1], repeat=15)
+             if not (CHECKS @ np.array(w) % 2).any()]
+weights = Counter(sum(w) for w in codewords)
+print(f"{len(codewords)} codewords; weight distribution:")
+print(dict(sorted(weights.items())))
+
+
+def distil(p):
+    """Exact acceptance and output error of one 15-to-1 round."""
+    accept = sum(n * p**w * (1 - p)**(15 - w) for w, n in weights.items())
+    bad = sum(n * p**w * (1 - p)**(15 - w) for w, n in weights.items()
+              if w % 2)
+    return accept, bad / accept
+
+
+print(f"\n{'p_in':>8}{'accept':>9}{'p_out exact':>14}{'35 p^3':>11}")
+for p in (1e-2, 1e-3, 1e-4):
+    accept, out = distil(p)
+    print(f"{p:>8.0e}{accept:>9.4f}{out:>14.3e}{35 * p**3:>11.3e}")
+```
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — Where 35 p³ comes from"}
+**Undetected means codeword.** The checks pass iff the error pattern is in
+the Hamming code. Only odd-weight codewords damage the output.
+
+**The lightest odd codeword has weight 3.** The Hamming code has distance
+3, and its weight-3 codewords are triples of positions $\{i, j, k\}$ whose
+binary labels XOR to zero: $k = i \oplus j$.
+
+**Count them.** Choose any two positions $i \ne j$ — $\binom{15}{2} = 105$
+ways — and $k$ is forced. Each triple is counted three times, once per
+pair it contains: $105/3 = 35$.
+
+**So** $p_{\mathrm{out}} \approx 35\,p^3$, with acceptance
+$\approx 1 - 15p$. One round turns $10^{-3}$ into $3.5 \times 10^{-8}$; two
+rounds reach $\sim 10^{-21}$, at a cost of $15^2 = 225$ inputs per output.
+:::
+
+```{python}
+#| fig-cap: "One round of 15-to-1 distillation. The exact output error (solid) and its leading term 35p³ (dashed) lie on top of each other below p ≈ 10⁻²; the dotted line is no distillation at all."
+p_in = np.logspace(-4, -1.3, 60)
+p_out = [distil(p)[1] for p in p_in]
+fig, ax = plt.subplots(figsize=(6.0, 3.4))
+ax.plot(p_in, p_out, color=palette.STAR)
+ax.plot(p_in, 35 * p_in**3, color=palette.REFERENCE, dashes=(6, 2))
+ax.plot(p_in, p_in, color=palette.COST, dashes=(1, 1.5))
+ax.annotate("exact 15-to-1", (p_in[40], p_out[40]), color=palette.STAR,
+            textcoords="offset points", xytext=(-95, 12), fontsize=9)
+ax.annotate("35 p³", (p_in[25], 35 * p_in[25]**3),
+            color=palette.REFERENCE, textcoords="offset points",
+            xytext=(12, -16), fontsize=9)
+ax.annotate("no distillation", (p_in[10], p_in[10]), color=palette.COST,
+            textcoords="offset points", xytext=(-10, 10), fontsize=9)
+ax.set_xscale("log")
+ax.set_yscale("log")
+ax.set_xlabel("input error $p$")
+ax.set_ylabel("output error")
+plt.show()
+```
+
+The price is space and time. Each output consumes fifteen inputs and a
+Clifford circuit on encoded qubits, so a *factory* of many surface-code
+patches runs alongside the computation, and a large algorithm spends most of
+its qubits there.
+
+**QuEra has done this on logical qubits.** @rodriguez2025distillation ran a
+5-to-1 distillation protocol [@bravyi2005universal] on a neutral-atom
+machine, with each magic state encoded in a distance-3 or distance-5 color
+code. With post-selection, the output beat the input: at $d = 3$, logical
+fidelity rose from 95.1% to 99.4%; at $d = 5$, from 92.5% to 98.6%. Two
+details to get right in an interview: the protocol is 5-to-1, not 15-to-1,
+and the state is the face-type magic state the paper calls $|SH\rangle$,
+not $|T\rangle$.
+
+## Cultivation: grow one good state in place
+
+@gidney2024cultivation replace "many copies, one check" with "one copy,
+many checks". Magic state cultivation has three stages:
+
+1. **Injection.** Prepare a $T$ state inside a small (distance-3) color
+   code. Its *fault distance* is still 1: one bad fault can spoil it.
+2. **Cultivation.** Repeatedly *check* the state — measure an operator that
+   is $+1$ exactly on a good $T$ state, which the color code can do
+   fault-tolerantly because its Clifford gates are transversal — and grow
+   the code, raising the fault distance to 3 or 5. Any detection event
+   discards the attempt. Post-selection does the purifying.
+3. **Escape.** Graft the small color code into a large surface code
+   (distance 15 in their simulation), where it can be stored and decoded
+   by matching.
+
+The headline numbers, at uniform circuit noise $p = 10^{-3}$: a logical
+error of about $2 \times 10^{-9}$, with about 99% of attempts discarded
+(roughly 100 attempts per success) for fault distance 5; and
+$4 \times 10^{-11}$ at $p = 5 \times 10^{-4}$. The authors estimate it uses
+about as many physical gates as one lattice-surgery CNOT of the same
+reliability, an order of magnitude fewer qubit-rounds than earlier
+approaches, and conclude that further distillation "may never be needed in
+practice". These are simulation estimates, not experiments.
+
+## Where STAR fits
+
+| | Makes | Error | Pays |
+|---|---|---|---|
+| 15-to-1 distillation | $\lvert T\rangle$ | $35p^3$ per level | 15 inputs per output, factory space |
+| Cultivation | $\lvert T\rangle$ | $\sim 2 \times 10^{-9}$ at $p = 10^{-3}$ | ~100 attempts, one patch |
+| STAR (@sec-star) | any small rotation $R_Z(\theta)$ | $\approx \alpha p \theta$ | a few attempts; a total-angle budget |
+
+The $T$-based routes make a *fixed* gate very well, then pay tens of $T$
+gates to synthesise each arbitrary rotation, *whatever its angle*. STAR
+makes the rotation itself, imperfectly, with an error proportional to its
+angle. For a computation made of millions of tiny rotations — a Trotterized
+lattice simulation (Chapter 5) — that trade wins, until the total angle
+exhausts the $1/(\alpha p)$ budget of @sec-question.
+
+::: {.callout-note .sixty title="⏱️ 60-Second Answer — Why can't you just do T, and what do you do instead?"}
+"Clifford gates are cheap and transversal, but they're classically
+simulable; you need a non-Clifford gate like $T$, and Eastin–Knill says no
+code gives you a universal transversal set. So you prepare magic states
+$T|+\rangle$ noisily, purify them, and teleport them in with a CNOT, a
+measurement and a conditional $S$ — which means waiting for the decoder,
+the reaction time. Purification used to mean distillation: 15-to-1 turns
+error $p$ into $35p^3$ by post-selecting on a Reed–Muller code's checks, at
+fifteen inputs per output. Cultivation instead grows one $T$ state inside a
+color code, checking it repeatedly and post-selecting, and reaches about
+$10^{-9}$ at $p = 10^{-3}$ for roughly the cost of a CNOT. STAR skips
+$T$ altogether for small angles: it injects the rotation itself with error
+proportional to the angle."
+:::
+
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 3"}
+| What a paper says | What it is |
+|---|---|
+| *magic state* | a resource state ($T\lvert +\rangle$) that supplies a non-Clifford gate when consumed |
+| *gate teleportation* | apply a gate by consuming a resource state, a measurement and a correction |
+| *reaction time* | measure + decode + decide, before the next conditional gate |
+| *distillation* | many noisy copies in, fewer better copies out, by post-selected checks |
+| *factory* | the region of a machine that produces magic states |
+| *fault distance* | the number of faults needed to spoil the state undetected |
+| *cultivation* | check one magic state repeatedly while growing its code; post-select |
+| *escape* | move a cultivated state into a large matchable code |
+:::
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 3"}
+**Delegated to the agent (Claude, 2026-10-26).** The selection and order of
+topics, the teleportation and distillation code, the derivations, and the
+summaries of @gidney2024cultivation and @rodriguez2025distillation, which
+were read through an automated summariser of the arXiv HTML.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] The teleportation whiteboard, cold, including why outcome 1 needs
+  $S$ and not $S^\dagger$.
+- [ ] The count of 35 weight-3 codewords, cold.
+- [ ] The cultivation numbers ($2 \times 10^{-9}$, 99% discard, distance-15
+  escape) against the paper's abstract and Sec. 1.
+- [ ] The Rodriguez numbers (95.1% → 99.4%, 92.5% → 98.6%, 5-to-1,
+  $|SH\rangle$) against the paper's main text.
+
+**Caught.** The agent's draft plan described QuEra's 2025 experiment as
+15-to-1 distillation of $T$ states. Reading the paper showed it is 5-to-1,
+on a different magic state; the draft was corrected before writing.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **Why is $T$ expensive on a surface-code machine?**
+2. **Walk me through teleporting a $T$ gate. What is the correction, and
+   why is it a problem for wall-clock time?**
+3. **Where does $35p^3$ come from?**
+4. **What is magic state cultivation, in three stages?**
+5. **When would you use STAR instead of a $T$ factory?**
+:::
+
+## Model answers
+
+1. It is not transversal, so it cannot be applied cheaply to encoded
+   qubits; it has to be supplied as a magic state, which must be purified
+   at a large cost in qubits and time.
+2. CNOT from data to a $T|+\rangle$ state, measure the magic qubit; on
+   outcome 1 the data holds $T^\dagger|\psi\rangle$, fixed by $S = T^2$.
+   Because the correction depends on a measured and decoded outcome,
+   every $T$ on the critical path waits one reaction time.
+3. Undetected input errors are Hamming codewords; only odd-weight ones
+   damage the output; the lightest odd ones have weight 3 and there are
+   $\binom{15}{2}/3 = 35$ of them. So $p_{\mathrm{out}} \approx 35p^3$.
+4. Inject a $T$ state into a small color code; repeatedly check it with a
+   fault-tolerant measurement and grow the code, discarding on any
+   detection; graft it into a large surface code. About $2 \times 10^{-9}$ at
+   $p = 10^{-3}$, for roughly the cost of a CNOT.
+5. When the program is dominated by many small-angle rotations and the
+   total angle fits within $1/(\alpha p)$ — early fault-tolerant simulation.
+   For large angles or very long programs, a $T$ factory's fixed,
+   tiny error wins.
+
+::: {.callout-caution title="💪 Exercises"}
+1. **Outcome 1, by hand.** Redo the teleportation with the CNOT pointing
+   the other way (magic → data) and a measurement in the $X$ basis. Does
+   it still work? What is the correction?
+2. **Two levels.** Using `distil`, find the input error at which two levels
+   of 15-to-1 reach $10^{-15}$. How many inputs does one output cost?
+3. **The next term.** From the weight distribution, write
+   $p_{\mathrm{out}}$ to the next non-zero order in $p$. At which $p$ is it
+   10% of the leading term?
+4. **Discard rate.** Cultivation discards ~99% of attempts. If one attempt
+   takes 30 syndrome rounds on a machine with a 1 ms cycle, how long is
+   the expected wait for one good state, and how many must run in
+   parallel to supply one $T$ per millisecond?
+5. **The crossover.** A rotation synthesised from Clifford $+\,T$ costs
+   about $3\log_2(1/\varepsilon)$ $T$ gates. At $\varepsilon = 10^{-6}$ and
+   $\alpha p = 4 \times 10^{-3}$, below what angle does a single STAR
+   rotation have lower error than its synthesis error budget?
+:::

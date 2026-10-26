@@ -185,10 +185,10 @@ And an error that changes the effective rotation without tripping a
 check produces a *coherent misrotation*, which the paper finds scales as
 $p\,\theta_L^{2(1 - 1/k)}$ for the injected state, and as $\alpha p \theta$
 once the rotation is teleported into a computation. Which physical channels
-feed those terms is exactly the question of Part III. Chapter 5 connects
+feed those terms is exactly the question of Part IV. Chapter 9 connects
 the injected-state error to the teleported $\alpha$.
 
-::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 2"}
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 6"}
 | What a paper says | What it is |
 |---|---|
 | *logical operator* $Z_L$ | a string of physical $Z$s that commutes with every check but is not itself a check |
@@ -199,7 +199,7 @@ the injected-state error to the teleported $\alpha$.
 | *perfect unrotation* | a simulation-only inverse rotation used to read out the injection error |
 :::
 
-::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 2"}
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 6"}
 **Delegated to the agent (Claude, 2026-10-26).** Writing `starlab.circuits`
 (re-angling QuEra's circuits), the tests that pin it to QuEra's published
 angles, the noiseless tsim check, the figure, and this chapter's prose and
@@ -224,7 +224,7 @@ the template's own results guard already allows. The test was wrong, not
 the library, and was fixed. Separately, tsim refuses to decompose the
 detector error model of a circuit with a non-deterministic observable, so
 the agent's first decoder crashed; the fix (decode with the circuit's
-Clifford proxy) is explained in Chapter 3 and registered in P01.
+Clifford proxy) is explained in @sec-matching and registered in P01.
 :::
 
 ::: {.callout-note .drill title="🎤 Interview Drill"}

@@ -67,6 +67,13 @@ div.callout.drill {
   > .callout-header { background-color: rgba($role-cost-dark, 0.14); }
 }
 
+// What to say out loud when asked: the crash course's compression device.
+div.callout.sixty {
+  border-left-color: $role-quantum-dark;
+  border-left-width: 6px;
+  > .callout-header { background-color: rgba($role-quantum-dark, 0.14); }
+}
+
 div.callout.rosetta {
   border-left-color: $role-classical-dark;
   border-left-width: 6px;

@@ -20,10 +20,16 @@ book:
     - part: "Part I — The Question"
       chapters:
         - chapters/part1/ch01-the-question.qmd
-    - part: "Part II — Foundations"
+    - part: "Part II — Crash Course"
       chapters:
-        - chapters/part2/ch02-one-small-rotation.qmd
-        - chapters/part2/ch03-memory-and-matching.qmd
+        - chapters/part2/ch02-codes-and-transversal-gates.qmd
+        - chapters/part2/ch03-magic-states.qmd
+        - chapters/part2/ch04-rydberg-atoms.qmd
+        - chapters/part2/ch05-trotter-and-jordan-wigner.qmd
+    - part: "Part III — The STAR Machinery"
+      chapters:
+        - chapters/part3/ch06-one-small-rotation.qmd
+        - chapters/part3/ch07-memory-and-matching.qmd
 
   appendices:
     - appendices/appA-reproducing-this-book.qmd

@@ -155,7 +155,7 @@ for errors, shots in ((0, 10**6), (5, 10**6), (100, 10**6), (557, 811245)):
           f"95% [{lo:.2e}, {hi:.2e}]")
 ```
 
-::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 3"}
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 7"}
 | What a paper says | What it is |
 |---|---|
 | *detector* | a parity of measurements that is deterministic without faults |
@@ -166,7 +166,7 @@ for errors, shots in ((0, 10**6), (5, 10**6), (100, 10**6), (557, 811245)):
 | *Wilson interval* | the confidence interval from inverting the score test |
 :::
 
-::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 3"}
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 7"}
 **Delegated to the agent (Claude, 2026-10-26).** Discovering that tsim will
 not decompose a DEM with a non-deterministic observable (by reading tsim's
 source, `tsim/noise/dem.py`); proposing the Clifford-proxy decoder; the

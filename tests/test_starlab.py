@@ -2,7 +2,7 @@
 
 Every test here checks the library against something that already exists
 independently of it -- the angles QuEra wrote into its own circuit files,
-the closed-form STAR algebra of Chapter 2, or textbook statistics. None of
+the closed-form STAR algebra of Chapter 6, or textbook statistics. None of
 them is an experimental result, so none needs a protocol.
 
 Run:  python tests/test_starlab.py      (or: pytest tests/)

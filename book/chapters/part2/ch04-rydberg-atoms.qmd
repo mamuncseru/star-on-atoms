@@ -1,0 +1,343 @@
+# Neutral Atoms as a Machine: Rydberg Blockade and Atom Shuttling {#sec-atoms}
+
+> **Time:** about 90 minutes. **You need:** two-level Rabi oscillations
+> (a drive $\Omega$ rotates $|g\rangle \leftrightarrow |r\rangle$), and
+> @sec-codes for why moving blocks matters.
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Sketch a neutral-atom processor: tweezers, the qubit, the Rydberg
+   level, zones, and readout.
+2. Derive the Rydberg blockade's collective $\sqrt{2}\,\Omega$ Rabi
+   frequency and estimate the blockade radius.
+3. Derive why a $\pi$–$2\pi$–$\pi$ pulse sequence is a CZ gate, and what an
+   imperfect blockade does to it.
+4. Explain how acousto-optic deflectors move atoms, the constraint they
+   impose, and how long a move takes.
+5. Name the timescales that set a QEC cycle on atoms, and map each
+   physical failure to the noise channel it becomes in a circuit model.
+:::
+
+```{python}
+#| include: false
+import numpy as np
+from scipy.linalg import expm
+```
+
+## The picture in five minutes
+
+Individual atoms — rubidium-87 in the Harvard and QuEra experiments
+[@bluvstein2024logical] — are laser-cooled and held in tightly focused
+laser beams called **optical tweezers**, a few micrometres apart. Each
+atom is a qubit: two long-lived *hyperfine* ground states are $|0\rangle$
+and $|1\rangle$. Single-qubit gates are laser or microwave pulses.
+
+Two-qubit gates use a third level, a **Rydberg state**: an electron
+excited so far from the nucleus that the atom becomes enormous and
+interacts strongly with any other Rydberg atom nearby. The interaction is
+so strong that two close atoms *cannot both* be excited at once — the
+**Rydberg blockade** — and that "not both" is turned into a CZ gate.
+
+What makes the platform distinctive is that the tweezers can **move**.
+Acousto-optic deflectors (AODs) drag whole rows and columns of atoms across
+the array mid-computation, so any qubit can be brought next to any other.
+That is how code blocks are laid on top of each other for transversal gates
+(@sec-codes). The price is time: moves take hundreds of microseconds, and
+reading a qubit out by imaging takes about as long. A QEC cycle on atoms is
+about a millisecond — a thousand times slower than on superconducting
+chips — and the architecture is designed around making each of those slow
+cycles do a lot of parallel work.
+
+## The Rydberg blockade
+
+A Rydberg pair at distance $r$ interacts through a van der Waals energy
+$V(r) = C_6 / r^6$. Drive both atoms from $|g\rangle$ to $|r\rangle$ with Rabi
+frequency $\Omega$. If $V \gg \Omega$, the doubly excited state $|rr\rangle$
+is shifted so far off resonance that it is never reached.
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — The blockade's √2 Ω"}
+**Hamiltonian.** Each atom couples $|g\rangle \leftrightarrow |r\rangle$
+with strength $\Omega/2$; the pair gets $V$ on $|rr\rangle$.
+
+**Blockade: drop $|rr\rangle$.** The drive takes $|gg\rangle$ only to the
+symmetric state $|W\rangle = (|gr\rangle + |rg\rangle)/\sqrt{2}$:
+$$\langle W | H | gg \rangle = \frac{1}{\sqrt 2}\big(\frac{\Omega}{2} +
+\frac{\Omega}{2}\big) = \frac{\sqrt{2}\,\Omega}{2}.$$
+
+**So** the pair behaves as one two-level system $|gg\rangle \leftrightarrow
+|W\rangle$ with Rabi frequency $\sqrt{2}\,\Omega$: a full transfer takes
+$t = \pi/(\sqrt{2}\,\Omega)$, and exactly one atom is excited — shared
+between the two.
+
+**Radius.** The blockade holds while $V(r) \gtrsim \Omega$, i.e. inside
+$R_b = (C_6/\Omega)^{1/6}$.
+:::
+
+```{python}
+def pair(omega, v, t):
+    """Two atoms, levels g/r, both driven; V on |rr>."""
+    sx, n = np.array([[0, 1], [1, 0]]), np.diag([0, 1])
+    eye = np.eye(2)
+    ham = omega / 2 * (np.kron(sx, eye) + np.kron(eye, sx)) \
+        + v * np.kron(n, n)
+    return expm(-1j * ham * t)
+
+
+omega = 2 * np.pi * 1.0                          # rad / us
+t = np.pi / (np.sqrt(2) * omega)
+print(f"{'V/Omega':>8}{'P(gg)':>8}{'P(one r)':>10}{'P(rr)':>9}")
+for ratio in (0, 1, 10, 100):
+    pop = abs(pair(omega, ratio * omega, t) @ [1, 0, 0, 0]) ** 2
+    print(f"{ratio:>8}{pop[0]:>8.3f}{pop[1] + pop[2]:>10.3f}"
+          f"{pop[3]:>9.4f}")
+
+C6 = 2 * np.pi * 862690                          # rad um^6 / us
+for mhz in (1, 4):
+    r_b = (C6 / (2 * np.pi * mhz)) ** (1 / 6)
+    print(f"blockade radius at Omega = 2 pi x {mhz} MHz: {r_b:.1f} um")
+```
+
+With no interaction the two atoms Rabi-flop independently and the pulse
+lands nowhere in particular. At $V = 100\,\Omega$ the pair goes entirely to
+the one-excitation state in exactly $\pi/(\sqrt 2\,\Omega)$. The $C_6$ used
+here is Bloqade's constant for rubidium's 70S Rydberg state,
+$2\pi \times 862{,}690$ MHz·µm⁶; with a megahertz-scale drive the blockade
+radius is 8–10 µm. Atoms closer than that blockade each other; atoms much
+farther apart act independently. That is why gate zones place partners a
+few micrometres apart and pairs well beyond $R_b$ from each other.
+
+## A CZ gate from "not both"
+
+Let only $|1\rangle$ couple to $|r\rangle$. The original protocol
+[@jaksch2000fast] is three pulses: a $\pi$ pulse on the control, a $2\pi$
+pulse on the target, a $\pi$ pulse on the control.
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — π–2π–π is a CZ"}
+A $2\pi$ rotation of a two-level system returns it with a sign: $-1$.
+
+- $|00\rangle$: nothing couples. Phase $+1$.
+- $|01\rangle$: the target makes a full $2\pi$ loop. Phase $-1$.
+- $|10\rangle$: the control's two $\pi$ pulses make a $2\pi$ loop. Phase $-1$.
+- $|11\rangle$: the control goes to $|r\rangle$; the target's $2\pi$ pulse is
+  *blockaded* and does nothing; the control returns. Phase $-1$.
+
+The result is $\mathrm{diag}(1, -1, -1, -1) = (Z \otimes Z)\cdot
+\mathrm{CZ}$: a CZ up to single-qubit $Z$ gates, which are free to undo.
+:::
+
+```{python}
+def protocol(v, omega=2 * np.pi):
+    """Jaksch pi-2pi-pi on two 3-level atoms (0, 1, r)."""
+    up = np.zeros((3, 3))
+    up[1, 2] = up[2, 1] = omega / 2
+    nr = np.diag([0, 0, 1])
+    eye = np.eye(3)
+    ham = {0: np.kron(up, eye), 1: np.kron(eye, up)}
+    blk = v * np.kron(nr, nr)
+    u = np.eye(9)
+    for atom, area in ((0, np.pi), (1, 2 * np.pi), (0, np.pi)):
+        u = expm(-1j * (ham[atom] + blk) * area / omega) @ u
+    comp = [0, 1, 3, 4]                       # |00>, |01>, |10>, |11>
+    return np.diag(u[np.ix_(comp, comp)])
+
+
+print(f"{'V/Omega':>8}  {'|00>':>6}{'|01>':>6}{'|10>':>6}{'|11>':>15}"
+      f"{'|11> error':>12}")
+for ratio in (10, 100, 1000):
+    d = protocol(ratio * 2 * np.pi)
+    signs = "".join(f"{z.real:>+6.0f}" for z in d[:3])
+    last = f"{d[3].real:+.3f}{d[3].imag:+.3f}i"
+    err = abs(np.angle(-d[3]))
+    print(f"{ratio:>8}  {signs}{last:>15}{err:>8.3f} rad")
+```
+
+The phase error left on $|11\rangle$ falls tenfold for each tenfold increase
+in $V/\Omega$: an imperfect blockade is a small *coherent* error on exactly
+the state where both atoms want to be excited. Modern gates use smoother,
+faster pulses applied to both atoms at once [@levine2019parallel], and
+reach two-qubit fidelities of 99.5% in parallel across the array
+[@evered2023gates].
+
+Because the Rydberg laser is *global*, every pair inside the gate zone
+receives the gate simultaneously — a transversal gate across code blocks is
+one pulse. Atoms in the zone with no partner still see the light, and pick
+up errors: the **spectator** channel.
+
+## Moving atoms
+
+An AOD is a crystal that deflects a laser beam by an angle set by the
+frequency of a radio-frequency sound wave in it. Two crossed AODs, each
+driven with several tones, make a grid of tweezers: one row per tone in
+one, one column per tone in the other. Sweeping the tones moves whole rows
+and columns at once [@bluvstein2022transport]. Atoms are handed between
+these mobile tweezers and a static array made by a spatial light modulator.
+
+The constraint that shapes every layout: rows move together and columns
+move together, and rows (or columns) cannot pass through each other. A
+move that would need two atoms in the same row to go in opposite
+directions has to be split into several moves.
+
+Moves are fast in absolute terms and slow compared to gates. Accelerating
+uniformly for half the distance and decelerating for the other half gives
+$t = 2\sqrt{L/a}$; @zhou2025resource use $a = 5500$ m/s², calibrated on
+moving 55 µm in 200 µs.
+
+```{python}
+a = 5500                                           # m / s^2
+for microns in (12, 55, 200):
+    t_us = 2 * np.sqrt(microns * 1e-6 / a) * 1e6
+    print(f"move {microns:>4} um: {t_us:>4.0f} us")
+```
+
+Because $t \propto \sqrt{L}$, doubling the distance costs only 41% more
+time — long moves are relatively cheap, and many moves can happen in
+parallel.
+
+## Zones, and the clock
+
+The architecture of @bluvstein2024logical splits the array into **zones**:
+a *storage* zone where idle qubits wait away from the Rydberg light, an
+*entangling* zone where the global pulse acts, and a *readout* zone where
+atoms are imaged without the light disturbing the rest. A QEC cycle shuttles
+blocks between them.
+
+| Step | Time (per @zhou2025resource) |
+|---|---|
+| single- or two-qubit gate | ~1 µs |
+| move one site (12 µm) | ~90 µs |
+| move a patch (~55 µm) | ~200 µs |
+| measurement (imaging) | ~500 µs |
+| decoding | ~500 µs |
+| reaction time (measure + decode) | ~1 ms |
+| QEC cycle | ~1 ms |
+
+Two consequences follow, and both reach this book. First, any step that
+must *wait for a measurement* — a teleported $T$ (@sec-magic), a STAR
+repeat-until-success attempt — costs about a millisecond each time it is on
+the critical path. Second, with a millisecond clock, an algorithm's
+wall-clock time depends more on how many such dependent steps it has than
+on how many gates it has.
+
+## From physics to noise channels
+
+A circuit simulation does not know about lasers. It knows Pauli errors
+after each operation. The translation:
+
+| Physical cause | When | Circuit-level channel |
+|---|---|---|
+| Rydberg decay, laser phase noise | during CZ | single-qubit Paulis on both atoms, $Z$-biased, plus a correlated $ZZ$ term |
+| Global light on unpaired atoms | during CZ | spectator Paulis |
+| Atom lost from its trap | CZ, moves | modelled as an effective $Y$ error, or as a detectable *erasure* |
+| Heating and dephasing in transit | moves | mostly $Z$ (dephasing) |
+| Imperfect pumping into $\lvert 0\rangle$ | preparation | initialisation error |
+| Imaging mistakes | readout | measurement bit flip |
+
+@ismail2026transversal give a channel-by-channel model of exactly this
+kind, with every channel tied to one overall knob $p$. Chapter 8 pins its
+numbers from the paper, and Part IV turns each row of this table into a
+dial.
+
+::: {.callout-note .sixty title="⏱️ 60-Second Answer — How does a neutral-atom machine entangle and move qubits?"}
+"Atoms sit in optical tweezers; the qubit is two hyperfine ground states.
+For a two-qubit gate you couple $|1\rangle$ to a Rydberg state. Two Rydberg
+atoms within the blockade radius — around 5 to 10 microns — can't both be
+excited, so the pair behaves like one two-level system with Rabi frequency
+$\sqrt 2\,\Omega$, and a pulse sequence that makes each excited path pick up
+a $-1$ gives a CZ; QuEra-style machines do it at 99.5% fidelity, in
+parallel, with one global pulse. Atoms are moved by acousto-optic
+deflectors that drag whole rows and columns, which can't cross; a move of
+tens of microns takes a couple of hundred microseconds. Imaging readout
+takes about half a millisecond, so a QEC cycle is about a millisecond, and
+anything that waits on a measurement — like a teleported $T$ — costs a
+reaction time of that order."
+:::
+
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 4"}
+| What a paper says | What it is |
+|---|---|
+| *optical tweezer* | a focused laser beam that traps one atom |
+| *hyperfine qubit* | two ground states of the atom; long-lived |
+| *Rydberg state* | a highly excited, strongly interacting level used for gates |
+| *Rabi frequency* $\Omega$ | how fast a drive rotates $\lvert g\rangle \leftrightarrow \lvert r\rangle$ |
+| *blockade radius* | the distance inside which two atoms cannot both be excited |
+| *AOD* | acousto-optic deflector; moves rows and columns of tweezers |
+| *SLM* | spatial light modulator; makes the static tweezer array |
+| *spectator error* | error on an atom that sees a gate pulse without being gated |
+| *erasure* | an error whose location is known (e.g. a detected lost atom) |
+| *reaction time* | measure + decode, before a conditional operation |
+:::
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 4"}
+**Delegated to the agent (Claude, 2026-10-26).** All prose; the blockade
+and CZ simulations; the move-time table. The $C_6$ value was checked
+against Bloqade's documented constant (`RB_C6`) and PennyLane's default;
+the timescales come from @zhou2025resource's Table 1 as read through an
+automated summariser.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] Both whiteboards (the $\sqrt 2\,\Omega$ and the $\pi$–$2\pi$–$\pi$
+  phases), cold.
+- [ ] The timescale table against @zhou2025resource, Table 1, in the PDF.
+- [ ] That the Harvard/QuEra qubits are rubidium-87 hyperfine states, in
+  @bluvstein2024logical's methods.
+- [ ] The "99.5% in parallel" figure against @evered2023gates.
+
+**Caught.** None of the agent's numbers in this chapter needed correcting;
+the CZ protocol's signs were prototyped numerically before the whiteboard
+was written, so the derivation and the cell agree by construction.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **What is the Rydberg blockade, and where does $\sqrt{2}\,\Omega$ come
+   from?**
+2. **How does the blockade make a CZ gate?** What goes wrong if the
+   blockade is imperfect?
+3. **How are atoms moved, and what constraint does that put on a
+   compiler?**
+4. **Why is a QEC cycle on atoms about a millisecond, and why does that
+   make reaction time important?**
+5. **Name four physical error sources on an atom array and the channel
+   each becomes in a circuit-level noise model.**
+:::
+
+## Model answers
+
+1. Two atoms closer than the blockade radius cannot both be in the
+   Rydberg state, because their $C_6/r^6$ interaction shifts $|rr\rangle$
+   off resonance. The drive then couples $|gg\rangle$ only to the symmetric
+   one-excitation state, with matrix element $\sqrt2\,\Omega/2$ — a Rabi
+   frequency of $\sqrt2\,\Omega$.
+2. Only $|1\rangle$ couples to $|r\rangle$. In the $\pi$–$2\pi$–$\pi$
+   sequence every path that completes a full Rabi cycle picks up $-1$; in
+   $|11\rangle$ the target's cycle is blocked, so it too ends with exactly
+   one $-1$. The result is CZ up to single-qubit $Z$s. An imperfect
+   blockade leaves a coherent phase error on $|11\rangle$ that shrinks as
+   $\Omega/V$.
+3. Crossed AODs make a grid of mobile tweezers; changing RF tones moves
+   whole rows and columns, which cannot cross. A compiler has to batch
+   moves that keep row and column order, and split the ones that don't.
+4. Imaging readout takes ~500 µs and patch moves ~200 µs, so a cycle is
+   ~1 ms. Any operation that depends on a measured outcome — a teleported
+   $T$, a STAR retry — waits a reaction time of about a millisecond, so the
+   number of such dependent steps sets wall-clock time.
+5. Rydberg decay / laser noise → Pauli errors on the CZ pair with a
+   correlated $ZZ$ part; global light on unpaired atoms → spectator error;
+   atom loss → effective $Y$ or erasure; heating during moves → $Z$
+   dephasing; imaging mistakes → measurement bit flips.
+
+::: {.callout-caution title="💪 Exercises"}
+1. **Blockade by hand.** Find the $V/\Omega$ at which $P(rr)$ after
+   $t = \pi/(\sqrt2\,\Omega)$ falls below 1%, using `pair`.
+2. **Radius scaling.** By what factor must $\Omega$ grow to halve the
+   blockade radius? What does that suggest about packing gates densely?
+3. **Phase error.** Fit the $|11\rangle$ phase error from `protocol` against
+   $\Omega/V$ and confirm the scaling claimed in the text.
+4. **Move budget.** A QEC round needs four moves of 12 µm and one of
+   55 µm, done one after another. Using the table, how much of a 1 ms cycle
+   is moving?
+5. **Reaction-limited time.** A program has $10^6$ STAR rotations, of which
+   $10^4$ lie on the critical path, each needing on average two attempts.
+   With a 1 ms reaction time, what is the minimum wall-clock time?
+:::

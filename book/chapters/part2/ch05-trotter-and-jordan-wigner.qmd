@@ -1,0 +1,334 @@
+# Simulating a Lattice: Trotter Error and the Jordan–Wigner Mapping {#sec-trotter}
+
+> **Time:** about 90 minutes. **You need:** matrix exponentials, and Pauli
+> operators on several qubits.
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Write first- and second-order product formulas and derive the
+   first-order Trotter error from the BCH expansion.
+2. Say what "commutator scaling" means and why it matters for lattices.
+3. Map fermions to qubits with Jordan–Wigner, derive the hopping term,
+   and explain the $Z$-string problem in two dimensions.
+4. Write one Trotter step of the transverse-field Ising and Fermi–Hubbard
+   models as a list of rotations.
+5. Turn a Trotter circuit into a total rotation angle, and compare it with
+   the STAR budget $1/(\alpha p)$.
+:::
+
+```{python}
+#| include: false
+from functools import reduce
+
+import numpy as np
+from scipy.linalg import expm
+
+I2 = np.eye(2)
+X = np.array([[0, 1], [1, 0]])
+Y = np.array([[0, -1j], [1j, 0]])
+Z = np.diag([1, -1])
+
+
+def op(n, where):
+    """Tensor product on n qubits; `where` maps site -> 2x2 matrix."""
+    return reduce(np.kron, [where.get(k, I2) for k in range(n)])
+```
+
+## The picture in five minutes
+
+The applications QuEra's papers target are **time evolution** under a
+lattice Hamiltonian: start in some state, apply $e^{-iHt}$, measure. A
+quantum computer cannot apply $e^{-iHt}$ in one go, but $H$ is a sum of
+simple terms, and each term's exponential is one rotation. The **Trotter**
+(product-formula) approach chops $t$ into $r$ small steps and applies the
+terms one after another in each step. Because the terms do not commute, this
+is an approximation, and its error — the **Trotter error** — shrinks as
+$1/r$ (first order) or $1/r^2$ (second order).
+
+For electrons, there is a second translation. Fermions anticommute;
+qubits do not. The **Jordan–Wigner** mapping fixes that by attaching a
+string of $Z$ operators to each fermionic operator. In one dimension the
+strings cancel for nearest neighbours; in two dimensions they do not, and
+some hopping terms become long Pauli strings.
+
+The punchline for this book: every Trotter step is a layer of *small-angle
+rotations*, which is exactly what STAR injects, and the sum of their angles
+over the whole simulation is what the STAR budget limits.
+
+## Product formulas
+
+Write $H = A + B$ and $\delta = t/r$. The first-order formula is
+$$e^{-iHt} \approx \big(e^{-iA\delta} e^{-iB\delta}\big)^r ,$$
+and the symmetric second-order formula is
+$$e^{-iHt} \approx \big(e^{-iA\delta/2} e^{-iB\delta} e^{-iA\delta/2}\big)^r .$$
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — First-order Trotter error from BCH"}
+**BCH.** For small $X$ and $Y$,
+$e^{X} e^{Y} = e^{X + Y + \frac12 [X, Y] + O(3)}$.
+
+**One step.** Put $X = -iA\delta$ and $Y = -iB\delta$:
+$\frac{1}{2}[X, Y] = -\frac{\delta^2}{2}[A, B]$, so
+$$e^{-iA\delta} e^{-iB\delta} = e^{-iH\delta - \frac{\delta^2}{2}[A,B] +
+O(\delta^3)},$$
+an error of about $\frac{\delta^2}{2}\lVert [A, B] \rVert$ per step.
+
+**All steps.** $r$ steps add at most $r$ times that:
+$$\big\lVert e^{-iHt} - (\cdots)^r \big\rVert \lesssim
+\frac{t^2}{2r}\,\lVert [A, B]\rVert .$$
+
+**Second order.** In the symmetric formula the $\delta^2$ terms of the two
+half-steps cancel, leaving $O(\delta^3)$ per step and $O(t^3/r^2)$ overall.
+
+**What sets the constant.** Only the *commutator* appears. For a lattice
+Hamiltonian most terms commute (they are far apart), so the error grows
+with the number of neighbouring pairs, not with $\lVert H \rVert^2$ — the
+"commutator scaling" of @childs2021trotter.
+:::
+
+```{python}
+n, J, g, t = 8, 1.0, 1.0, 1.0
+A = -J * sum(op(n, {j: Z, (j + 1) % n: Z}) for j in range(n))
+B = -g * sum(op(n, {j: X}) for j in range(n))
+exact = expm(-1j * (A + B) * t)
+comm = np.linalg.norm(A @ B - B @ A, 2)
+print(f"8-site periodic TFIM, ||[A, B]|| = {comm:.2f}")
+print(f"{'r':>4}{'1st order':>12}{'bound':>11}{'2nd order':>12}")
+for r in (4, 8, 16, 32, 64):
+    d = t / r
+    s1 = np.linalg.matrix_power(expm(-1j * A * d) @ expm(-1j * B * d), r)
+    half = expm(-1j * A * d / 2)
+    s2 = np.linalg.matrix_power(half @ expm(-1j * B * d) @ half, r)
+    e1 = np.linalg.norm(s1 - exact, 2)
+    e2 = np.linalg.norm(s2 - exact, 2)
+    print(f"{r:>4}{e1:>12.3e}{t * t / (2 * r) * comm:>11.3e}{e2:>12.3e}")
+```
+
+Doubling $r$ halves the first-order error and quarters the second-order
+error, exactly as derived; the bound holds but is loose by a factor of
+about three. This is why STAR papers use low-order formulas: the second
+order is far more accurate per rotation, and higher orders add rotations
+whose Clifford overhead competes with the gain.
+
+## The transverse-field Ising model
+
+$$H_{\mathrm{TFIM}} = -J \sum_{\langle ij \rangle} Z_i Z_j \; - \; g \sum_i X_i .$$
+One second-order step is three layers: $R_X$ on every site, $R_{ZZ}$ on
+every bond, $R_X$ on every site again. Every rotation angle is proportional
+to $\delta$ — small. On a quantum computer, $R_{ZZ}(\theta)$ is a CNOT, an
+$R_Z(\theta)$ on the target, and another CNOT, so the only non-Clifford gate
+in the whole step is a small $Z$-rotation per term. That is precisely the
+gate STAR supplies.
+
+## Fermions to qubits: Jordan–Wigner
+
+Fermionic operators satisfy $\{c_i, c_j^\dagger\} = \delta_{ij}$ and
+$\{c_i, c_j\} = 0$. Order the modes $0, 1, \dots, n-1$ and set
+[@jordan1928]
+$$c_j = Z_0 Z_1 \cdots Z_{j-1}\; \frac{X_j + iY_j}{2} .$$
+The local factor lowers mode $j$; the $Z$-string counts the occupied modes
+before it, which supplies the sign that makes different modes anticommute.
+
+```{python}
+modes = 4
+lower = (X + 1j * Y) / 2
+c = [op(modes, {**{k: Z for k in range(j)}, j: lower})
+     for j in range(modes)]
+dag = [m.conj().T for m in c]
+worst = max(np.abs(c[i] @ dag[j] + dag[j] @ c[i]
+                   - (np.eye(2**modes) if i == j else 0)).max()
+            for i in range(modes) for j in range(modes))
+print(f"max deviation from {{c_i, c_j^dag}} = delta_ij: {worst:.1e}")
+
+checks = {
+    "c0^dag c1 + h.c. = (X0 X1 + Y0 Y1)/2":
+        (dag[0] @ c[1] + dag[1] @ c[0],
+         (op(modes, {0: X, 1: X}) + op(modes, {0: Y, 1: Y})) / 2),
+    "c0^dag c3 + h.c. = (X0 Z1 Z2 X3 + Y0 Z1 Z2 Y3)/2":
+        (dag[0] @ c[3] + dag[3] @ c[0],
+         (op(modes, {0: X, 1: Z, 2: Z, 3: X})
+          + op(modes, {0: Y, 1: Z, 2: Z, 3: Y})) / 2),
+    "n2 = (1 - Z2)/2":
+        (dag[2] @ c[2], (np.eye(2**modes) - op(modes, {2: Z})) / 2),
+}
+for name, (lhs, rhs) in checks.items():
+    print(f"{name:<50} {np.allclose(lhs, rhs)}")
+```
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — The hopping term under Jordan–Wigner"}
+**Notation.** Let $a = (X + iY)/2 = |0\rangle\langle 1|$, the local lowering
+operator (occupied is $|1\rangle$), so $a^\dagger = |1\rangle\langle 0|$.
+Then $c_j = Z_{<j}\, a_j$ and $c_{j+1} = Z_{<j}\, Z_j\, a_{j+1}$, where
+$Z_{<j}$ is the string on sites before $j$.
+
+**The common string cancels.** $Z_{<j}$ commutes with everything on sites
+$j$ and $j+1$ and squares to one, so
+$$c_j^\dagger c_{j+1} = a_j^\dagger\, Z_j\, a_{j+1}.$$
+
+**The leftover $Z_j$ is harmless.** $a^\dagger = |1\rangle\langle 0|$ only
+acts on $|0\rangle$, where $Z = +1$, so $a_j^\dagger Z_j = a_j^\dagger$.
+Hence
+$$c_j^\dagger c_{j+1} + \mathrm{h.c.} = a_j^\dagger a_{j+1} + a_j a_{j+1}^\dagger
+= |10\rangle\langle 01| + |01\rangle\langle 10|
+= \frac{1}{2}\big(X_jX_{j+1} + Y_jY_{j+1}\big).$$
+
+**Far apart.** For $c_i^\dagger c_k$ with $k > i+1$ the strings do not
+cancel: the sites strictly between keep a $Z$, giving
+$\frac{1}{2}(X_i Z \cdots Z X_k + Y_i Z \cdots Z Y_k)$ — the cell above checks
+$i = 0$, $k = 3$.
+
+**Number operator.** $n_j = c_j^\dagger c_j = (1 - Z_j)/2$: occupied is
+$Z = -1$.
+:::
+
+**The two-dimensional problem.** On an $L \times L$ lattice the modes must
+still be put in one line, usually a "snake" through the rows. Horizontal
+neighbours are adjacent in the line; vertical neighbours are about $L$
+apart, so their hopping terms carry $Z$-strings of length $\sim L$. A long
+Pauli string means more CNOTs (or more moves) per rotation, though still
+one small non-Clifford rotation. Alternative encodings that keep every term
+local exist, at the price of extra qubits; which one a paper uses is worth
+checking whenever you read a resource estimate.
+
+## The Fermi–Hubbard model
+
+$$H_{\mathrm{FH}} = -t_h \sum_{\langle ij \rangle,\sigma}
+\big(c_{i\sigma}^\dagger c_{j\sigma} + \mathrm{h.c.}\big)
++ U \sum_i n_{i\uparrow} n_{i\downarrow} .$$
+Each site has two modes, spin up and spin down, so $N$ sites need $2N$
+qubits. Hopping becomes $(XX + YY)/2$ terms (with strings), and the
+interaction becomes
+$n_{\uparrow} n_{\downarrow} = \frac{1}{4}(1 - Z_\uparrow)(1 - Z_\downarrow)$:
+a $Z_\uparrow Z_\downarrow$ term plus single $Z$s plus a constant. Every
+piece is again a Pauli rotation by an angle proportional to $\delta$.
+
+## From Trotter steps to the STAR budget
+
+A term $c\,P$ evolved for time $\delta$ is $e^{-ic\delta P}$ — a rotation by
+angle $2|c|\delta$ about $P$. Summing over all terms and all steps gives the
+total rotation angle $\Theta$ a simulation needs, and @sec-question showed
+that STAR can afford $\Theta \lesssim 1/(\alpha p)$.
+
+```{python}
+def tfim_angle(L, T, J=1.0, g=1.0):
+    """Total |rotation angle| for TFIM on an L x L periodic lattice."""
+    sites, bonds = L * L, 2 * L * L
+    return 2 * (g * sites + J * bonds) * T
+
+
+budget = 1 / (3.8 * 1e-3)            # 1 / (alpha p), alpha = 3.8
+print(f"STAR budget at alpha = 3.8, p = 1e-3: {budget:.0f} rad")
+for L in (4, 8):
+    for T in (0.25, 0.5, 1.0):
+        theta = tfim_angle(L, T)
+        print(f"L = {L}, J t = {T:<4}: total angle {theta:>6.0f} rad  "
+              f"({theta / budget:.2f} of budget)")
+```
+
+Two things to read off. The total angle grows with *system size times
+simulated time*, not with the number of Trotter steps — finer steps cost
+more rotations but each is smaller (to first order). And an $8 \times 8$
+Ising lattice exhausts a single-knob budget of this size at a simulated time
+of order $1/J$. That is the scale of QuEra's own comparison point for this
+model [@ismail2026highrate], and it is why every factor in $\alpha p$ —
+the subject of Part IV — translates directly into how far a simulation can
+go.
+
+::: {.callout-note .sixty title="⏱️ 60-Second Answer — How do you simulate a lattice of fermions, and what does Trotter error cost?"}
+"Split the Hamiltonian into terms that are easy to exponentiate and apply
+them in turn for small time steps. First-order Trotter error per step is
+about $\delta^2\lVert[A,B]\rVert/2$ from BCH, so the total is
+$t^2\lVert[A,B]\rVert/2r$; the symmetric second-order formula cancels that
+and goes as $t^3/r^2$, and for local lattices only neighbouring terms
+contribute — commutator scaling. For fermions, Jordan–Wigner writes $c_j$ as
+a $Z$-string times a lowering operator; nearest-neighbour hopping in 1D
+becomes $(XX + YY)/2$, but in 2D vertical hops pick up strings of length
+$L$. Either way every term becomes a small Pauli rotation, which is what
+STAR injects, and the total rotation angle — sites times simulated time —
+is what STAR's $1/(\alpha p)$ budget caps."
+:::
+
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 5"}
+| What a paper says | What it is |
+|---|---|
+| *product formula* / *Trotterization* | apply each term's exponential in turn, in small steps |
+| *Trotter error* | the error from terms not commuting; $O(t^2/r)$ or $O(t^3/r^2)$ |
+| *BCH* | Baker–Campbell–Hausdorff: $e^X e^Y = e^{X+Y+[X,Y]/2+\cdots}$ |
+| *commutator scaling* | error bounds that depend only on commutators of terms |
+| *Jordan–Wigner* | fermion → qubit map using $Z$-strings for signs |
+| *TFIM* | transverse-field Ising model: $ZZ$ couplings plus an $X$ field |
+| *Fermi–Hubbard* | electrons hopping on a lattice with on-site repulsion $U$ |
+| *$\ell_1$ norm* | sum of absolute coefficients; sets the total rotation angle |
+:::
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 5"}
+**Delegated to the agent (Claude, 2026-10-26).** All prose and code; the
+Trotter-scaling and Jordan–Wigner checks, which compute every claim the
+text makes about them; the budget calculation.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] Both whiteboards, cold, including why $a_j^\dagger Z_j = a_j^\dagger$.
+- [ ] The rotation-angle convention: is QuEra's $\Theta = \ell_1 N_s T$
+  defined with the factor of 2 used here? Check @ismail2026transversal
+  Sec. II, and correct `tfim_angle` if not.
+- [ ] Which fermion encoding @ismail2026highrate uses for Fermi–Hubbard.
+- [ ] The claim that QuEra's TFIM comparison point is at a simulated time
+  of order $1/J$, against @ismail2026highrate's stated units.
+
+**Caught.** The agent first planned to quote the June 2026 paper's
+fermion encoding from a reviewer's summary; it could not confirm it from
+the paper's text, so the chapter states the general trade-off and leaves
+the specific claim to the checkbox above. The agent's first draft of the
+hopping whiteboard also left a sign step as "check it on your board"
+instead of deriving it; it was rewritten with the derivation in full.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **Derive the first-order Trotter error.** How does it change for the
+   symmetric formula?
+2. **What is commutator scaling, and why does it help for lattices?**
+3. **Write $c_j$ under Jordan–Wigner and derive the nearest-neighbour
+   hopping term.**
+4. **What goes wrong with Jordan–Wigner in two dimensions?**
+5. **How do you get from a Trotter circuit to the STAR budget?**
+:::
+
+## Model answers
+
+1. From BCH, $e^{-iA\delta}e^{-iB\delta} = e^{-iH\delta -
+   \frac{\delta^2}{2}[A,B] + \cdots}$, so each step errs by about
+   $\delta^2\lVert[A,B]\rVert/2$ and $r$ steps by $t^2\lVert[A,B]\rVert/2r$.
+   The symmetric formula cancels the $\delta^2$ term: $O(t^3/r^2)$.
+2. Bounds that depend on commutators of terms rather than on $\lVert H
+   \rVert$. On a lattice most pairs of terms commute, so the error grows
+   with the number of neighbouring pairs — linearly in system size — rather
+   than quadratically.
+3. $c_j = Z_0\cdots Z_{j-1}(X_j + iY_j)/2$. For neighbours the strings cancel
+   except on site $j$, and $c_j^\dagger c_{j+1} + \mathrm{h.c.} =
+   \frac{1}{2}(X_jX_{j+1} + Y_jY_{j+1})$.
+4. Modes must be ordered in a line; vertical neighbours end up $\sim L$
+   apart, so their hopping terms carry $Z$-strings of length $\sim L$:
+   heavier Pauli strings, deeper circuits. Local encodings fix it with
+   extra qubits.
+5. Each term $cP$ evolved for $\delta$ is a rotation by $2|c|\delta$. Sum
+   over terms and steps: $\Theta \approx 2\lVert H\rVert_1 T$, which grows
+   with system size times simulated time. STAR's total error is about
+   $\alpha p \Theta$, so $\Theta \lesssim 1/(\alpha p)$ bounds how big and how
+   long a simulation can be.
+
+::: {.callout-caution title="💪 Exercises"}
+1. **Second order by hand.** Show that the $\delta^2$ terms cancel in
+   $e^{-iA\delta/2}e^{-iB\delta}e^{-iA\delta/2}$.
+2. **Fit the exponents.** From the Trotter table, fit the slopes of
+   $\log(\text{error})$ against $\log r$ for both orders.
+3. **Hubbard in qubits.** Write the full Pauli form of
+   $U n_{\uparrow} n_{\downarrow}$ and of one horizontal and one vertical
+   hopping term on a $3 \times 3$ snake-ordered lattice.
+4. **Steps versus angle.** Show that, to first order, doubling the number
+   of Trotter steps leaves the total rotation angle unchanged. What does
+   it change?
+5. **Budget for Hubbard.** Adapt `tfim_angle` to an $L \times L$
+   Fermi–Hubbard model with $t_h = 1$, $U = 4$, and find the simulated time
+   at which an $8 \times 8$ lattice uses the whole budget above.
+:::
