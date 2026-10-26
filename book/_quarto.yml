@@ -23,6 +23,7 @@ book:
     - part: "Part II — Foundations"
       chapters:
         - chapters/part2/ch02-one-small-rotation.qmd
+        - chapters/part2/ch03-memory-and-matching.qmd
 
   appendices:
     - appendices/appA-reproducing-this-book.qmd

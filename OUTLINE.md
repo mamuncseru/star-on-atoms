@@ -86,7 +86,7 @@ Status key: ✅ drafted · 🟡 in progress · ⬜ planned
 | Ch | Title | Status | Protocol |
 |---|---|---|---|
 | 2 | One small rotation: STAR injection from first principles | ✅ | — |
-| 3 | Memory and matching: detectors, error models, and the Clifford proxy | ⬜ | — |
+| 3 | Memory and matching: detectors, error models, and the Clifford proxy | ✅ | — |
 | 4 | Neutral atoms as a machine: zones, moves, CZ, loss — and the noise menu | ⬜ | — |
 | 5 | From one rotation to a simulation: Trotter steps, the rotation budget, simulation volume | ⬜ | — |
 

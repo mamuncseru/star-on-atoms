@@ -1,6 +1,6 @@
 # Protocol P01: reproduce QuEra's uniform-noise STAR curve
 
-- **Status:** COMMITTED
+- **Status:** RUN
 - **Chapter:** 6
 - **Registered:** 2026-10-26
 - **Artifacts:** p01_uniform_star_d3, p01_uniform_star_d5
@@ -108,4 +108,46 @@ under Deviations.
 
 ## Deviations
 
-None yet.
+### 2026-10-26 — result, and the registered diagnosis
+
+- The run completed at the registered budget and seeds: no crashes, no
+  re-runs, no underpowered point (fewest errors: 117).
+- **Registered criterion: FAIL in shape.** Geometric-mean ratio 0.375
+  (window 0.80–1.25); ratios 0.11–1.10 (window 0.5–2.0); not a common
+  factor. Computed by `tools/analyze_p01.py`, not by hand.
+- **Pattern.** Where injection error dominates — θ ≥ 0.1 rad at d = 5,
+  θ = 1.58 rad at d = 3 — the pipeline matches the reference within 10%
+  (ratios 1.10, 1.05, 1.00, 0.94). Where the memory floor dominates, it
+  sits *below* the reference: ×0.11 at d = 3, ×0.51–0.77 at d = 5.
+- **R1 (registered):** post-selecting on all detectors gives 0 failures at
+  θ = 1e-4 and ~1.1e-4 at θ = 0.1, for both distances — the decoder-free
+  lower bound is respected.
+- **R2 (registered):** 0 decomposition failures at d = 3 and d = 5; the
+  decoder's model is complete.
+- **X1 (exploratory, not registered):** shrinking the post-selection window
+  raises the floor but cannot reproduce the reference at both distances.
+  At d = 3 even zero post-selected rounds gives 7.9e-4 per distance, still
+  2.5× below the reference's 2.0e-3; at d = 5 the reference lies between
+  the one- and two-round windows. Rejected as an explanation.
+- Independent seeds in `p01_diagnosis.json` reproduce the P01 floors
+  within their intervals.
+- **Cause unresolved.** As registered, P02 and P03 do not run yet.
+
+### 2026-10-26 — two diagnostics added, registered here before they run
+
+- **R3:** decode the same kind of samples with QuEra's own decoder stack —
+  `bloqade.decoders.BpLsdDecoder` on tsim's undecomposed detector error
+  model. If the reference floor was produced that way, R3 should land on
+  it at small θ.
+- **R4:** at θ = 1e-4 the circuit is Clifford up to a negligible rotation;
+  sample its Clifford proxy with stim instead of tsim and decode
+  identically. Agreement checks tsim's sampling of the floor against an
+  independent sampler.
+- **Gate rule, fixed now, if the cause is still unknown at the end of
+  Tue 2026-10-27:** the P01 gate narrows to the injection-dominated regime
+  (θ ≥ 0.1 rad), where the pipeline already agrees with the reference
+  within 10% — the regime in which α is defined and measured. The floor
+  discrepancy is carried into Chapter 10 as an open threat to validity and
+  put to QuEra as a direct question. The narrowing is recorded here, today,
+  before R3 and R4 exist, so it cannot become "whatever made the result
+  look right".

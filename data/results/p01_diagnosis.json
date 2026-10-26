@@ -1,0 +1,272 @@
+{
+  "protocol": "P01 (diagnosis)",
+  "captured": "2026-10-26",
+  "seed_base": 20261027,
+  "environment": {
+    "python": "3.11.12",
+    "platform": "Linux-4.18.0-553.8.1.el8_10.x86_64-x86_64-with-glibc2.28",
+    "numpy": "2.2.6",
+    "stim": "1.16.0",
+    "PyMatching": "2.4.0",
+    "bloqade-tsim": "0.1.5",
+    "jax": "0.10.2"
+  },
+  "points": [
+    {
+      "d": 3,
+      "theta_rad": 0.0001,
+      "shots_sampled": 1000000,
+      "seed": 20261030,
+      "R2_dem_errors": 910,
+      "R2_decomposition_failures": 0,
+      "R1_all_detectors_postselected": {
+        "shots": 689012,
+        "logical_errors": 0,
+        "logical_error_rate": 0.0,
+        "wilson_95": [
+          0.0,
+          5.575283832607277e-06
+        ],
+        "acceptance": 0.689012
+      },
+      "X1_postselection_window_EXPLORATORY": {
+        "0_rounds": {
+          "shots": 1000000,
+          "logical_errors": 2355,
+          "logical_error_rate": 0.002355,
+          "wilson_95": [
+            0.002261890884729934,
+            0.0024519324661927853
+          ],
+          "acceptance": 1.0,
+          "per_distance": 0.000785
+        },
+        "1_rounds": {
+          "shots": 917808,
+          "logical_errors": 1380,
+          "logical_error_rate": 0.0015035824486167042,
+          "wilson_95": [
+            0.001426371558963312,
+            0.0015849662055267516
+          ],
+          "acceptance": 0.917808,
+          "per_distance": 0.0005011941495389014
+        },
+        "2_rounds": {
+          "shots": 853197,
+          "logical_errors": 818,
+          "logical_error_rate": 0.0009587469248016578,
+          "wilson_95": [
+            0.0008952855147221999,
+            0.0010267021102282683
+          ],
+          "acceptance": 0.853197,
+          "per_distance": 0.00031958230826721926
+        },
+        "3_rounds": {
+          "shots": 810864,
+          "logical_errors": 563,
+          "logical_error_rate": 0.0006943211192012471,
+          "wilson_95": [
+            0.0006393050831681151,
+            0.0007540680426528941
+          ],
+          "acceptance": 0.810864,
+          "per_distance": 0.00023144037306708237
+        }
+      }
+    },
+    {
+      "d": 3,
+      "theta_rad": 0.1,
+      "shots_sampled": 1000000,
+      "seed": 20261030,
+      "R2_dem_errors": 910,
+      "R2_decomposition_failures": 0,
+      "R1_all_detectors_postselected": {
+        "shots": 474208,
+        "logical_errors": 62,
+        "logical_error_rate": 0.00013074431473108846,
+        "wilson_95": [
+          0.00010200060144038153,
+          0.00016758663300741342
+        ],
+        "acceptance": 0.474208
+      },
+      "X1_postselection_window_EXPLORATORY": {
+        "0_rounds": {
+          "shots": 1000000,
+          "logical_errors": 56195,
+          "logical_error_rate": 0.056195,
+          "wilson_95": [
+            0.05574532690945585,
+            0.056648082794763556
+          ],
+          "acceptance": 1.0,
+          "per_distance": 0.018731666666666667
+        },
+        "1_rounds": {
+          "shots": 917808,
+          "logical_errors": 49275,
+          "logical_error_rate": 0.053687699388107316,
+          "wilson_95": [
+            0.053228430939133826,
+            0.05415070387593663
+          ],
+          "acceptance": 0.917808,
+          "per_distance": 0.017895899796035772
+        },
+        "2_rounds": {
+          "shots": 588027,
+          "logical_errors": 980,
+          "logical_error_rate": 0.0016665901395684212,
+          "wilson_95": [
+            0.001565539006363558,
+            0.0017741522486207605
+          ],
+          "acceptance": 0.588027,
+          "per_distance": 0.000555530046522807
+        },
+        "3_rounds": {
+          "shots": 558202,
+          "logical_errors": 591,
+          "logical_error_rate": 0.001058756507500869,
+          "wilson_95": [
+            0.0009768073224706894,
+            0.0011475729165144088
+          ],
+          "acceptance": 0.558202,
+          "per_distance": 0.000352918835833623
+        }
+      }
+    },
+    {
+      "d": 5,
+      "theta_rad": 0.0001,
+      "shots_sampled": 2000000,
+      "seed": 20261032,
+      "R2_dem_errors": 3890,
+      "R2_decomposition_failures": 0,
+      "R1_all_detectors_postselected": {
+        "shots": 500527,
+        "logical_errors": 0,
+        "logical_error_rate": 0.0,
+        "wilson_95": [
+          0.0,
+          7.674769590819662e-06
+        ],
+        "acceptance": 0.2502635
+      },
+      "X1_postselection_window_EXPLORATORY": {
+        "0_rounds": {
+          "shots": 2000000,
+          "logical_errors": 1109,
+          "logical_error_rate": 0.0005545,
+          "wilson_95": [
+            0.0005228192592995127,
+            0.0005880993363670823
+          ],
+          "acceptance": 1.0,
+          "per_distance": 0.0001109
+        },
+        "1_rounds": {
+          "shots": 1568478,
+          "logical_errors": 565,
+          "logical_error_rate": 0.00036022182013391323,
+          "wilson_95": [
+            0.0003317231418307872,
+            0.0003911678913396598
+          ],
+          "acceptance": 0.784239,
+          "per_distance": 7.204436402678265e-05
+        },
+        "2_rounds": {
+          "shots": 1181822,
+          "logical_errors": 112,
+          "logical_error_rate": 9.476892459270516e-05,
+          "wilson_95": [
+            7.87685088799343e-05,
+            0.00011401916836364469
+          ],
+          "acceptance": 0.590911,
+          "per_distance": 1.895378491854103e-05
+        },
+        "3_rounds": {
+          "shots": 1027835,
+          "logical_errors": 74,
+          "logical_error_rate": 7.199599157452315e-05,
+          "wilson_95": [
+            5.735532617330864e-05,
+            9.037353243430843e-05
+          ],
+          "acceptance": 0.5139175,
+          "per_distance": 1.4399198314904631e-05
+        }
+      }
+    },
+    {
+      "d": 5,
+      "theta_rad": 0.1,
+      "shots_sampled": 2000000,
+      "seed": 20261032,
+      "R2_dem_errors": 3890,
+      "R2_decomposition_failures": 0,
+      "R1_all_detectors_postselected": {
+        "shots": 147842,
+        "logical_errors": 16,
+        "logical_error_rate": 0.000108223644160658,
+        "wilson_95": [
+          6.661958723347893e-05,
+          0.0001758049444789276
+        ],
+        "acceptance": 0.073921
+      },
+      "X1_postselection_window_EXPLORATORY": {
+        "0_rounds": {
+          "shots": 2000000,
+          "logical_errors": 178985,
+          "logical_error_rate": 0.0894925,
+          "wilson_95": [
+            0.08909767722878516,
+            0.08988889971586768
+          ],
+          "acceptance": 1.0,
+          "per_distance": 0.0178985
+        },
+        "1_rounds": {
+          "shots": 1568478,
+          "logical_errors": 136173,
+          "logical_error_rate": 0.0868185591382219,
+          "wilson_95": [
+            0.08637892053385937,
+            0.08726022163533684
+          ],
+          "acceptance": 0.784239,
+          "per_distance": 0.01736371182764438
+        },
+        "2_rounds": {
+          "shots": 349632,
+          "logical_errors": 408,
+          "logical_error_rate": 0.0011669412410763318,
+          "wilson_95": [
+            0.0010591245694406418,
+            0.0012857192985691343
+          ],
+          "acceptance": 0.174816,
+          "per_distance": 0.00023338824821526636
+        },
+        "3_rounds": {
+          "shots": 303063,
+          "logical_errors": 212,
+          "logical_error_rate": 0.0006995245213041513,
+          "wilson_95": [
+            0.0006115107075503768,
+            0.0008001958876739097
+          ],
+          "acceptance": 0.1515315,
+          "per_distance": 0.00013990490426083027
+        }
+      }
+    }
+  ]
+}

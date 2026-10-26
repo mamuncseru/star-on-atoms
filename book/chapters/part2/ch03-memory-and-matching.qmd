@@ -1,0 +1,212 @@
+# Memory and Matching: Detectors, Error Models, and the Clifford Proxy {#sec-matching}
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Read a STAR circuit as three phases — post-selected injection, decoded
+   memory, perfect read-out — and say which detectors belong to which.
+2. Explain what a detector error model is, and why minimum-weight matching
+   needs it *decomposed* into edges.
+3. Argue, at a whiteboard, why decoding a non-Clifford STAR circuit with
+   the error model of its $\theta = 0$ Clifford proxy is exact for every
+   error the decoder is responsible for.
+4. Put a 95% Wilson interval on a rare-event rate, and say why the
+   textbook normal interval fails exactly where this book needs it.
+:::
+
+```{python}
+#| include: false
+import math
+import pathlib
+import sys
+
+import numpy as np
+
+_here = pathlib.Path.cwd()
+sys.path.insert(0, str(next(p for p in (_here, *_here.parents)
+                            if (p / "starlab").is_dir())))
+import starlab
+from starlab.sampling import matcher
+```
+
+## Three phases in one file
+
+Every published STAR circuit has the same shape, and it is worth being
+able to sketch it from memory:
+
+1. **Injection, post-selected.** Prepare the patch, run one round of
+   syndrome extraction, apply the $k = d$ physical rotations, run two more
+   rounds. That is three rounds of $d^2 - 1$ detectors each, and an attempt
+   is kept only if all $3(d^2 - 1)$ of them read 0.
+2. **Memory, decoded.** Run $d$ further rounds. Faults here are not
+   discarded; they are *corrected*, by a decoder that reads the detectors
+   and guesses whether the logical observable was flipped.
+3. **Read-out, perfect.** Switch noise off, run one last clean round, undo
+   the logical rotation exactly, and measure logical $X$. A 1 means the
+   decoder's guess and reality disagree: a logical error.
+
+The split matters because the two halves of the protocol answer to
+different machinery. Post-selection handles everything before and during
+the injection; the decoder handles only the memory.
+
+```{python}
+for d in (3, 5, 7):
+    circ = starlab.star_circuit(d, 0.01)
+    rounds = circ.num_detectors // (d * d - 1)
+    print(f"d={d}: {circ.num_qubits:>3} qubits, {circ.num_detectors:>4} "
+          f"detectors = {rounds} rounds x {d * d - 1}; post-select "
+          f"the first {starlab.n_postselected(d)}")
+```
+
+The round count is $3 + d + 1$ every time: three injection rounds, $d$
+memory rounds, one perfect round.
+
+## Detectors and the error model
+
+A **detector** is a parity of measurement outcomes that is deterministic
+when nothing goes wrong — usually the same stabilizer measured in two
+consecutive rounds. A fault anywhere in the circuit flips some set of
+detectors and possibly the logical observable. Listing, for every possible
+fault, *which* detectors and observables it flips and *how likely* it is,
+gives the circuit's **detector error model** (DEM) [@gidney2021stim].
+
+Minimum-weight perfect matching [@higgott2025sparse] works on a graph: each
+fault must flip at most two detectors, so that it is an edge. A depolarizing
+fault often flips more — a $Y$ error trips both $X$-type and $Z$-type
+checks — and has to be *decomposed* into edges the decoder can use. stim
+does that decomposition when asked.
+
+## The obstacle, and the proxy
+
+tsim [@haenel2026tsim] will produce a DEM for a STAR circuit, but it will
+not decompose it: with non-Clifford rotations in the circuit, the logical
+observable is not deterministic, and decomposition is only defined when it
+is. So the decoder cannot be built from the true circuit directly.
+
+The way out is in how tsim writes the rotations for stim. Each `R_Z(θ)`
+becomes a stim identity gate carrying a tag, `I[R_Z(theta=…)]`; stim ignores
+the tag. So `circuit.stim_circuit` *is the same circuit at θ = 0*: Clifford,
+with a deterministic observable, decomposable.
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — Why the Clifford proxy decodes the memory exactly"}
+**Claim.** For every Pauli fault after the physical rotations, the proxy
+DEM records exactly the detectors and observable that fault flips in the
+true circuit.
+
+**Why.** After the rotation layer, the true circuit and the proxy contain
+the same Clifford gates and measurements; they differ only by the logical
+rotation applied to the encoded state, and by the perfect unrotation at
+the end. A Pauli fault $P$ at some later point propagates through the same
+Cliffords to the same Pauli on the measurements, so it flips the same
+detectors in both. For the observable: the read-out undoes the logical
+rotation exactly, so the logical $X$ measured at the end differs from the
+noiseless outcome exactly when the accumulated logical Pauli
+anticommutes with $X_L$ — the same condition as in the proxy.
+
+**What it does not cover.** Faults *before or during* the rotations do not
+merely propagate: an $X$ fault before $R_Z(\theta^*)$ turns it into
+$R_Z(-\theta^*)$, which changes the injected angle. Those are not the
+decoder's job. They are the post-selection's — and, when they slip through
+it, they are exactly the injection errors this book measures.
+:::
+
+```{python}
+for d in (3, 5):
+    circ = starlab.star_circuit(d, 0.01)
+    dem = circ.stim_circuit.detector_error_model(decompose_errors=True)
+    m = matcher(circ)
+    print(f"d={d}: {dem.num_errors:>4} error mechanisms, "
+          f"{m.num_edges:>4} matching edges, "
+          f"{m.num_detectors:>4} detectors in the graph")
+```
+
+The decomposition succeeds with no failures ignored: `matcher` builds the
+model with stim's default, which raises if any fault cannot be split into
+edges.
+
+## A rate is a count, and a count needs an interval
+
+Below threshold, logical errors are rare. A rate of $10^{-4}$ measured on
+$10^6$ accepted shots is about a hundred events, and the uncertainty in it
+is a property of that count, not of the shots. Every rate in this book is
+printed with a 95% **Wilson score interval**, and the reason is the case
+this book meets constantly: few or no failures.
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — The Wilson interval, and why not the normal one"}
+**The normal interval** is $\hat p \pm z\sqrt{\hat p(1-\hat p)/n}$. At
+$\hat p = 0$ it collapses to the single point 0 — it claims certainty from
+zero observations of a rare event.
+
+**Wilson** inverts the score test instead: find every $p$ for which
+$|\hat p - p| \le z\sqrt{p(1-p)/n}$. Squaring gives a quadratic in $p$,
+whose roots are
+$$\frac{\hat p + \frac{z^2}{2n} \pm z\sqrt{\frac{\hat p(1-\hat p)}{n}
+  + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}} .$$
+
+**At zero failures** this gives $[0,\; z^2/(n + z^2)]$ — about $3.84/n$ at
+95%, close to the "rule of three". The interval stays inside $[0, 1]$ and
+never claims more than the count supports.
+:::
+
+```{python}
+for errors, shots in ((0, 10**6), (5, 10**6), (100, 10**6), (557, 811245)):
+    lo, hi = starlab.wilson(errors, shots)
+    print(f"{errors:>4} / {shots:>7}:  rate {errors / shots:.2e}   "
+          f"95% [{lo:.2e}, {hi:.2e}]")
+```
+
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 3"}
+| What a paper says | What it is |
+|---|---|
+| *detector* | a parity of measurements that is deterministic without faults |
+| *detector error model (DEM)* | every fault, with the detectors and observables it flips and its probability |
+| *decomposition* | splitting a fault that flips many detectors into graph edges |
+| *minimum-weight perfect matching* | pair up fired detectors by the most likely set of faults |
+| *Clifford proxy* | the same circuit with every rotation set to zero |
+| *Wilson interval* | the confidence interval from inverting the score test |
+:::
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 3"}
+**Delegated to the agent (Claude, 2026-10-26).** Discovering that tsim will
+not decompose a DEM with a non-deterministic observable (by reading tsim's
+source, `tsim/noise/dem.py`); proposing the Clifford-proxy decoder; the
+whiteboard argument; this chapter's prose and code.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] The proxy argument, reproduced cold, including what it does *not*
+  cover.
+- [ ] That tsim encodes `R_Z` as a tagged stim `I`, by printing
+  `star_circuit(3, 0.01).stim_circuit` and finding the lines.
+- [ ] The Wilson formula, derived from the score test on paper.
+
+**Caught.** The agent's first decoder asked tsim for a decomposed DEM and
+crashed. The agent's first sampler recompiled tsim's JAX sampler for every
+batch, which made each run several times slower than necessary; it now
+compiles once per point.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **Why can't you just use tsim's own detector error model with
+   PyMatching?** What property of the circuit blocks it?
+2. **Which faults does the Clifford proxy model exactly, and which does it
+   not?** What handles the rest?
+3. **You measured 0 failures in $10^6$ shots. What do you report?**
+4. **Why does the injection need three post-selected rounds rather than
+   one?** (Hint: a single round cannot tell a data error from a measurement
+   error.)
+:::
+
+::: {.callout-caution title="💪 Exercises"}
+1. **Count the rounds.** From `star_d=7.stim`, verify that the detector
+   count is $(3 + d + 1)(d^2 - 1)$ by counting `DETECTOR` lines.
+2. **Wilson at the edge.** For $n = 10^6$, at how many observed errors does
+   the Wilson interval's lower end first exceed zero by more than a factor
+   of two below the point estimate?
+3. **Proxy on a toy.** Build a three-qubit repetition code in stim with a
+   tagged `I` in it, and show that the DEM is identical with and without
+   the tag.
+4. **Decomposition by hand.** Take one `DEPOLARIZE1` fault on a data qubit
+   in the d = 3 circuit and list the detectors its $X$, $Y$ and $Z$
+   components flip. Which component needs decomposing?
+:::

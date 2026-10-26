@@ -1,0 +1,178 @@
+{
+  "protocol": "P01",
+  "captured": "2026-10-26",
+  "seed_base": 20264026,
+  "environment": {
+    "python": "3.11.12",
+    "platform": "Linux-4.18.0-553.8.1.el8_10.x86_64-x86_64-with-glibc2.28",
+    "numpy": "2.2.6",
+    "stim": "1.16.0",
+    "PyMatching": "2.4.0",
+    "bloqade-tsim": "0.1.5",
+    "jax": "0.10.2"
+  },
+  "d": 3,
+  "noise": "as published (uniform depolarizing, p = 1e-3)",
+  "points": [
+    {
+      "shots": 811245,
+      "logical_errors": 557,
+      "logical_error_rate": 0.0006865989929059655,
+      "wilson_95": [
+        0.0006319145256789783,
+        0.0007460121988400541
+      ],
+      "d": 3,
+      "theta_rad": 0.0001,
+      "shots_sampled": 1000000,
+      "acceptance": 0.811245,
+      "seed": 20264026,
+      "batch_size": 100000,
+      "batches": 10,
+      "seconds": 4.8,
+      "per_distance": 0.00022886633096865517,
+      "reference_per_distance": 0.0020005984580270643,
+      "ideal_acceptance": 0.9959394032080015
+    },
+    {
+      "shots": 806077,
+      "logical_errors": 542,
+      "logical_error_rate": 0.0006723923396896326,
+      "wilson_95": [
+        0.0006181339547502403,
+        0.0007314099159519481
+      ],
+      "d": 3,
+      "theta_rad": 0.00039810717055349735,
+      "shots_sampled": 1000000,
+      "acceptance": 0.806077,
+      "seed": 20264027,
+      "batch_size": 100000,
+      "batches": 10,
+      "seconds": 1.9,
+      "per_distance": 0.0002241307798965442,
+      "reference_per_distance": 0.002042917713169635,
+      "ideal_acceptance": 0.9898419157553402
+    },
+    {
+      "shots": 793097,
+      "logical_errors": 528,
+      "logical_error_rate": 0.0006657445432273731,
+      "wilson_95": [
+        0.0006113449906919995,
+        0.0007249812410791767
+      ],
+      "d": 3,
+      "theta_rad": 0.001584893192461114,
+      "shots_sampled": 1000000,
+      "acceptance": 0.793097,
+      "seed": 20264028,
+      "batch_size": 100000,
+      "batches": 10,
+      "seconds": 1.7,
+      "per_distance": 0.00022191484774245772,
+      "reference_per_distance": 0.0020421855378258713,
+      "ideal_acceptance": 0.9747441744773406
+    },
+    {
+      "shots": 762950,
+      "logical_errors": 531,
+      "logical_error_rate": 0.0006959826987351726,
+      "wilson_95": [
+        0.0006392671184984129,
+        0.0007577262524809485
+      ],
+      "d": 3,
+      "theta_rad": 0.00630957344480193,
+      "shots_sampled": 1000000,
+      "acceptance": 0.76295,
+      "seed": 20264029,
+      "batch_size": 100000,
+      "batches": 10,
+      "seconds": 1.9,
+      "per_distance": 0.0002319942329117242,
+      "reference_per_distance": 0.0019653882331178876,
+      "ideal_acceptance": 0.9381580271466475
+    },
+    {
+      "shots": 695669,
+      "logical_errors": 505,
+      "logical_error_rate": 0.0007259199418114074,
+      "wilson_95": [
+        0.0006653272958754628,
+        0.0007920265038721166
+      ],
+      "d": 3,
+      "theta_rad": 0.025118864315095794,
+      "shots_sampled": 1000000,
+      "acceptance": 0.695669,
+      "seed": 20264030,
+      "batch_size": 100000,
+      "batches": 10,
+      "seconds": 1.8,
+      "per_distance": 0.0002419733139371358,
+      "reference_per_distance": 0.002068587457751539,
+      "ideal_acceptance": 0.8540935658829539
+    },
+    {
+      "shots": 557187,
+      "logical_errors": 574,
+      "logical_error_rate": 0.0010301747887154582,
+      "wilson_95": [
+        0.0009493125109440751,
+        0.0011179171941699808
+      ],
+      "d": 3,
+      "theta_rad": 0.1,
+      "shots_sampled": 1000000,
+      "acceptance": 0.557187,
+      "seed": 20264031,
+      "batch_size": 100000,
+      "batches": 10,
+      "seconds": 1.8,
+      "per_distance": 0.00034339159623848607,
+      "reference_per_distance": 0.002471380036696574,
+      "ideal_acceptance": 0.6842027053112791
+    },
+    {
+      "shots": 349648,
+      "logical_errors": 1778,
+      "logical_error_rate": 0.0050851141719672355,
+      "wilson_95": [
+        0.004854727038802057,
+        0.005326376095184812
+      ],
+      "d": 3,
+      "theta_rad": 0.3981071705534969,
+      "shots_sampled": 1000000,
+      "acceptance": 0.349648,
+      "seed": 20264032,
+      "batch_size": 100000,
+      "batches": 10,
+      "seconds": 1.7,
+      "per_distance": 0.0016950380573224118,
+      "reference_per_distance": 0.0032271496439840778,
+      "ideal_acceptance": 0.42871115868489706
+    },
+    {
+      "shots": 204744,
+      "logical_errors": 6032,
+      "logical_error_rate": 0.02946118079162271,
+      "wilson_95": [
+        0.028737519326629324,
+        0.030202498662790275
+      ],
+      "d": 3,
+      "theta_rad": 1.584893192461114,
+      "shots_sampled": 1000000,
+      "acceptance": 0.204744,
+      "seed": 20264033,
+      "batch_size": 100000,
+      "batches": 10,
+      "seconds": 3.9,
+      "per_distance": 0.00982039359720757,
+      "reference_per_distance": 0.010416666159440403,
+      "ideal_acceptance": 0.2500165609883628
+    }
+  ]
+}
