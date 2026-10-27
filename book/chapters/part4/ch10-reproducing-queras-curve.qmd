@@ -7,10 +7,12 @@ By the end of this chapter you can:
    what a pre-registered pass criterion buys when it fails.
 2. Read a ratio table and tell a normalisation offset from a disagreement
    in one component of the error, using a two-component model.
-3. Explain what each of seven diagnostics rules in or out, and why each
+3. Explain what each of eight diagnostics rules in or out, and why each
    was registered before it ran.
 4. Explain how a decoder that silently drops faults flipping more than two
-   detectors raises a memory floor — the cause P01 finally found.
+   detectors raises a memory floor — the cause P01 finally found — and why
+   the published circuits' large-angle regime measures memory, not
+   injection.
 5. State exactly what this book may and may not claim after P01, and tell
    the story of a failed reproduction in an interview.
 :::
@@ -36,6 +38,7 @@ p01 = [pt for d in (3, 5) for pt in json.loads(
     (RESULTS / f"p01_uniform_star_d{d}.json").read_text())["points"]]
 diag = json.loads((RESULTS / "p01_diagnosis_r3_r5.json").read_text())
 r6 = json.loads((RESULTS / "p01_r6_naive_pipeline.json").read_text())
+r7 = json.loads((RESULTS / "p01_r7_readout_artifact.json").read_text())
 ```
 
 ## The question, and the rule
@@ -110,11 +113,11 @@ plt.show()
 
 The rule fails, and it fails in *shape*: the ratios run from 0.11 to 1.10,
 which no single normalisation factor can fix. But the shape is not random.
-At $d = 5$ the three points where the injection error dominates
-($\theta \ge 0.1$ rad) agree with the reference to within 10%. At $d = 3$
-the agreement improves steadily as $\theta$ grows, from 0.11 to 0.94. The
-disagreement lives in the part of the curve that does not depend on the
-angle at all.
+At $d = 5$ the three large-angle points ($\theta \ge 0.1$ rad) agree with
+the reference to within 10%. At $d = 3$ the agreement improves steadily as
+$\theta$ grows, from 0.11 to 0.94. The disagreement lives in the part of
+the curve that does not depend on the angle at all. (What the large-angle
+part *does* depend on turned out to be a surprise of its own; see R7.)
 
 ## Reading a ratio table
 
@@ -156,9 +159,9 @@ ratios to within about 10%. It was found *after* the results came in, so it
 is an explanation, not evidence registered in advance — but it says
 precisely where to look: the memory floor, not the injection.
 
-## Seven diagnostics
+## Eight diagnostics
 
-The protocol prescribed two diagnostics for a shape failure; five more
+The protocol prescribed two diagnostics for a shape failure; six more
 were registered, each in writing before it ran, as the earlier ones came
 back. All live in `data/results/p01_diagnosis*.json` and
 `data/results/p01_r6_naive_pipeline.json`.
@@ -198,6 +201,7 @@ for key, label in (("ref", "QuEra reference"),
 | R4 | stim instead of tsim | agrees within intervals | tsim's sampling is right |
 | R5 | a textbook memory circuit | ×1.3 from this book at $d = 3$ | the reference's $d = 3$ floor is the outlier |
 | R6 | matching on tsim's *default* (undecomposed) error model | passes P01's own criterion: ratio 1.10, range 0.91–1.45 | **the reference is reproduced** |
+| R7 | noise in the memory rounds only, or the injection rounds only | memory alone gives 69–84% of the large-angle excess, ∝ sin²θ | **the large-angle regime is a read-out artifact** |
 
 By R5 the picture was consistent but unexplained: two samplers and a
 textbook circuit agreed on this book's floor, and the reference did not.
@@ -211,6 +215,13 @@ there is least slack. The hypothesis came from outside: a public ETH QHack
 submission decoded the circuit exactly this way and printed a number close
 to the reference's. It was registered, with its reading rule, before a
 single R6 sample existed.
+
+There is also a check that needs no reference at all. Going from $d = 3$ to
+$d = 5$ at $\theta = 10^{-4}$, the reference's floor drops 79-fold; this
+book's drops 12.5-fold, and the textbook memory circuit's (R5) 8-fold. At a
+physical error rate of $10^{-3}$, an order of magnitude per two steps of
+distance is what a surface code does; eighty is not. (A post-hoc
+comparison, made after R5, and labelled as such.)
 
 ::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — Why dropping hyperedges raises the floor"}
 **What a hyperedge is.** A $Y$ error on a data qubit anticommutes with
@@ -235,6 +246,64 @@ proxy's model, `circuit.stim_circuit.detector_error_model(
 decompose_errors=True)`.
 :::
 
+## What the large angles measure
+
+R6 explained the floor. R7, proposed by the same kind of outside reading
+and registered before it ran, explained the other end of the curve — and
+changed how the rest of this book measures.
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — The sin²θ read-out artifact"}
+**The read-out.** After the noisy memory rounds the circuit switches noise
+off, applies the exact inverse rotation $\exp(+i\theta Z_0Z_3Z_6/2)$ on the
+logical column (at $d = 3$), and measures logical $X$. The decoder predicts
+only that $X$ observable.
+
+**A leftover $X$.** Suppose a physical $X$ error on qubit 0 survives the
+memory rounds uncorrected — the decoder had no reason to correct it, since
+it does not flip the $X$ observable. $X_0$ anticommutes with $Z_0Z_3Z_6$, so
+$X_0\, e^{+i\theta Z_0Z_3Z_6/2} = e^{-i\theta Z_0Z_3Z_6/2}\, X_0$: the
+"inverse" rotation now *adds* to the injected one.
+
+**The flip.** The state reaching the read-out is rotated by $2\theta$
+instead of 0, and a logical-$X$ measurement of $R_Z(2\theta)|+\rangle$ reads
+1 with probability $\sin^2\theta$.
+
+**So** the error grows as $\varepsilon_X \sin^2\theta$, with $\varepsilon_X$
+the chance of an odd number of uncorrected $X$s on the column — larger at
+$d = 5$ (five qubits, more rounds) than at $d = 3$, which is why the
+better code looks *worse* at large angles in the published plot.
+:::
+
+```{python}
+#| echo: false
+spread = [v["memory_excess_per_sin2_spread"] for v in r7["verdicts"]]
+mean = [np.mean(v["memory_excess_per_sin2"]) for v in r7["verdicts"]]
+share = [v["memory_share_of_all_excess"] for v in r7["verdicts"]]
+inj = {(p["d"], round(p["theta_rad"], 3)): p["logical_error_rate"]
+       for p in r7["points"] if p["window"] == "injection"}
+print(f"{'':<36}{'d = 3':>10}{'d = 5':>10}")
+print(f"{'memory excess / sin^2 (mean)':<36}{mean[0]:>10.2e}"
+      f"{mean[1]:>10.2e}")
+print(f"{'  spread over three angles':<36}{spread[0]:>10.2f}"
+      f"{spread[1]:>10.2f}")
+for k in share[0]:
+    print(f"{'memory share of excess, th=' + k[:5]:<36}"
+          f"{share[0][k]:>10.2f}{share[1][k]:>10.2f}")
+print(f"{'injection window alone, th=0.398':<36}"
+      f"{inj[(3, 0.398)]:>10.2e}{inj[(5, 0.398)]:>10.2e}")
+```
+
+Two consequences. First, the agreement with the reference at large angles
+was agreement on this artifact — both pipelines read out the same memory
+$X$ errors — not a validation of the injection itself. Second, any channel
+ranking built on these circuits as published would rank channels mostly by
+how they cause memory $X$ errors. So, as registered with R7, Part IV
+measures the **injection error** directly: noise only in the injection
+window, post-selection on every detector, no decoder and no floor. The
+injection window alone is nearly independent of distance (1.6·10⁻³ at
+$d = 3$, 1.9·10⁻³ at $d = 5$, at $\theta = 0.398$), as an intrinsic
+injection error should be.
+
 ## Verdict, and what it buys
 
 **Registered verdict: REFUTED**, and the ledger keeps that row: this
@@ -254,8 +323,8 @@ answer.
 The decision recorded before R6, to proceed with Part IV on this
 pipeline, no longer needs defending: the pipeline is not merely internally
 consistent but reproduces the reference once the one difference is
-matched. Part IV keeps the decomposed decoder, because it is the correct
-one.
+matched. Part IV goes further than keeping the decomposed decoder: after
+R7 it measures the injection window alone, where no decoder is needed.
 
 ::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 10"}
 **Delegated to the agent (Claude, 2026-10-26/27).** Writing P01, its
@@ -263,7 +332,9 @@ runner, its analysis script and every diagnostic; registering each
 diagnostic before running it; drafting this chapter. The R6 hypothesis
 came from a simulated advisor agent; the main agent verified its two
 premises (the dropped-fault counts, and the public notebook's printed
-number) before registering it.
+number) before registering it. The R7 hypothesis came from a second
+simulated advisor; the main agent checked the anticommutation argument by
+hand before registering it.
 
 **Verified by hand — the author must tick each before freeze.**
 
@@ -276,6 +347,8 @@ number) before registering it.
   `star_d=3.stim` and the four detectors it flips.
 - [ ] Open QuEraComputing/ETH_QHACK_2026 PR #6, `Star2/main2.ipynb`,
   cell 3, and confirm the printed acceptance and error rate yourself.
+- [ ] The sin²θ whiteboard, cold, including why the decoder never corrects
+  that $X$.
 
 **Caught.** The agent's own gate-rule text of 2026-10-26 claimed the
 pipeline "already agrees within 10%" for θ ≥ 0.1 rad. That held only at
@@ -293,6 +366,8 @@ in with a styling change; it was split before anything was pushed.
    error model?**
 4. **Why register a diagnostic before running it, when it is "only" a
    diagnostic?**
+5. **In the published circuits, why is $d = 5$ worse than $d = 3$ at large
+   angles?**
 :::
 
 ## Model answers
@@ -315,6 +390,12 @@ in with a styling change; it was split before anything was pushed.
 4. Because a diagnostic chosen after seeing the data can be tuned until it
    "explains" anything. Registering it, with how each outcome will be
    read, is what makes a negative answer — like R3's — informative.
+5. The read-out applies an exact inverse rotation about a $Z$-string and
+   measures $X$. A leftover physical $X$ on that string — which the decoder
+   never corrects, because it does not flip the $X$ observable — turns the
+   inverse into a second rotation, flipping the read-out with probability
+   $\sin^2\theta$. $d = 5$ has more qubits and rounds for such $X$s to
+   appear in, so its artifact is larger.
 
 ::: {.callout-caution title="💪 Exercises"}
 1. **The window.** Using the P01 artifacts, compute the geometric-mean
@@ -331,4 +412,7 @@ in with a styling change; it was split before anything was pushed.
 5. **Count it yourself.** Write ten lines that count the mechanisms in
    tsim's default model of `star_d=5.stim` that flip more than two
    detectors, and their share of the total probability.
+6. **Remove the artifact.** How would you change the read-out so that
+   uncorrected $X$s no longer flip it? (Hint: decode $X$ errors too, with a
+   second observable.)
 :::
