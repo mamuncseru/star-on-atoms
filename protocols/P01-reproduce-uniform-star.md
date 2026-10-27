@@ -1,6 +1,6 @@
 # Protocol P01: reproduce QuEra's uniform-noise STAR curve
 
-- **Status:** RUN
+- **Status:** REPORTED
 - **Chapter:** 10
 - **Registered:** 2026-10-26
 - **Artifacts:** p01_uniform_star_d3, p01_uniform_star_d5
@@ -191,3 +191,48 @@ Fixed before any of them runs.
     2026-10-26 applies as written.
   - If R4 disagrees with tsim, every tsim floor in this book is suspect,
     and that is investigated before anything else.
+
+### 2026-10-27 — R3, R4, R5 results; a correction; verdict; a decision
+
+Results (`data/results/p01_diagnosis_r3_r5.json`; rates per distance):
+
+| | d = 3, θ = 1e-4 | d = 5, θ = 1e-4 |
+|---|---|---|
+| reference | 2.00e-3 | 2.53e-5 |
+| matching on tsim samples (R3) | 2.31e-4 | 1.85e-5 |
+| BP-LSD on the same samples (R3) | 5.44e-4 | 9.33e-5 |
+| matching on stim samples (R4) | 2.30e-4 | 1.54e-5 |
+| textbook stim memory, p = 1e-3 (R5) | 2.91e-4 | 3.64e-5 |
+
+- **R3:** BP-LSD is worse than matching here (×2.4 at d = 3, ×5 at
+  d = 5) but does not land on the reference (ratios 0.27 and 3.69). By the
+  rule fixed this morning, the decoder does not explain the discrepancy.
+- **R4:** stim and tsim agree within their intervals at both distances
+  (the lower stim acceptance at d = 5 is the expected factor: the proxy
+  has no rotation, so its ideal acceptance is 1, not 0.91). tsim's sampling
+  of the floor is validated.
+- **R5:** the textbook memory floor sits on this book's scale at d = 3
+  (×1.3) and is ~7× below the reference; at d = 5 all three agree to
+  within ×2.
+- **Correction.** The 2026-10-26 gate rule says the pipeline "already
+  agrees with the reference within 10%" for θ ≥ 0.1 rad. That is true at
+  d = 5 (ratios 1.10, 1.05, 1.00) but **false at d = 3** (0.14, 0.53,
+  0.94): the reference's d = 3 floor is so high that it still dominates at
+  θ = 0.1 and 0.4. Applied literally, the narrowed gate also fails.
+
+**Verdict (registered criterion): REFUTED.** This pipeline does not
+reproduce QuEra's published d = 3 curve. The disagreement is confined to
+the memory floor, and on that floor this pipeline agrees with an
+independent sampler (R4) and with a textbook memory circuit (R5), while the
+reference does not. The cause is unexplained; it is put to QuEra directly.
+
+**Decision, made after seeing R3–R5 and labelled as such.** P02 and P03
+proceed on this pipeline. Reasons: (1) every internal check passes — the
+noiseless closed form (Ch 6), R1, R2, R4; (2) where the reference is not
+dominated by its own floor (d = 5, θ ≥ 0.1) the pipeline matches it within
+10%; (3) P02 and P03 measure *changes relative to this pipeline* as one
+channel moves, which a fixed offset in an external reference curve cannot
+bias. The cost is real and is carried forward: no claim in this book may
+say its STAR numbers "reproduce QuEra's", only that they reproduce the
+injection regime at d = 5, and Chapter 14 lists the unexplained d = 3
+floor as an open threat.

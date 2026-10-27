@@ -21,4 +21,4 @@ result that would overturn it. "Further work" is not an answer.
 | Protocol | The claim | Verdict | Key numbers | What would change it | Dated |
 |---|---|---|---|---|---|
 
-*(No rows yet. P01 was registered 2026-10-26.)*
+| P01 | This pipeline reproduces QuEra's published uniform-noise STAR curve (d = 3, 5) | **REFUTED** | geometric-mean ratio 0.375 (window 0.80–1.25); injection regime at d = 5 within 10%; d = 3 floor ×0.11 of the reference, while an independent sampler (R4) agrees with this pipeline and a textbook memory circuit (R5) sits ×1.3 from it | QuEra's decoding and normalisation for `star_sim.svg`, or any documented pipeline that reproduces its d = 3 floor | 2026-10-27 |
