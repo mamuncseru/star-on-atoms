@@ -105,7 +105,7 @@ author's request, from the interview topics the reviewers named.
 ### Part IV — The Experiment
 | Ch | Title | Status | Protocol |
 |---|---|---|---|
-| 10 | Reproducing QuEra's curve | 🟡 | P01 (registered 2026-10-26; RUN, diagnosis open) |
+| 10 | Reproducing QuEra's curve | ✅ | P01 (REPORTED 2026-10-27: refuted as registered; see LEDGER) |
 | 11 | Re-noising: from uniform to hardware-aware | ⬜ | P02 |
 | 12 | The per-channel scan | ⬜ | P03 |
 | 13 | What a factor of two buys | ⬜ | P03 (analysis) |

@@ -1,0 +1,275 @@
+# Reproducing QuEra's Curve {#sec-reproduce}
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Say why the first experiment in a project should ask nothing new, and
+   what a pre-registered pass criterion buys when it fails.
+2. Read a ratio table and tell a normalisation offset from a disagreement
+   in one component of the error, using a two-component model.
+3. Explain what each of six diagnostics rules in or out.
+4. State exactly what this book may and may not claim after P01 — and
+   tell the story of a failed reproduction in an interview without
+   flinching.
+:::
+
+```{python}
+#| include: false
+import json
+import math
+import pathlib
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.style.use("../../styles/star.mplstyle")
+sys.path.insert(0, "../../styles")
+import palette
+
+_here = pathlib.Path.cwd()
+ROOT = next(p for p in (_here, *_here.parents) if (p / "starlab").is_dir())
+RESULTS = ROOT / "data" / "results"
+p01 = [pt for d in (3, 5) for pt in json.loads(
+    (RESULTS / f"p01_uniform_star_d{d}.json").read_text())["points"]]
+diag = json.loads((RESULTS / "p01_diagnosis_r3_r5.json").read_text())
+```
+
+## The question, and the rule
+
+Everything Part IV measures is a *change* in STAR's error as one physical
+channel moves. A change is only meaningful against a baseline that is
+right, so the first protocol asks nothing new. Protocol P01
+(`protocols/P01-reproduce-uniform-star.md`) runs QuEra's own published
+STAR circuits, under QuEra's own published noise, through this book's
+pipeline (@sec-star, @sec-matching), and compares the result with the
+curve QuEra published alongside them — recovered to four significant
+figures from the plot's SVG.
+
+The pass rule was written and committed before any sample existed: over
+the sixteen points (two distances, eight angles), the geometric mean of
+*this book's rate ÷ the reference* must lie in $[0.80, 1.25]$, and no single
+ratio may leave $[0.5, 2.0]$. If it failed by a common factor, three
+alternative normalisations were to be tried, in a fixed order. If it
+failed in shape, the pipeline was to be diagnosed before anything else ran.
+
+## The result
+
+::: {.callout-tip .evidence title="🔬 Evidence — P01, as registered"}
+```{python}
+#| echo: false
+print(f"{'d':>2}{'theta':>9}{'errors':>8}{'this book':>11}"
+      f"{'reference':>11}{'ratio':>7}")
+ratios = []
+for pt in p01:
+    r = pt["per_distance"] / pt["reference_per_distance"]
+    ratios.append(r)
+    print(f"{pt['d']:>2}{pt['theta_rad']:>9.1e}{pt['logical_errors']:>8}"
+          f"{pt['per_distance']:>11.2e}"
+          f"{pt['reference_per_distance']:>11.2e}{r:>7.2f}")
+gmean = math.exp(sum(map(math.log, ratios)) / len(ratios))
+print(f"\ngeometric-mean ratio {gmean:.3f} (window 0.80-1.25); "
+      f"range {min(ratios):.2f}-{max(ratios):.2f} (window 0.5-2.0)")
+print("outcome: FAIL in shape")
+```
+Rates are logical errors per accepted shot, divided by $d$, to match the
+reference's axis. 10⁶ sampled shots per point at $d = 3$, 4·10⁶ at
+$d = 5$; seeds, environment and Wilson intervals are in
+`data/results/p01_uniform_star_d{3,5}.json`.
+:::
+
+```{python}
+#| fig-cap: "P01. This book's rates (blue, 95% Wilson intervals) against QuEra's published reference (slate). Circles d = 3, squares d = 5. The two agree where injection error dominates; at d = 3 the reference's memory floor sits about nine times higher."
+fig, ax = plt.subplots(figsize=(6.4, 4.0))
+for d, marker in ((3, "o"), (5, "s")):
+    pts = [p for p in p01 if p["d"] == d]
+    th = np.array([p["theta_rad"] for p in pts])
+    ours = np.array([p["per_distance"] for p in pts])
+    lo = np.array([p["wilson_95"][0] / d for p in pts])
+    hi = np.array([p["wilson_95"][1] / d for p in pts])
+    ref = np.array([p["reference_per_distance"] for p in pts])
+    ax.errorbar(th, ours, yerr=[ours - lo, hi - ours], color=palette.STAR,
+                marker=marker, capsize=2, lw=1.6)
+    ax.plot(th, ref, color=palette.REFERENCE, marker=marker,
+            mfc="none", dashes=(5, 2), lw=1.4)
+    ax.annotate(f"d = {d}", (th[0], ref[0]), color=palette.REFERENCE,
+                textcoords="offset points", xytext=(4, 7), fontsize=9)
+ax.set_xscale("log")
+ax.set_yscale("log")
+ax.set_xlabel(r"logical angle $\theta$ (rad)")
+ax.set_ylabel("logical error rate / distance")
+plt.show()
+```
+
+The rule fails, and it fails in *shape*: the ratios run from 0.11 to 1.10,
+which no single normalisation factor can fix. But the shape is not random.
+At $d = 5$ the three points where the injection error dominates
+($\theta \ge 0.1$ rad) agree with the reference to within 10%. At $d = 3$
+the agreement improves steadily as $\theta$ grows, from 0.11 to 0.94. The
+disagreement lives in the part of the curve that does not depend on the
+angle at all.
+
+## Reading a ratio table
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — A floor mismatch has a signature"}
+**Model.** At small error rates, a STAR circuit's failure rate is a
+memory **floor** $f$ (independent of $\theta$) plus an **injection** term
+$g(\theta)$ that grows with the angle:
+$\varepsilon(\theta) \approx f + g(\theta)$.
+
+**Two pipelines, one injection.** Suppose this book and the reference
+agree on $g$ but disagree on the floor, $f$ versus $F$. Then
+$$r(\theta) = \frac{f + g(\theta)}{F + g(\theta)} .$$
+
+**Signature.** At small $\theta$, $r \to f/F$, a constant. As $g$ grows past
+both floors, $r \to 1$. A *normalisation* error would instead give the
+same $r$ at every $\theta$. So: a ratio that climbs from $f/F$ towards 1
+as the angle grows says *the floors differ, the injections agree*.
+
+**Test it.** Take $f$ from this book's small-angle points, $F$ from the
+reference's, and $g(\theta) = \varepsilon_{\text{ours}}(\theta) - f$. The
+model then *predicts* every other ratio.
+:::
+
+```{python}
+print(f"{'d':>2}{'theta':>9}{'observed':>10}{'predicted':>11}")
+for d in (3, 5):
+    pts = [p for p in p01 if p["d"] == d]
+    f = np.mean([p["per_distance"] for p in pts[:5]])
+    F = np.mean([p["reference_per_distance"] for p in pts[:5]])
+    for p in pts[5:]:
+        g = p["per_distance"] - f
+        obs = p["per_distance"] / p["reference_per_distance"]
+        print(f"{d:>2}{p['theta_rad']:>9.1e}{obs:>10.2f}"
+              f"{(f + g) / (F + g):>11.2f}")
+```
+
+The two-component model, given only the two floors, predicts the large-angle
+ratios to within about 10%. It was found *after* the results came in, so it
+is an explanation, not evidence registered in advance — but it says
+precisely where to look: the memory floor, not the injection.
+
+## Six diagnostics
+
+The protocol prescribed two diagnostics for a shape failure; four more
+were registered, each in writing before it ran, as the first ones came
+back. All live in `data/results/p01_diagnosis*.json`.
+
+```{python}
+#| echo: false
+rows = {}
+for p in diag["R3"]:
+    if p["theta_rad"] < 1e-3:
+        rows[p["d"]] = {"ref": p["reference_per_distance"],
+                        "mwpm": p["matching"]["per_distance"],
+                        "bp": p["bp_lsd"]["per_distance"]}
+for p in diag["R4"]:
+    rows[p["d"]]["stim"] = p["per_distance"]
+for p in diag["R5"]:
+    rows[p["d"]]["book"] = p["per_distance"]
+print("memory floor at theta = 1e-4, rate / distance")
+print(f"{'':<32}{'d = 3':>10}{'d = 5':>10}")
+for key, label in (("ref", "QuEra reference"),
+                   ("mwpm", "this book (tsim + matching)"),
+                   ("stim", "R4: stim sampling + matching"),
+                   ("bp", "R3: tsim + QuEra's BP-LSD"),
+                   ("book", "R5: textbook stim memory")):
+    print(f"{label:<32}{rows[3][key]:>10.2e}{rows[5][key]:>10.2e}")
+```
+
+| | What it tests | Result | Reading |
+|---|---|---|---|
+| R1 | post-select on every detector — no decoder | 0 failures at θ = 10⁻⁴ | the decoder-free floor is far below both curves |
+| R2 | decomposition failures in the decoder's model | none | the matching graph is complete |
+| X1 | fewer post-selected rounds (exploratory) | cannot fit both distances | rejected |
+| R3 | QuEra's own BP-LSD decoder | worse than matching, but ×0.27 and ×3.7 of the reference | the decoder does not explain it |
+| R4 | stim instead of tsim | agrees within intervals | tsim's sampling is right |
+| R5 | a textbook memory circuit | ×1.3 from this book at $d = 3$ | the reference's $d = 3$ floor is the outlier |
+
+The picture is consistent. Two independent samplers agree on this book's
+floor; a textbook circuit of the same size and noise agrees with it to
+within 30%; QuEra's own decoder, run on the same samples, moves the floor
+the wrong way at $d = 5$ and not far enough at $d = 3$. Whatever produced
+the reference's $d = 3$ floor is not something this book can reconstruct
+from what QuEra published.
+
+## Verdict, and what it costs
+
+**Registered verdict: REFUTED.** This pipeline does not reproduce QuEra's
+published $d = 3$ curve, and the ledger says so.
+
+**Decision, made after the results and labelled as such:** Part IV goes on
+using this pipeline. Every internal check passes; where the reference is
+not dominated by its own floor, the two agree to 10%; and Part IV measures
+*changes relative to this pipeline*, which an offset in an external curve
+cannot bias. The price is a sentence this book will never write — that its
+STAR numbers "reproduce QuEra's" — and an open item in Chapter 14.
+
+The cheapest way to close it is to ask. The question for QuEra, specific
+enough to answer in one line: *how was `star_sim.svg` decoded and
+normalised — which decoder, which detectors post-selected, and is "logical
+error rate / distance" per accepted shot?*
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 10"}
+**Delegated to the agent (Claude, 2026-10-26/27).** Writing P01, its
+runner, its analysis script and every diagnostic; registering each
+diagnostic before running it; drafting this chapter.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] Re-run `tools/analyze_p01.py` and confirm the verdict line.
+- [ ] Read P01's Deviations section end to end and confirm every
+  diagnostic's commit precedes its result file (`git log --stat`).
+- [ ] The two-component whiteboard, cold, including why a normalisation
+  error looks different.
+- [ ] Decide whether the post-hoc decision to proceed is one you can
+  defend in an interview; if not, say so in P01 and stop Part IV.
+
+**Caught.** The agent's own gate-rule text of 2026-10-26 claimed the
+pipeline "already agrees within 10%" for θ ≥ 0.1 rad. That held only at
+$d = 5$; the agent found and recorded the error the next day, in P01,
+before using the rule. Earlier, a commit swept an unrelated result file
+in with a styling change; it was split before anything was pushed.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **Your reproduction failed. What did you do next, and why should I
+   still trust your later numbers?**
+2. **How do you tell a normalisation problem from a physics problem in a
+   ratio plot?**
+3. **What would you ask QuEra to settle it, and why that question?**
+4. **Why register a diagnostic before running it, when it is "only" a
+   diagnostic?**
+:::
+
+## Model answers
+
+1. I diagnosed it with checks registered before they ran. Two independent
+   samplers agree on my floor, a textbook memory circuit agrees with it,
+   and my curve matches QuEra's to 10% wherever injection error dominates.
+   The disagreement is confined to the reference's $d = 3$ memory floor.
+   My later numbers are *changes* relative to my own validated pipeline,
+   which a fixed offset in someone else's curve cannot bias — and I never
+   claim to reproduce QuEra's numbers.
+2. A normalisation error gives the same ratio at every point. A
+   disagreement in one additive component gives a ratio that drifts
+   towards 1 as the other component grows: $r = (f + g)/(F + g)$.
+3. Which decoder and post-selection produced the plot, and whether the
+   rate is per accepted shot. It distinguishes the remaining hypotheses in
+   one answer.
+4. Because a diagnostic chosen after seeing the data can be tuned until it
+   "explains" anything. Registering it, with how each outcome will be
+   read, is what makes a negative answer — like R3's — informative.
+
+::: {.callout-caution title="💪 Exercises"}
+1. **The window.** Using the P01 artifacts, compute the geometric-mean
+   ratio over the $d = 5$ points alone. Would $d = 5$ alone have passed?
+2. **Predict the floor.** Using the two-component model, what reference
+   floor $F$ at $d = 3$ would make the $\theta = 0.4$ ratio exactly 1?
+3. **Acceptance check.** In R4 the stim-sampled acceptance at $d = 5$ is
+   higher than tsim's. Show that the ratio is the noiseless acceptance at
+   $\theta = 10^{-4}$, and explain why.
+4. **Write the issue.** Draft a three-sentence GitHub issue for QuEra's
+   ETH QHack repository asking the question above, with one number and one
+   link. (Do not post it without the author's decision.)
+:::
