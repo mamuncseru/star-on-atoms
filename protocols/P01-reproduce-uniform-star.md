@@ -326,3 +326,26 @@ post-selection on every detector (decoder-free and floor-free), and Ch 10's
 "agreement in the injection regime" is restated as agreement in a regime
 dominated by the read-out artifact. If not confirmed, P02 keeps P01's
 metric and says why.
+
+### 2026-10-27 — R7 result: the read-out artifact is CONFIRMED
+
+`data/results/p01_r7_readout_artifact.json`. Per accepted shot:
+
+| | d = 3 | d = 5 |
+|---|---|---|
+| memory-window excess ÷ sin²θ at θ = 0.1, 0.398, π/4 | 1.95e-2, 2.06e-2, 2.04e-2 (spread 1.06) | 5.69e-2, 5.74e-2, 5.40e-2 (spread 1.06) |
+| memory share of the all-noise excess at θ = 0.398, π/4 | 0.70, 0.69 | 0.84, 0.80 |
+| additivity, (memory + injection) ÷ all, θ = 0.1 / 0.398 / π/4 (reported) | 1.25, 1.07, 1.02 | 0.97, 1.03, 0.99 |
+| injection-window rate at θ = 1e-4 / 0.398 | 8.6e-6 / 1.61e-3 | 0 / 1.93e-3 |
+
+Both registered conditions hold at both distances. In the published
+circuits, most of the angle-dependent error is uncorrected memory-round X
+noise read out through the perfect inverse rotation (∝ sin²θ), not
+injection error; that is also why the d = 5 curve lies above d = 3 at large
+angles although d = 5 is the better code. The injection window alone is
+floor-free and nearly independent of d.
+
+As fixed before the run: P02 and P03 measure the injection error with
+noise in the injection window only and post-selection on every detector;
+Ch 10's "agreement in the injection regime" is restated as agreement in a
+regime dominated by the read-out artifact.
