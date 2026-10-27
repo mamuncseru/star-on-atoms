@@ -158,3 +158,36 @@ A four-chapter crash course (Part II) was inserted ahead of the STAR
 chapters. P01's chapter is now 10 (was 6), and the threats-to-validity
 chapter named in the entry above is now 14 (was 10). Nothing about the
 method, the criteria, the budget or the gate changed.
+
+### 2026-10-27 — budgets for R3 and R4, a yardstick R5, and how each reads
+
+Fixed before any of them runs.
+
+- **Samples.** One fresh tsim sample per point, seed `20261028 + d` (and
+  `+ 100` for θ = 0.1): d = 3 with 10⁶ shots and d = 5 with 2·10⁶ shots,
+  at θ = 10⁻⁴ and θ = 0.1 rad. Post-selection exactly as registered.
+- **R3, paired.** Every accepted shot is decoded twice: by matching on the
+  Clifford proxy (the registered decoder) and by
+  `bloqade.decoders.BpLsdDecoder` with default arguments on tsim's own
+  undecomposed detector error model. Decoding is split across 32 worker
+  processes; the split does not change any result.
+- **R4.** At θ = 10⁻⁴ only, the Clifford proxy (`circuit.stim_circuit`) is
+  sampled by stim with the same seed and shot count and decoded by
+  matching. Agreement with tsim's matching floor (overlapping 95%
+  intervals) validates tsim's sampling of the floor.
+- **R5 (reported, not a criterion).** stim's standard rotated-surface-code
+  X-memory circuit, distance d, d rounds, uniform circuit noise
+  p = 10⁻³ on every channel, matched decoding, 10⁶ shots: an independent
+  textbook scale for a d-round memory floor at this p. It is a different
+  circuit, so only its order of magnitude is read.
+- **How the results read.**
+  - If BP-LSD's floor at d = 3, θ = 10⁻⁴ lies within [0.5, 2] of the
+    reference *and* its d = 5 floor does too, the discrepancy is
+    attributed to the decoder: the reference is consistent with BP-LSD
+    decoding, P01 is reported as **reproduced under the reference's
+    decoder**, and this book keeps matching (the stronger decoder here) for
+    every later protocol, saying so.
+  - Otherwise the cause stays unexplained, and the gate rule of
+    2026-10-26 applies as written.
+  - If R4 disagrees with tsim, every tsim floor in this book is suspect,
+    and that is investigated before anything else.
