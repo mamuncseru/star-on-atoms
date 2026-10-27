@@ -7,10 +7,12 @@ By the end of this chapter you can:
    what a pre-registered pass criterion buys when it fails.
 2. Read a ratio table and tell a normalisation offset from a disagreement
    in one component of the error, using a two-component model.
-3. Explain what each of six diagnostics rules in or out.
-4. State exactly what this book may and may not claim after P01 — and
-   tell the story of a failed reproduction in an interview without
-   flinching.
+3. Explain what each of seven diagnostics rules in or out, and why each
+   was registered before it ran.
+4. Explain how a decoder that silently drops faults flipping more than two
+   detectors raises a memory floor — the cause P01 finally found.
+5. State exactly what this book may and may not claim after P01, and tell
+   the story of a failed reproduction in an interview.
 :::
 
 ```{python}
@@ -33,6 +35,7 @@ RESULTS = ROOT / "data" / "results"
 p01 = [pt for d in (3, 5) for pt in json.loads(
     (RESULTS / f"p01_uniform_star_d{d}.json").read_text())["points"]]
 diag = json.loads((RESULTS / "p01_diagnosis_r3_r5.json").read_text())
+r6 = json.loads((RESULTS / "p01_r6_naive_pipeline.json").read_text())
 ```
 
 ## The question, and the rule
@@ -79,7 +82,7 @@ $d = 5$; seeds, environment and Wilson intervals are in
 :::
 
 ```{python}
-#| fig-cap: "P01. This book's rates (blue, 95% Wilson intervals) against QuEra's published reference (slate). Circles d = 3, squares d = 5. The two agree where injection error dominates; at d = 3 the reference's memory floor sits about nine times higher."
+#| fig-cap: "P01. This book's rates (blue, 95% Wilson intervals) against QuEra's published reference (slate, open markers, dashed). Filled slate markers are R6: the same circuits decoded by matching on tsim's default, undecomposed error model — they land on the reference. Circles d = 3, squares d = 5."
 fig, ax = plt.subplots(figsize=(6.4, 4.0))
 for d, marker in ((3, "o"), (5, "s")):
     pts = [p for p in p01 if p["d"] == d]
@@ -92,6 +95,10 @@ for d, marker in ((3, "o"), (5, "s")):
                 marker=marker, capsize=2, lw=1.6)
     ax.plot(th, ref, color=palette.REFERENCE, marker=marker,
             mfc="none", dashes=(5, 2), lw=1.4)
+    naive = [q["naive_matching"]["per_distance"]
+             for q in r6["points"] if q["d"] == d]
+    ax.plot(th, naive, color=palette.REFERENCE, marker=marker, ls="none",
+            ms=4)
     ax.annotate(f"d = {d}", (th[0], ref[0]), color=palette.REFERENCE,
                 textcoords="offset points", xytext=(4, 7), fontsize=9)
 ax.set_xscale("log")
@@ -149,11 +156,12 @@ ratios to within about 10%. It was found *after* the results came in, so it
 is an explanation, not evidence registered in advance — but it says
 precisely where to look: the memory floor, not the injection.
 
-## Six diagnostics
+## Seven diagnostics
 
-The protocol prescribed two diagnostics for a shape failure; four more
-were registered, each in writing before it ran, as the first ones came
-back. All live in `data/results/p01_diagnosis*.json`.
+The protocol prescribed two diagnostics for a shape failure; five more
+were registered, each in writing before it ran, as the earlier ones came
+back. All live in `data/results/p01_diagnosis*.json` and
+`data/results/p01_r6_naive_pipeline.json`.
 
 ```{python}
 #| echo: false
@@ -167,13 +175,17 @@ for p in diag["R4"]:
     rows[p["d"]]["stim"] = p["per_distance"]
 for p in diag["R5"]:
     rows[p["d"]]["book"] = p["per_distance"]
+for p in r6["points"]:
+    if p["theta_rad"] < 2e-4:
+        rows[p["d"]]["naive"] = p["naive_matching"]["per_distance"]
 print("memory floor at theta = 1e-4, rate / distance")
 print(f"{'':<32}{'d = 3':>10}{'d = 5':>10}")
 for key, label in (("ref", "QuEra reference"),
                    ("mwpm", "this book (tsim + matching)"),
                    ("stim", "R4: stim sampling + matching"),
                    ("bp", "R3: tsim + QuEra's BP-LSD"),
-                   ("book", "R5: textbook stim memory")):
+                   ("book", "R5: textbook stim memory"),
+                   ("naive", "R6: tsim default DEM + matching")):
     print(f"{label:<32}{rows[3][key]:>10.2e}{rows[5][key]:>10.2e}")
 ```
 
@@ -185,35 +197,73 @@ for key, label in (("ref", "QuEra reference"),
 | R3 | QuEra's own BP-LSD decoder | worse than matching, but ×0.27 and ×3.7 of the reference | the decoder does not explain it |
 | R4 | stim instead of tsim | agrees within intervals | tsim's sampling is right |
 | R5 | a textbook memory circuit | ×1.3 from this book at $d = 3$ | the reference's $d = 3$ floor is the outlier |
+| R6 | matching on tsim's *default* (undecomposed) error model | passes P01's own criterion: ratio 1.10, range 0.91–1.45 | **the reference is reproduced** |
 
-The picture is consistent. Two independent samplers agree on this book's
-floor; a textbook circuit of the same size and noise agrees with it to
-within 30%; QuEra's own decoder, run on the same samples, moves the floor
-the wrong way at $d = 5$ and not far enough at $d = 3$. Whatever produced
-the reference's $d = 3$ floor is not something this book can reconstruct
-from what QuEra published.
+By R5 the picture was consistent but unexplained: two samplers and a
+textbook circuit agreed on this book's floor, and the reference did not.
+R6 explained it. tsim's `detector_error_model()` returns an
+*undecomposed* model by default, and PyMatching, handed one, quietly builds
+its matching graph from only the faults that flip at most two detectors.
+At $d = 3$ that discards 421 of 706 fault mechanisms — 19% of the fault
+probability; at $d = 5$, 28%. A decoder that does not know about a fifth
+of the faults fails more often, and it fails most at small distance, where
+there is least slack. The hypothesis came from outside: a public ETH QHack
+submission decoded the circuit exactly this way and printed a number close
+to the reference's. It was registered, with its reading rule, before a
+single R6 sample existed.
 
-## Verdict, and what it costs
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — Why dropping hyperedges raises the floor"}
+**What a hyperedge is.** A $Y$ error on a data qubit anticommutes with
+both its $X$-type and its $Z$-type neighbours, so it flips up to four
+detectors at once. Matching can only use faults that flip one or two
+detectors (edges, or edges to the boundary).
 
-**Registered verdict: REFUTED.** This pipeline does not reproduce QuEra's
-published $d = 3$ curve, and the ledger says so.
+**Decomposition** rewrites such a fault as a product of graph-like
+pieces — "this $Y$ is the $X$-edge plus the $Z$-edge" — so the decoder
+still knows it exists and how likely it is.
 
-**Decision, made after the results and labelled as such:** Part IV goes on
-using this pipeline. Every internal check passes; where the reference is
-not dominated by its own floor, the two agree to 10%; and Part IV measures
-*changes relative to this pipeline*, which an offset in an external curve
-cannot bias. The price is a sentence this book will never write — that its
-STAR numbers "reproduce QuEra's" — and an open item in Chapter 14.
+**Dropping** it instead deletes it from the decoder's model. The decoder
+then under-weights the paths those faults create, and on the shots where
+they happen it picks the wrong correction more often.
 
-The cheapest way to close it is to ask. The question for QuEra, specific
-enough to answer in one line: *how was `star_sim.svg` decoded and
-normalised — which decoder, which detectors post-selected, and is "logical
-error rate / distance" per accepted shot?*
+**Why $d = 3$ suffers most.** A distance-3 code corrects one fault. If the
+decoder misreads even one common fault type, a single fault can become a
+logical error; a larger code has the slack to absorb some mistakes.
+
+**The fix** is one argument: decompose — here by decoding the Clifford
+proxy's model, `circuit.stim_circuit.detector_error_model(
+decompose_errors=True)`.
+:::
+
+## Verdict, and what it buys
+
+**Registered verdict: REFUTED**, and the ledger keeps that row: this
+pipeline, as registered, does not reproduce QuEra's curve. **R6 then
+CONFIRMS** that the same circuits, decoded the way the reference appears to
+have been, reproduce it within P01's own tolerance. The ledger marks the
+first row SUPERSEDED and keeps both.
+
+What this book may now say, precisely: *its pipeline reproduces QuEra's
+published STAR curve when decoded the same way; decoded with a decomposed
+error model, the $d = 3$ memory floor is about nine times lower and agrees
+with an independent sampler and a textbook circuit.* What it may not say:
+that QuEra made the plot this way. That is a strong inference, not a fact,
+and it is the question to put to them — now with a specific candidate
+answer.
+
+The decision recorded before R6, to proceed with Part IV on this
+pipeline, no longer needs defending: the pipeline is not merely internally
+consistent but reproduces the reference once the one difference is
+matched. Part IV keeps the decomposed decoder, because it is the correct
+one.
 
 ::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 10"}
 **Delegated to the agent (Claude, 2026-10-26/27).** Writing P01, its
 runner, its analysis script and every diagnostic; registering each
-diagnostic before running it; drafting this chapter.
+diagnostic before running it; drafting this chapter. The R6 hypothesis
+came from a simulated advisor agent; the main agent verified its two
+premises (the dropped-fault counts, and the public notebook's printed
+number) before registering it.
 
 **Verified by hand — the author must tick each before freeze.**
 
@@ -222,8 +272,10 @@ diagnostic before running it; drafting this chapter.
   diagnostic's commit precedes its result file (`git log --stat`).
 - [ ] The two-component whiteboard, cold, including why a normalisation
   error looks different.
-- [ ] Decide whether the post-hoc decision to proceed is one you can
-  defend in an interview; if not, say so in P01 and stop Part IV.
+- [ ] The hyperedge whiteboard, cold, with one concrete $Y$ fault from
+  `star_d=3.stim` and the four detectors it flips.
+- [ ] Open QuEraComputing/ETH_QHACK_2026 PR #6, `Star2/main2.ipynb`,
+  cell 3, and confirm the printed acceptance and error rate yourself.
 
 **Caught.** The agent's own gate-rule text of 2026-10-26 claimed the
 pipeline "already agrees within 10%" for θ ≥ 0.1 rad. That held only at
@@ -237,26 +289,29 @@ in with a styling change; it was split before anything was pushed.
    still trust your later numbers?**
 2. **How do you tell a normalisation problem from a physics problem in a
    ratio plot?**
-3. **What would you ask QuEra to settle it, and why that question?**
+3. **What exactly goes wrong when you match on an undecomposed detector
+   error model?**
 4. **Why register a diagnostic before running it, when it is "only" a
    diagnostic?**
 :::
 
 ## Model answers
 
-1. I diagnosed it with checks registered before they ran. Two independent
-   samplers agree on my floor, a textbook memory circuit agrees with it,
-   and my curve matches QuEra's to 10% wherever injection error dominates.
-   The disagreement is confined to the reference's $d = 3$ memory floor.
-   My later numbers are *changes* relative to my own validated pipeline,
-   which a fixed offset in someone else's curve cannot bias — and I never
-   claim to reproduce QuEra's numbers.
+1. I diagnosed it with checks registered before they ran. Two samplers and
+   a textbook circuit agreed on my floor, which localised the problem to
+   the reference's memory floor; the seventh check found the cause. The
+   reference is reproduced exactly when the error model is left
+   undecomposed, because PyMatching then silently drops about a fifth of
+   the fault probability. My pipeline decomposes it, and its $d = 3$ floor
+   is nine times lower — and correct by two independent checks.
 2. A normalisation error gives the same ratio at every point. A
    disagreement in one additive component gives a ratio that drifts
    towards 1 as the other component grows: $r = (f + g)/(F + g)$.
-3. Which decoder and post-selection produced the plot, and whether the
-   rate is per accepted shot. It distinguishes the remaining hypotheses in
-   one answer.
+3. PyMatching builds its graph only from faults flipping at most two
+   detectors. An undecomposed model has hyperedges — a $Y$ fault flips up
+   to four — and they are dropped without a warning, so the decoder
+   ignores a fifth of the faults, mis-weights the rest, and fails more
+   often, most visibly at small $d$.
 4. Because a diagnostic chosen after seeing the data can be tuned until it
    "explains" anything. Registering it, with how each outcome will be
    read, is what makes a negative answer — like R3's — informative.
@@ -269,7 +324,11 @@ in with a styling change; it was split before anything was pushed.
 3. **Acceptance check.** In R4 the stim-sampled acceptance at $d = 5$ is
    higher than tsim's. Show that the ratio is the noiseless acceptance at
    $\theta = 10^{-4}$, and explain why.
-4. **Write the issue.** Draft a three-sentence GitHub issue for QuEra's
-   ETH QHack repository asking the question above, with one number and one
-   link. (Do not post it without the author's decision.)
+4. **Write the issue.** Draft a short GitHub issue for QuEra's tsim
+   repository reporting that matching on `Circuit.detector_error_model()`
+   silently drops non-graph-like faults, with the two floors and one link.
+   (Do not post it without the author's decision.)
+5. **Count it yourself.** Write ten lines that count the mechanisms in
+   tsim's default model of `star_d=5.stim` that flip more than two
+   detectors, and their share of the total probability.
 :::
