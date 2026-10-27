@@ -76,6 +76,39 @@ def test_noiseless_star_accepts_at_the_ideal_rate_and_never_fails():
         assert not obs[keep, 0].any()
 
 
+def test_restrict_noise_partitions_the_published_noise():
+    from starlab.circuits import restrict_noise
+    for d in (3, 5):
+        text = source(d)
+        total = sum(line.startswith("DEPOLARIZE")
+                    for line in text.splitlines())
+        inj = restrict_noise(text, d, "injection")
+        mem = restrict_noise(text, d, "memory")
+        count = [sum(line.startswith("DEPOLARIZE")
+                     for line in t.splitlines()) for t in (inj, mem)]
+        assert count[0] + count[1] == total and min(count) > 0, (d, count)
+        # Only noise lines differ: the gate-and-detector skeleton is intact.
+        strip = [[line for line in t.splitlines()
+                  if not line.startswith("DEPOLARIZE")]
+                 for t in (text, inj, mem)]
+        assert strip[0] == strip[1] == strip[2]
+        # The boundary is the last post-selected detector: no injection
+        # noise after it, no memory noise before it.
+        def noise_detector_positions(t):
+            seen, before, after = 0, 0, 0
+            for line in t.splitlines():
+                if line.startswith("DETECTOR"):
+                    seen += 1
+                elif line.startswith("DEPOLARIZE"):
+                    if seen < starlab.n_postselected(d):
+                        before += 1
+                    else:
+                        after += 1
+            return before, after
+        assert noise_detector_positions(inj)[1] == 0
+        assert noise_detector_positions(mem)[0] == 0
+
+
 def test_wilson_interval():
     # At zero failures the lower end is zero only up to rounding (the same
     # slack tools/check_results.py allows); the upper end is near 3/n.

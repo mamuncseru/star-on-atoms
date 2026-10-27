@@ -293,3 +293,36 @@ What this does **not** establish: that QuEra made `star_sim.svg` this way.
 It establishes that this pipeline reproduces the plot within the
 registered tolerance and that the plot's floor is consistent with it. The
 question to QuEra still stands, now with a specific candidate answer.
+
+### 2026-10-27 — R7 registered: is the angle-dependent regime a read-out artifact?
+
+Proposed by a simulated advisor; the mechanism was checked by hand before
+registering. After the noisy memory rounds the circuit applies a perfect
+inverse rotation exp(+iθ Z₀Z₃Z₆/2) (for d = 3) and reads out logical X.
+The decoder only tracks that X observable. A residual physical X error on
+a column qubit anticommutes with the rotation's Z-string, so the inverse
+rotation adds to the injected one instead of cancelling it, and the
+read-out flips with probability sin²θ. If that dominates, P01's
+"injection regime" measures uncorrected memory X errors, not injection.
+
+**R7.** Three noise windows on the published circuits, via
+`starlab.circuits.restrict_noise`: *all* (P01's circuit), *memory* (noise
+only after the last post-selected detector, up to TICK[DISABLE_ERROR]),
+*injection* (noise only up to and including the last post-selected
+detector). Same post-selection and proxy decoder as P01. θ ∈ {1e-4, 0.1,
+0.398, π/4} rad; d = 3 at 10⁶ shots, d = 5 at 2·10⁶; seed
+`20261030 + 1000·d + 10·v + i` (v = 0, 1, 2 for all, memory, injection).
+Excess(θ) = rate(θ) − rate(1e-4), per accepted shot, per window.
+
+**Reading, fixed now.** The artifact is CONFIRMED at a distance if both:
+(i) the memory window's excess ÷ sin²θ at θ = 0.1, 0.398 and π/4 has
+max/min ≤ 1.5; and (ii) the memory window's excess is at least half the
+all-noise excess at θ = 0.398 and at θ = π/4. Additivity (excess_all ≈
+excess_memory + excess_injection within 20%) is reported, not a criterion.
+
+**Consequence, fixed now.** If confirmed at both distances, P02 and P03
+measure the injection error with noise in the injection window only and
+post-selection on every detector (decoder-free and floor-free), and Ch 10's
+"agreement in the injection regime" is restated as agreement in a regime
+dominated by the read-out artifact. If not confirmed, P02 keeps P01's
+metric and says why.

@@ -97,6 +97,42 @@ def with_angle(text: str, d: int, theta_rad: float) -> str:
             + new_unrot + text[unrot.end():])
 
 
+_NOISE = re.compile(r"^DEPOLARIZE[12]\(")
+
+
+def restrict_noise(text: str, d: int, window: str) -> str:
+    """Keep the published noise in one window of a STAR circuit only.
+
+    `window` is "injection" (everything up to and including the last
+    post-selected detector: preparation, rotation, three rounds), "memory"
+    (from there to TICK[DISABLE_ERROR]: the d decoded rounds), or "all".
+    Used to separate the injection error from the memory rounds' effect on
+    the read-out (P01's R7).
+    """
+    if window == "all":
+        return text
+    if window not in ("injection", "memory"):
+        raise ValueError(f"unknown window {window!r}")
+    lines = text.splitlines(keepends=True)
+    seen, boundary = 0, None
+    for index, line in enumerate(lines):
+        if line.startswith("DETECTOR"):
+            seen += 1
+            if seen == n_postselected(d):
+                boundary = index
+                break
+    if boundary is None:
+        raise ValueError("circuit has fewer detectors than expected")
+    keep_before = window == "injection"
+    out = []
+    for index, line in enumerate(lines):
+        before = index <= boundary
+        if _NOISE.match(line) and before != keep_before:
+            continue
+        out.append(line)
+    return "".join(out)
+
+
 def star_text(d: int, theta_rad: float) -> str:
     """The published distance-d circuit, set to inject `theta_rad`."""
     return with_angle(source(d), d, theta_rad)
