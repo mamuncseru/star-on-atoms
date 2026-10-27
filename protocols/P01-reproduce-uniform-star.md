@@ -236,3 +236,37 @@ bias. The cost is real and is carried forward: no claim in this book may
 say its STAR numbers "reproduce QuEra's", only that they reproduce the
 injection regime at d = 5, and Chapter 14 lists the unexplained d = 3
 floor as an open threat.
+
+### 2026-10-27 — R6 registered: the "naive pipeline" hypothesis
+
+Proposed by a simulated advisor; two of its factual premises were checked
+before registering, without computing any logical error rate:
+
+- tsim's `Circuit.detector_error_model()` defaults to an *undecomposed*
+  model, and `pymatching.Matching.from_detector_error_model` accepts it
+  without complaint while building its graph only from mechanisms that
+  flip at most two detectors. At θ = 1e-4: d = 3 has 706 mechanisms, 421
+  of them flipping more than two detectors (19% of the probability; the
+  graph keeps 285 edges); d = 5 has 3401, of which 2341 (28%).
+- A public ETH QHack 2026 submission (QuEraComputing/ETH_QHACK_2026
+  PR #6, `Star2/main2.ipynb`, cell 3, head 778886d697) decodes the d = 3
+  circuit exactly this way, post-selecting the first 24 detectors, and
+  prints acceptance 0.818 and a logical error rate of 6.92e-3 at
+  θ ≈ 3e-4 rad — 2.3e-3 per distance, against the reference's 2.0e-3.
+
+**Hypothesis.** The reference was decoded with matching on tsim's default
+(undecomposed) DEM, which drops the multi-detector faults and weakens the
+decoder, mostly at d = 3.
+
+**R6.** The registered P01 grid (d = 3, 5; the same eight angles), fresh
+samples with seed `20261029 + 1000·d + i`, 10⁶ shots at d = 3 and 2·10⁶ at
+d = 5, post-selection as registered. Each accepted shot decoded twice:
+matching on the Clifford proxy (this book's decoder) and matching on
+tsim's default DEM (the naive pipeline).
+
+**Reading, fixed now.** P01's own registered primary criterion, applied
+unchanged to the naive pipeline's sixteen points. If it passes, P01 is
+re-reported as *reproduced under the reference's decoder*; the ledger keeps
+the REFUTED row and adds a SUPERSEDED pointer; this book keeps the proxy
+decoder for everything after, and says why. If it fails, the cause stays
+unexplained and nothing else changes.
