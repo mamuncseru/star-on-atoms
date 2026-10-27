@@ -102,31 +102,38 @@ author's request, from the interview topics the reviewers named.
 |---|---|---|---|
 | 6 | One small rotation: STAR injection from first principles | ✅ | — |
 | 7 | Memory and matching: detectors, error models, and the Clifford proxy | ✅ | — |
-| 8 | The noise menu: every way an atom array fails, as a Pauli channel | ⬜ | — |
-| 9 | From an injected state to a teleported rotation: α and the budget | ⬜ | — |
+| 8 | The noise menu: Table II of the PRX paper as Pauli channels (a short chapter: one table, pinned from the PDF) | ⬜ | — |
+| 9 | From an injected state to a teleported rotation: α via Eq. 4 (a short whiteboard chapter) | ⬜ | — |
 
 ### Part IV — The Experiment
 | Ch | Title | Status | Protocol |
 |---|---|---|---|
 | 10 | Reproducing QuEra's curve | ✅ | P01 (REPORTED 2026-10-27: refuted as registered; see LEDGER) |
-| 11 | Re-noising: from uniform to hardware-aware | ⬜ | P02 |
-| 12 | The per-channel scan | ⬜ | P03 |
-| 13 | What a factor of two buys | ⬜ | P03 (analysis) |
-| 14 | Threats to validity | ⬜ | — |
+| 11 | Re-noising: Table II in stim, validated | ⬜ | P02 |
+| 12 | An error budget for STAR injection (shares, additivity, what halving buys) | ⬜ | P03 |
+| 13 | Threats to validity | ⬜ | — |
 
-### Part V — After the application
+### Part V — After the application (deferred 2026-10-27; nothing here starts before 11-06)
 | Ch | Title | Status | Protocol |
 |---|---|---|---|
-| 15 | d = 7 and beyond: sampling on a GPU | ⬜ | P04 |
-| 16 | Atom loss as erasure | ⬜ | P05 |
-| 17 | Upstream: what this project gave back | ⬜ | — |
+| 14 | The paper's own protocol: k = 3 TMR, then a high-rate STAR gadget | ⬜ | P04 |
+| 15 | Upstream: what this project gave back | ⬜ | — |
+
+Cut 2026-10-27 on advisor recommendations (see `application/advisors/DECISIONS.md`,
+local): the bloqade Gemini simulation mode, the ×2 arms, d = 7, and the
+atom-loss-as-erasure chapter (arXiv:2606.25011 already reports the
+heralded-loss scaling).
 
 ### Appendices
 | App | Title | Status |
 |---|---|---|
 | A | Reproducing this book | ✅ |
-| B | The interview drill bank (every 🎤 box, with model answers) | ⬜ |
-| C | The agent log index (every 🤖 box, collected) | ⬜ |
+| B | The interview drill bank — after submission | ⬜ |
+| C | The agent log index — after submission | ⬜ |
+
+**Freeze rule (2026-10-27).** At the freeze, any chapter whose 🤖 Agent Log
+still has unticked "Verified by hand" boxes is removed from the public
+build's `_quarto.yml` until the author has checked it.
 
 ---
 
@@ -139,22 +146,28 @@ project chapters assume it.
 | Date | Study track | Project track | Done when |
 |---|---|---|---|
 | **Mon 10-26** | — | Repo, guards, PDF; P01 registered and run; Ch 1–3, 6–7 drafted; crash course drafted | `make check` green |
-| Tue 10-27 | **Ch 2** codes & transversal gates | P01 diagnostics R3/R4; Ch 10 written; P01 settled | P01 verdict in LEDGER.md |
-| Wed 10-28 | **Ch 3** magic states | Ch 8 (noise menu, pinned from the PDF); **P02 registered** (re-noiser) | P02 committed |
-| Thu 10-29 | **Ch 4** Rydberg atoms | P02 run: uniform vs. hardware-aware vs. bloqade Gemini; Ch 11 | re-noiser reproduces P01 at uniform settings |
-| Fri 10-30 | **Ch 5** Trotter & Jordan–Wigner | **P03 registered**; scan launched | P03 committed before first sample |
-| Sat 10-31 | Ch 2–5 whiteboards **cold** (no notes) | scan runs; Ch 9 | — |
-| Sun 11-01 | **Ch 6–7** + their whiteboards cold | Ch 12 (per-channel tornado) | — |
-| Mon 11-02 | Mock interview #1 (agent as interviewer, Part II drills) | Ch 13: headline figure and answer | one-paragraph answer |
-| Tue 11-03 | Ch 2–5 whiteboards cold, second day | Ch 14 threats; one upstream issue/PR | — |
-| **Wed 11-04** | — | **FREEZE.** README, repo public, 2–3 page note | `make release` green |
-| Thu 11-05 | Mock interview #2 (whole book) | Resume, site, cover letter (`application/`); re-run reviewer agents | verdicts recorded |
+| Tue 10-27 | **Ch 2** codes & transversal gates | P01 diagnostics R3–R7 (cause found: R6 decoder, R7 read-out artifact); Ch 10; advisors consulted; volume exponent fixed | ✅ P01 settled in LEDGER.md |
+| Wed 10-28 | **Ch 7** memory, matching & DEMs + Ch 10's three whiteboards (the project's own story) | Ch 8 (Table II); **P02 registered**: re-noiser + injection-window metric; start `starlab/renoise.py` | P02 committed |
+| Thu 10-29 | **Ch 3** magic states (skim derivations; 60-second answer cold) | P02 run: uniform mode reproduces the published DEM; Table II at p_ph = 1e-3; both H variants; Ch 11 | re-noiser validated |
+| Fri 10-30 | **Read** PRX paper Sec. II–III, App. D, G in the PDF | **P03 registered** (error budget); launched ≤ 32 cores; upstream issue drafted for the author | P03 committed before first sample |
+| Sat 10-31 | **Ch 5** Trotter & JW; Ch 6 STAR whiteboard cold | P03 analysis; Ch 9 (α via Eq. 4); Ch 12 | — |
+| Sun 11-01 | **Ch 4** Rydberg (60-second answer; skim pulse derivations); fix site, resume header, pinned repos | Ch 12 headline figure | — |
+| Mon 11-02 | Mock interview #1 (agent as interviewer) | 2–3 page note; Ch 13 threats | one-paragraph answer |
+| Tue 11-03 | Six core whiteboards cold, second day | README headline; tick-or-remove pass on every Agent Log | — |
+| **Wed 11-04** | — | **FREEZE.** repo public; `make release` | `make release` green |
+| Thu 11-05 | Mock interview #2 — with a human if possible | Cover letter (`application/`); re-run the two hiring reviewers on the real artifact | verdicts recorded |
 | **Fri 11-06** | — | **Submit** | confirmation email |
 | Sat 11-07 – Tue 11-10 | Drill bank, weakest chapter first | buffer only | — |
 
-**Scope guard.** If P02 is not producing trustworthy numbers by the end of
-Thu 10-29, P03 shrinks to d = 3 only and the cut is recorded here. The study
-track is not cut: it is what the interview tests.
+**Scope guard.** If the re-noiser is not validated by the end of Fri 10-30,
+ship what is solid (P01 and its eight diagnostics, the note, the upstream
+finding) and register P03 as post-submission work. The study track is not
+cut: it is what the interview tests.
+
+**Six core whiteboards** (the ones to master first, on two different days):
+transversal CNOT (Ch 2), STAR acceptance and angle (Ch 6), the Clifford
+proxy (Ch 7), why dropped hyperedges raise the floor (Ch 10), the sin²θ
+read-out artifact (Ch 10), and simulation vs. circuit volume (Ch 1).
 
 ## Mastery plan
 
