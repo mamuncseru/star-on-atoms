@@ -22,11 +22,14 @@ regime — using QuEra's own published circuits and open-source tools
 
 The useful reach of transversal STAR is capped by one coefficient: a
 teleported rotation by θ fails with probability ≈ α·p·θ, so a computation
-can afford a total rotation of only about 1/(α p), and its simulation volume
-scales as 1/(α p)². QuEra's papers fold all physical noise into one knob,
-p. A hardware programme has to decide which error to halve next. This book
-measures that: one channel at a time, with intervals, against a pipeline
-first shown to reproduce QuEra's published numbers.
+can afford a total rotation of only about 1/(α p): its simulation volume
+(sites × simulated time) scales as 1/(α p), and its circuit volume (sites ×
+Trotter steps) as 1/(α p)². QuEra's papers scale every physical noise
+channel together by one knob, p. A hardware programme has to decide which
+error to halve next. This book measures that — an error budget for STAR
+injection under QuEra's published hardware model, one channel at a time,
+with intervals — on a pipeline first shown to reproduce QuEra's published
+curve.
 
 ## What makes it trustworthy
 

@@ -21,13 +21,16 @@ Transversal STAR (space-time efficient analog rotation) is QuEra's
 proposal for running the megaquop regime: inject small-angle rotations by
 post-selection instead of distilling T gates. Its usefulness is capped by
 one number — the coefficient α in the teleported rotation error
-p_L(θ) ≈ α·p·θ — through the rotation budget Σ|θ| ≲ 1/(α p) and a
-simulation volume that scales as 1/(α p)² [Ismail et al. 2026, PRX Quantum
-7, 020343; arXiv:2606.25011].
+p_L(θ) ≈ α·p·θ — through the rotation budget Σ|θ| ≲ 1/(α p): simulation
+volume N_sT ∝ 1/(αp) (Eq. 5) and circuit volume N_sN_tr ∝ 1/(αp)² (Eq. 8)
+[Ismail et al. 2026, PRX Quantum 7, 020343; arXiv:2606.25011].
 
-Both papers fold the physical noise into a single knob p. Neither, in the
-text read on 2026-10-26, varies the physical channels one at a time. A
-hardware team has to choose *which* error to halve next.
+Both papers scale every physical channel together by one knob p (the
+second uses uniform noise only). The PRX paper's App. D.2 argues per-channel
+improvement targets qualitatively and App. G.3 compares whole noise
+models; neither measures each channel's share of STAR's injection error
+(checked in the PDF, 2026-10-27). A hardware team has to choose *which*
+error to halve next.
 
 > **Which physical noise channel limits transversal STAR on neutral atoms,
 > and how much simulation volume would halving each one buy?**
