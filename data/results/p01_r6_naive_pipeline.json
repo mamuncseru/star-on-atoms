@@ -1,0 +1,470 @@
+{
+  "protocol": "P01 (diagnosis R6, registered 2026-10-27)",
+  "captured": "2026-10-27",
+  "seed_base": 20261029,
+  "environment": {
+    "python": "3.11.12",
+    "platform": "Linux-4.18.0-553.8.1.el8_10.x86_64-x86_64-with-glibc2.28",
+    "numpy": "2.2.6",
+    "stim": "1.16.0",
+    "PyMatching": "2.4.0",
+    "bloqade-tsim": "0.1.5",
+    "jax": "0.10.2"
+  },
+  "points": [
+    {
+      "d": 3,
+      "theta_rad": 0.0001,
+      "seed": 20264029,
+      "shots_sampled": 1000000,
+      "acceptance": 0.81071,
+      "reference_per_distance": 0.0020005984580270643,
+      "proxy_matching": {
+        "shots": 810710,
+        "logical_errors": 569,
+        "logical_error_rate": 0.0007018539305053595,
+        "wilson_95": [
+          0.0006465231332676868,
+          0.0007619164424358066
+        ],
+        "per_distance": 0.00023395131016845316
+      },
+      "naive_matching": {
+        "shots": 810710,
+        "logical_errors": 5200,
+        "logical_error_rate": 0.006414130823599067,
+        "wilson_95": [
+          0.006242679431037953,
+          0.006590259797136023
+        ],
+        "per_distance": 0.002138043607866356
+      }
+    },
+    {
+      "d": 3,
+      "theta_rad": 0.00039810717055349735,
+      "seed": 20264030,
+      "shots_sampled": 1000000,
+      "acceptance": 0.805359,
+      "reference_per_distance": 0.002042917713169635,
+      "proxy_matching": {
+        "shots": 805359,
+        "logical_errors": 567,
+        "logical_error_rate": 0.0007040338532257043,
+        "wilson_95": [
+          0.0006484374705329359,
+          0.0007643933683224345
+        ],
+        "per_distance": 0.0002346779510752348
+      },
+      "naive_matching": {
+        "shots": 805359,
+        "logical_errors": 5121,
+        "logical_error_rate": 0.0063586549600861235,
+        "wilson_95": [
+          0.006187393572700016,
+          0.006534625536502217
+        ],
+        "per_distance": 0.002119551653362041
+      }
+    },
+    {
+      "d": 3,
+      "theta_rad": 0.001584893192461114,
+      "seed": 20264031,
+      "shots_sampled": 1000000,
+      "acceptance": 0.793306,
+      "reference_per_distance": 0.0020421855378258713,
+      "proxy_matching": {
+        "shots": 793306,
+        "logical_errors": 551,
+        "logical_error_rate": 0.0006945617454046736,
+        "wilson_95": [
+          0.00063895541808835,
+          0.0007550036645919747
+        ],
+        "per_distance": 0.0002315205818015579
+      },
+      "naive_matching": {
+        "shots": 793306,
+        "logical_errors": 5033,
+        "logical_error_rate": 0.006344336233433253,
+        "wilson_95": [
+          0.006171992289080062,
+          0.006521461053642946
+        ],
+        "per_distance": 0.002114778744477751
+      }
+    },
+    {
+      "d": 3,
+      "theta_rad": 0.00630957344480193,
+      "seed": 20264032,
+      "shots_sampled": 1000000,
+      "acceptance": 0.763529,
+      "reference_per_distance": 0.0019653882331178876,
+      "proxy_matching": {
+        "shots": 763529,
+        "logical_errors": 518,
+        "logical_error_rate": 0.0006784287171803559,
+        "wilson_95": [
+          0.0006224833679256802,
+          0.0007393984037797412
+        ],
+        "per_distance": 0.0002261429057267853
+      },
+      "naive_matching": {
+        "shots": 763529,
+        "logical_errors": 4960,
+        "logical_error_rate": 0.0064961514231941415,
+        "wilson_95": [
+          0.006318420414629176,
+          0.0066788482292707025
+        ],
+        "per_distance": 0.0021653838077313804
+      }
+    },
+    {
+      "d": 3,
+      "theta_rad": 0.025118864315095794,
+      "seed": 20264033,
+      "shots_sampled": 1000000,
+      "acceptance": 0.694822,
+      "reference_per_distance": 0.002068587457751539,
+      "proxy_matching": {
+        "shots": 694822,
+        "logical_errors": 493,
+        "logical_error_rate": 0.0007095342404241662,
+        "wilson_95": [
+          0.0006496239772831572,
+          0.0007749653223937075
+        ],
+        "per_distance": 0.00023651141347472206
+      },
+      "naive_matching": {
+        "shots": 694822,
+        "logical_errors": 4497,
+        "logical_error_rate": 0.006472161215390416,
+        "wilson_95": [
+          0.006286320778696089,
+          0.00666345875165227
+        ],
+        "per_distance": 0.0021573870717968052
+      }
+    },
+    {
+      "d": 3,
+      "theta_rad": 0.1,
+      "seed": 20264034,
+      "shots_sampled": 1000000,
+      "acceptance": 0.558463,
+      "reference_per_distance": 0.002471380036696574,
+      "proxy_matching": {
+        "shots": 558463,
+        "logical_errors": 589,
+        "logical_error_rate": 0.0010546804354093287,
+        "wilson_95": [
+          0.0009729136955827355,
+          0.0011433112458909156
+        ],
+        "per_distance": 0.0003515601451364429
+      },
+      "naive_matching": {
+        "shots": 558463,
+        "logical_errors": 3773,
+        "logical_error_rate": 0.006756042924956533,
+        "wilson_95": [
+          0.0065445647894688255,
+          0.006974306696542531
+        ],
+        "per_distance": 0.002252014308318844
+      }
+    },
+    {
+      "d": 3,
+      "theta_rad": 0.3981071705534969,
+      "seed": 20264035,
+      "shots_sampled": 1000000,
+      "acceptance": 0.350007,
+      "reference_per_distance": 0.0032271496439840778,
+      "proxy_matching": {
+        "shots": 350007,
+        "logical_errors": 1811,
+        "logical_error_rate": 0.005174182230641101,
+        "wilson_95": [
+          0.0049418660593497695,
+          0.005417360082813185
+        ],
+        "per_distance": 0.0017247274102137004
+      },
+      "naive_matching": {
+        "shots": 350007,
+        "logical_errors": 3626,
+        "logical_error_rate": 0.010359792804143918,
+        "wilson_95": [
+          0.010029678515135008,
+          0.01070065494721776
+        ],
+        "per_distance": 0.0034532642680479724
+      }
+    },
+    {
+      "d": 3,
+      "theta_rad": 1.584893192461114,
+      "seed": 20264036,
+      "shots_sampled": 1000000,
+      "acceptance": 0.205627,
+      "reference_per_distance": 0.010416666159440403,
+      "proxy_matching": {
+        "shots": 205627,
+        "logical_errors": 6063,
+        "logical_error_rate": 0.029485427497361726,
+        "wilson_95": [
+          0.028763010753080992,
+          0.030225423923469337
+        ],
+        "per_distance": 0.00982847583245391
+      },
+      "naive_matching": {
+        "shots": 205627,
+        "logical_errors": 6209,
+        "logical_error_rate": 0.030195450986494964,
+        "wilson_95": [
+          0.029464541544446082,
+          0.030943913581995712
+        ],
+        "per_distance": 0.010065150328831655
+      }
+    },
+    {
+      "d": 5,
+      "theta_rad": 0.0001,
+      "seed": 20266029,
+      "shots_sampled": 2000000,
+      "acceptance": 0.5133125,
+      "reference_per_distance": 2.5318462616186167e-05,
+      "proxy_matching": {
+        "shots": 1026625,
+        "logical_errors": 103,
+        "logical_error_rate": 0.00010032874710824303,
+        "wilson_95": [
+          8.273461548636509e-05,
+          0.00012166394649354457
+        ],
+        "per_distance": 2.0065749421648607e-05
+      },
+      "naive_matching": {
+        "shots": 1026625,
+        "logical_errors": 189,
+        "logical_error_rate": 0.00018409838061609645,
+        "wilson_95": [
+          0.00015965826755545795,
+          0.0002122789345386151
+        ],
+        "per_distance": 3.681967612321929e-05
+      }
+    },
+    {
+      "d": 5,
+      "theta_rad": 0.00039810717055349735,
+      "seed": 20266030,
+      "shots_sampled": 2000000,
+      "acceptance": 0.4792315,
+      "reference_per_distance": 2.4943944224062434e-05,
+      "proxy_matching": {
+        "shots": 958463,
+        "logical_errors": 86,
+        "logical_error_rate": 8.972698998292057e-05,
+        "wilson_95": [
+          7.266227162849338e-05,
+          0.00011079890957799252
+        ],
+        "per_distance": 1.7945397996584113e-05
+      },
+      "naive_matching": {
+        "shots": 958463,
+        "logical_errors": 171,
+        "logical_error_rate": 0.00017841064287301648,
+        "wilson_95": [
+          0.0001536008112695358,
+          0.000207226964843085
+        ],
+        "per_distance": 3.56821285746033e-05
+      }
+    },
+    {
+      "d": 5,
+      "theta_rad": 0.001584893192461114,
+      "seed": 20266031,
+      "shots_sampled": 2000000,
+      "acceptance": 0.425771,
+      "reference_per_distance": 3.4202992889184596e-05,
+      "proxy_matching": {
+        "shots": 851542,
+        "logical_errors": 74,
+        "logical_error_rate": 8.6901174575065e-05,
+        "wilson_95": [
+          6.922957518576582e-05,
+          0.00010908314914291967
+        ],
+        "per_distance": 1.7380234915013e-05
+      },
+      "naive_matching": {
+        "shots": 851542,
+        "logical_errors": 149,
+        "logical_error_rate": 0.00017497668934709034,
+        "wilson_95": [
+          0.00014904826353318942,
+          0.00020541469569420416
+        ],
+        "per_distance": 3.499533786941807e-05
+      }
+    },
+    {
+      "d": 5,
+      "theta_rad": 0.00630957344480193,
+      "seed": 20266032,
+      "shots_sampled": 2000000,
+      "acceptance": 0.350551,
+      "reference_per_distance": 3.0360217870023177e-05,
+      "proxy_matching": {
+        "shots": 701102,
+        "logical_errors": 61,
+        "logical_error_rate": 8.700588502100978e-05,
+        "wilson_95": [
+          6.774091605159311e-05,
+          0.00011174904315262838
+        ],
+        "per_distance": 1.7401177004201957e-05
+      },
+      "naive_matching": {
+        "shots": 701102,
+        "logical_errors": 108,
+        "logical_error_rate": 0.00015404320626670584,
+        "wilson_95": [
+          0.00012760325461035873,
+          0.00018596061247116996
+        ],
+        "per_distance": 3.0808641253341165e-05
+      }
+    },
+    {
+      "d": 5,
+      "theta_rad": 0.025118864315095794,
+      "seed": 20266033,
+      "shots_sampled": 2000000,
+      "acceptance": 0.254087,
+      "reference_per_distance": 3.4243910210553505e-05,
+      "proxy_matching": {
+        "shots": 508174,
+        "logical_errors": 70,
+        "logical_error_rate": 0.00013774809415672586,
+        "wilson_95": [
+          0.0001090396054540654,
+          0.00017401378087296282
+        ],
+        "per_distance": 2.7549618831345173e-05
+      },
+      "naive_matching": {
+        "shots": 508174,
+        "logical_errors": 112,
+        "logical_error_rate": 0.00022039695065076135,
+        "wilson_95": [
+          0.0001831877526948994,
+          0.00026516209708841033
+        ],
+        "per_distance": 4.407939013015227e-05
+      }
+    },
+    {
+      "d": 5,
+      "theta_rad": 0.1,
+      "seed": 20266034,
+      "shots_sampled": 2000000,
+      "acceptance": 0.1517495,
+      "reference_per_distance": 0.00014456433500231795,
+      "proxy_matching": {
+        "shots": 303499,
+        "logical_errors": 231,
+        "logical_error_rate": 0.000761122771409461,
+        "wilson_95": [
+          0.0006691249135418811,
+          0.0008657584392533788
+        ],
+        "per_distance": 0.0001522245542818922
+      },
+      "naive_matching": {
+        "shots": 303499,
+        "logical_errors": 259,
+        "logical_error_rate": 0.0008533800770348502,
+        "wilson_95": [
+          0.0007556209500735507,
+          0.0009637746785568168
+        ],
+        "per_distance": 0.00017067601540697006
+      }
+    },
+    {
+      "d": 5,
+      "theta_rad": 0.3981071705534969,
+      "seed": 20266035,
+      "shots_sampled": 2000000,
+      "acceptance": 0.0710535,
+      "reference_per_distance": 0.0019684307888901834,
+      "proxy_matching": {
+        "shots": 142107,
+        "logical_errors": 1475,
+        "logical_error_rate": 0.01037950276904023,
+        "wilson_95": [
+          0.009865636650475712,
+          0.01091983916936853
+        ],
+        "per_distance": 0.0020759005538080457
+      },
+      "naive_matching": {
+        "shots": 142107,
+        "logical_errors": 1482,
+        "logical_error_rate": 0.010428761426249235,
+        "wilson_95": [
+          0.009913658669183645,
+          0.010970331802014986
+        ],
+        "per_distance": 0.002085752285249847
+      }
+    },
+    {
+      "d": 5,
+      "theta_rad": 1.584893192461114,
+      "seed": 20266036,
+      "shots_sampled": 2000000,
+      "acceptance": 0.035554,
+      "reference_per_distance": 0.013214396942395592,
+      "proxy_matching": {
+        "shots": 71108,
+        "logical_errors": 4705,
+        "logical_error_rate": 0.06616695730438207,
+        "wilson_95": [
+          0.06436326878809992,
+          0.06801751710850246
+        ],
+        "per_distance": 0.013233391460876414
+      },
+      "naive_matching": {
+        "shots": 71108,
+        "logical_errors": 4705,
+        "logical_error_rate": 0.06616695730438207,
+        "wilson_95": [
+          0.06436326878809992,
+          0.06801751710850246
+        ],
+        "per_distance": 0.013233391460876414
+      }
+    }
+  ],
+  "naive_pipeline_verdict": {
+    "geometric_mean": 1.095920689188813,
+    "ratio_min": 0.9112375575101958,
+    "ratio_max": 1.4542619226682572,
+    "outcome": "PASS"
+  }
+}

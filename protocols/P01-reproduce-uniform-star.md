@@ -270,3 +270,26 @@ re-reported as *reproduced under the reference's decoder*; the ledger keeps
 the REFUTED row and adds a SUPERSEDED pointer; this book keeps the proxy
 decoder for everything after, and says why. If it fails, the cause stays
 unexplained and nothing else changes.
+
+### 2026-10-27 — R6 result: the reference is reproduced by the naive pipeline
+
+`data/results/p01_r6_naive_pipeline.json`. Under P01's own registered
+criterion, the naive pipeline (matching on tsim's default, undecomposed
+DEM) **passes**: geometric-mean ratio **1.096** (window 0.80–1.25), ratios
+**0.91–1.45** (window 0.5–2.0), over the same sixteen points. On the same
+samples this book's proxy decoder reproduces its own P01 numbers (d = 3
+floor 2.3e-4 per distance, against the naive pipeline's 2.1e-3).
+
+As fixed before the run: P01 is re-reported as **reproduced under the
+reference's decoder**. The reference's d = 3 floor is what matching gives
+when PyMatching silently drops the 19% (d = 3) to 28% (d = 5) of fault
+probability that flips more than two detectors; decoding the decomposed
+Clifford-proxy DEM instead lowers that floor about ninefold at d = 3 and
+about twofold at d = 5. This book keeps the proxy decoder for every later
+protocol: it is the stronger decoder, and it agrees with an independent
+sampler (R4) and a textbook memory circuit (R5).
+
+What this does **not** establish: that QuEra made `star_sim.svg` this way.
+It establishes that this pipeline reproduces the plot within the
+registered tolerance and that the plot's floor is consistent with it. The
+question to QuEra still stands, now with a specific candidate answer.
