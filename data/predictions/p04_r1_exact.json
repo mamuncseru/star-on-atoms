@@ -1,0 +1,56 @@
+{
+  "d3 CZ ZZ only": {
+    "predicted_rate": 0,
+    "census": {
+      "mechanisms": 70,
+      "detected": 70,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d3 CZ single Z only": {
+    "predicted_rate": 2.772826759734946e-05,
+    "census": {
+      "mechanisms": 74,
+      "detected": 71,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d3 CZ single X/Y only": {
+    "predicted_rate": 3.0808178557796716e-05,
+    "census": {
+      "mechanisms": 243,
+      "detected": 240,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d5 CZ ZZ only": {
+    "predicted_rate": 0,
+    "census": {
+      "mechanisms": 252,
+      "detected": 252,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 CZ single Z only": {
+    "predicted_rate": 2.3732788705875413e-05,
+    "census": {
+      "mechanisms": 231,
+      "detected": 227,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 CZ single X/Y only": {
+    "predicted_rate": 3.139186228877942e-05,
+    "census": {
+      "mechanisms": 844,
+      "detected": 839,
+      "harmless": 0,
+      "k": 5
+    }
+  }
+}

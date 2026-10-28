@@ -126,4 +126,35 @@ or at the ceiling.
 
 ## Deviations
 
-None yet.
+**2026-10-27, while P04 was running and before any of its results were
+read: diagnostic R1 registered (the CZ channel by parameter).**
+
+- **The finding to test.** Computed by the calculator after P03, while
+  writing Chapter 12:
+  - Table II's CZ channel has three parameters: a single X or Y on either
+    atom (5×10⁻⁴ each term), a single Z (6.3×10⁻⁴), and the correlated ZZ
+    (1.3×10⁻³, its largest).
+  - The calculator says ZZ adds **exactly nothing** to the injection
+    error, and the X/Y terms add more than the Z terms.
+  - The stated reason: the ancilla half of ZZ always flips that ancilla's
+    measurement, and the data qubits sit in the Hadamard frame during
+    X-check CZs.
+- **Arms** (`tools/measure_p04_r1.py`). The CZ channel alone, at Table II
+  rates × 0.134, restricted to one parameter group, at π/16, d = 3 and 5:
+  - **ZZ only:** a P04 "zero" arm, capped at 2×10⁷ shots;
+  - **single Z only** and **single X/Y only:** P04 "main" arms, to 400
+    errors.
+- **Predictions**, committed in `data/predictions/p04_r1_exact.json`:
+
+  | Arm | d = 3 | d = 5 |
+  |---|---|---|
+  | ZZ only | 0 | 0 |
+  | single Z only | 2.773×10⁻⁵ | 2.373×10⁻⁵ |
+  | single X/Y only | 3.081×10⁻⁵ | 3.139×10⁻⁵ |
+
+  The two non-zero arms sum to the CZ row of P04's table.
+- **Scoring.** P04's own (`measure_p04.score`), with P04's verdict rule
+  applied to these six arms.
+- **Seeds and order.** Seed = 2×10⁷ + 10⁵·arm + chunk. Run after P04
+  finishes, so the two never share the 32 cores.
+- **Artifact:** `data/results/p04_r1_cz_terms.json`.
