@@ -8,18 +8,18 @@ edit.
 
 ## Now
 
-**Measuring the injection error under QuEra's own hardware noise model
-([Protocol P02](protocols/P02-renoise-table-ii.md)).** The published STAR
-circuits have been rebuilt on the atoms' native gates, with every channel
-of the paper's Table II in place. Given the published uniform noise
-instead, the rebuild reproduces the published error model exactly. P02 was
-registered before its first sample and is running. Its first test: does one
-constant times a known function of the angle describe the injection error
-under both noise models?
+**P02 is reported: one constant fits.** Under both QuEra's Table II
+hardware model and the published uniform model, the injection error of the
+published circuits is a single constant times the paper's misrotation term,
+evaluated exactly. It holds from π/4 to π/128 at d = 3 and 5, flat to
+within 15% over a 150–400× range in rate. At the same headline error
+$p_{\text{ph}} = 10^{-3}$, the hardware model gives about **half** the
+uniform model's injection error. See the [ledger](LEDGER.md).
 
-**Next:** Protocol P03, the error budget. Each Table II channel is switched
-on alone at the operating point $p_{\text{ph}} = 10^{-3}$, giving its share
-of the injection error, and so of α.
+**Next:** Protocol P03, the error budget. Because a channel can change only
+the constant, never the angle dependence, the budget can be measured at one
+angle. Each Table II channel is switched on alone, giving its share of the
+injection error and so of α.
 
 ## Milestones
 
@@ -28,13 +28,37 @@ of the injection error, and so of α.
 | 2026-10-26 | Pipeline, guards and book scaffold; P01 registered and run | ✅ |
 | 2026-10-27 | P01 explained: the reference's decoder (R6) and a read-out artifact (R7) | ✅ |
 | 2026-10-27 | Re-noiser validated against the published error model; P02 registered | ✅ |
-| 2026-10-27 | P02: the injection error under QuEra's Table II hardware model | 🚧 |
-| 2026-10-28 | P03 registered: the error budget, one noise channel at a time | ⬜ |
+| 2026-10-27 | P02 reported: one constant times the misrotation shape fits both noise models | ✅ |
+| 2026-10-28 | P03: the error budget, one noise channel at a time | 🚧 |
 | 2026-10-31 | Error-budget chapter and its headline figure | ⬜ |
 | 2026-11-02 | A short note (2–3 pages); threats to validity | ⬜ |
 | 2026-11-04 | Freeze: results final, book PDF released | ⬜ |
 
 ## Log
+
+### 2026-10-27 (night) · P02 reported: one constant fits; hardware noise halves the error
+
+-   **[P02](protocols/P02-renoise-table-ii.md)** ran in 35 minutes:
+    665 million shots, 32 points, each to 400 errors or its cap.
+-   **The registered shape test passed (H2 CONFIRMED).** In every
+    (distance, model) pair, the injection error divided by the paper's
+    misrotation term varies by at most ×1.15 from π/4 to π/128 (the limit
+    was ×1.5). A noise channel can change only the constant in front.
+-   **QuEra's hardware model at $p_{\text{ph}} = 10^{-3}$ gives 0.53×
+    (d = 3) and 0.58× (d = 5) the uniform model's injection error.** Only a
+    net pure-*Z* on the data survives post-selection. Table II puts more
+    *Z* into the CZ than uniform noise does, but much less into spectators,
+    single-qubit gates and idles. P03 will test that explanation.
+-   **The paper's open readings, priced** (at π/16):
+    -   keeping every Hadamard from the CNOT-to-CZ compilation: +20–25%;
+    -   a physical (noisy) feed-forward before the rotation: +15%;
+    -   moving the data atom instead of the ancilla: no measurable change;
+    -   loss on the gate pair only: no change in error, more shots
+        accepted. Loss costs acceptance, not fidelity.
+-   Through the paper's Eq. 4, these teaching circuits have α ≈ 8.5 under
+    Table II; the paper's own optimised protocol reaches α ≈ 1.5 at d = 7.
+-   **[Chapter 11](book/chapters/part4/ch11-renoising.qmd)** tells the
+    story, with the evidence table and the figure.
 
 ### 2026-10-27 (evening) · Re-noiser validated; P02 registered and running
 

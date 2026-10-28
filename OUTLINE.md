@@ -109,7 +109,7 @@ author's request, from the interview topics the reviewers named.
 | Ch | Title | Status | Protocol |
 |---|---|---|---|
 | 10 | Reproducing QuEra's curve | ✅ | P01 (REPORTED 2026-10-27: refuted as registered; see LEDGER) |
-| 11 | Re-noising: Table II in stim, validated | 🚧 | P02 (registered 2026-10-27) |
+| 11 | Re-noising: Table II in stim, validated | ✅ | P02 (REPORTED 2026-10-27: H2 confirmed) |
 | 12 | An error budget for STAR injection (shares, additivity, what halving buys) | ⬜ | P03 |
 | 13 | Threats to validity | ⬜ | — |
 
