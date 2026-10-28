@@ -21,7 +21,7 @@ published hardware noise model, with every experiment registered before it
 runs.
 
 <p class="soa-meta" markdown="span">Started 2026-10-26 · results freeze
-2026-11-04 · last update <!-- progress:updated --> ·
+2026-10-30 · last update <!-- progress:updated --> ·
 [source on GitHub](https://github.com/mamuncseru/star-on-atoms) ·
 text CC BY 4.0, code MIT</p>
 
@@ -58,6 +58,11 @@ result that would overturn it.
   7.46 × 10⁻³, not the quoted 7.3 × 10⁻³. And its prose and its table
   disagree about the single-qubit gate channel. Both are recorded in
   [P02](protocols/P02-renoise-table-ii.md).
+- **The injection error, computed exactly.** Matching every possible fault
+  against the rotation's branches reproduces 665 million sampled shots
+  with no fitted parameter ([P03](protocols/P03-exact-first-order.md)).
+  Only single *Z* faults on the rotated qubits survive post-selection.
+  Initialization, measurement and atom loss cost shots, never fidelity.
 - **α is decided at large angles.** Composed through the paper's
   repeat-until-success sum (its Eq. 4), the injections at π/4 to π/16 carry
   61–79% of α. A budget measured there sets α.

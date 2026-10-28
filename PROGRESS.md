@@ -8,18 +8,17 @@ edit.
 
 ## Now
 
-**P02 is reported: one constant fits.** Under both QuEra's Table II
-hardware model and the published uniform model, the injection error of the
-published circuits is a single constant times the paper's misrotation term,
-evaluated exactly. It holds from π/4 to π/128 at d = 3 and 5, flat to
-within 15% over a 150–400× range in rate. At the same headline error
-$p_{\text{ph}} = 10^{-3}$, the hardware model gives about **half** the
-uniform model's injection error. See the [ledger](LEDGER.md).
+**The error budget, sampled as a blind test
+([Protocol P04](protocols/P04-sampled-budget-blind-test.md)).** An exact
+first-order calculation now reproduces everything P02 sampled, with no
+fitted parameter ([P03](protocols/P03-exact-first-order.md)). Its
+per-channel predictions were committed before sampling. P04 now samples
+each Table II channel alone, the top channel halved, a second angle, and
+d = 7, which no protocol had sampled before. Every number is scored
+against the prediction already in the repository.
 
-**Next:** Protocol P03, the error budget. Because a channel can change only
-the constant, never the angle dependence, the budget can be measured at one
-angle. Each Table II channel is switched on alone, giving its share of the
-injection error and so of α.
+**Next:** the error-budget chapter, then the threats chapter and a short
+note. The schedule moved earlier: **results freeze Fri 2026-10-30.**
 
 ## Milestones
 
@@ -29,12 +28,46 @@ injection error and so of α.
 | 2026-10-27 | P01 explained: the reference's decoder (R6) and a read-out artifact (R7) | ✅ |
 | 2026-10-27 | Re-noiser validated against the published error model; P02 registered | ✅ |
 | 2026-10-27 | P02 reported: one constant times the misrotation shape fits both noise models | ✅ |
-| 2026-10-28 | P03: the error budget, one noise channel at a time | 🚧 |
-| 2026-10-31 | Error-budget chapter and its headline figure | ⬜ |
-| 2026-11-02 | A short note (2–3 pages); threats to validity | ⬜ |
-| 2026-11-04 | Freeze: results final, book PDF released | ⬜ |
+| 2026-10-27 | P03: an exact first-order calculation reproduces P02 with no free parameter | ✅ |
+| 2026-10-27 | P04: the sampled error budget, a blind test of the calculation (d = 3, 5, 7) | 🚧 |
+| 2026-10-28 | Error-budget chapter and its headline figure | ⬜ |
+| 2026-10-29 | A short note (2–3 pages); threats to validity | ⬜ |
+| 2026-10-30 | Freeze: results final, book PDF released | ⬜ |
 
 ## Log
+
+### 2026-10-27 (late night) · No GPU; an exact calculation instead
+
+-   **The GPU question.** Four NVIDIA A40s are available. The principle:
+    add a tool only if it is really useful.
+    -   Both advisors, consulted independently, said no GPU before
+        submission, and the facts agree. The planned runs take hours on
+        CPU, and the simulator generates its noise on the CPU, which caps
+        any GPU gain.
+    -   The GPU is kept for later work that needs 10⁹–10¹⁰ shots, once a
+        profile, a speed-up test and a re-run of a P02 point have passed.
+-   **What replaced it.** P02 showed that the injection error comes from
+    single faults that a rotation branch hides. So each fault can be
+    matched against the branches directly:
+    -   [`starlab/enumerate.py`](starlab/enumerate.py) does this in the
+        circuit's own error model. In seconds, at any distance, with no
+        sampling, it gives the injection error to first order. That is the
+        paper's Eq. 2, evaluated exactly.
+-   **[P03](protocols/P03-exact-first-order.md) CONFIRMED.** With no
+    fitted parameter, the calculation reproduces P02's four sampled
+    constants (ratios 0.97, 1.00, 1.01, 0.95) and all 8 variant ratios
+    (χ² p = 0.30).
+    -   Only 3 of 271 fault classes survive post-selection at d = 3 (5 of
+        955 at d = 5), each one a single *Z* on a rotated qubit.
+    -   **Initialization, measurement and atom loss cost exactly nothing
+        in fidelity**, only shots.
+-   **The first-order budget at π/16 under Table II:**
+    -   single-qubit gates 43–48%;
+    -   spectators 26–31%;
+    -   the CZ 25–26%;
+    -   moves 0.5%.
+-   **[P04](protocols/P04-sampled-budget-blind-test.md)** was registered
+    with every prediction committed, and launched.
 
 ### 2026-10-27 (night) · P02 reported: one constant fits; hardware noise halves the error
 

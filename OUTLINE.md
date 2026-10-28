@@ -4,9 +4,11 @@
 > may split, merge or reorder as drafts reveal what the work needs — but
 > every change lands here first, so this file is always the current plan.
 >
-> **Started:** Mon 2026-10-26 · **Results freeze:** Wed 2026-11-04 ·
-> **Application target:** Fri 2026-11-06 (hard deadline Tue 2026-11-10;
-> QuEra guarantees full consideration before Sun 2026-11-15).
+> **Started:** Mon 2026-10-26 · **Results freeze:** Fri 2026-10-30
+> (brought forward 2026-10-27 from Wed 11-04, at the author's request) ·
+> **Application target:** Mon 2026-11-02 (was Fri 11-06; hard deadline
+> Tue 2026-11-10; QuEra guarantees full consideration before Sun
+> 2026-11-15).
 >
 > **Primary stack:** QuEra's published STAR circuits (fetched, pinned,
 > hash-checked) · **tsim** for every non-Clifford sample · **stim +
@@ -110,13 +112,13 @@ author's request, from the interview topics the reviewers named.
 |---|---|---|---|
 | 10 | Reproducing QuEra's curve | ✅ | P01 (REPORTED 2026-10-27: refuted as registered; see LEDGER) |
 | 11 | Re-noising: Table II in stim, validated | ✅ | P02 (REPORTED 2026-10-27: H2 confirmed) |
-| 12 | An error budget for STAR injection (shares, additivity, what halving buys) | ⬜ | P03 |
+| 12 | An error budget for STAR injection: the exact first-order calculation, the sampled budget, what halving buys | 🚧 | P03 (REPORTED 2026-10-27: confirmed), P04 (running) |
 | 13 | Threats to validity | ⬜ | — |
 
-### Part V — After the application (deferred 2026-10-27; nothing here starts before 11-06)
+### Part V — After the application (deferred 2026-10-27; nothing here starts before the submission)
 | Ch | Title | Status | Protocol |
 |---|---|---|---|
-| 14 | The paper's own protocol: k = 3 TMR, then a high-rate STAR gadget | ⬜ | P04 |
+| 14 | The paper's own protocol: k = 3 TMR, then a high-rate STAR gadget; GPU sampling if its gates pass (DECISIONS, consultation 2) | ⬜ | P05 |
 | 15 | Upstream: what this project gave back | ⬜ | — |
 
 Cut 2026-10-27 on advisor recommendations (see `application/advisors/DECISIONS.md`,
@@ -148,27 +150,26 @@ project chapters assume it.
 | **Mon 10-26** | — | Repo, guards, PDF; P01 registered and run; Ch 1–3, 6–7 drafted; crash course drafted | `make check` green |
 | Tue 10-27 | **Ch 2** codes & transversal gates | P01 diagnostics R3–R7 (cause found: R6 decoder, R7 read-out artifact); Ch 10; advisors consulted; volume exponent fixed | ✅ P01 settled in LEDGER.md |
 | Tue 10-27 (evening, pulled forward) | — | Repo pushed (public); QAQ fix pushed; tsim issue finalised for the author; Ch 8; `starlab/renoise.py` validated (V1 exact at d = 3, 5, 7); **P02 registered and run** | ✅ P02 committed before its first sample |
-| Wed 10-28 | **Ch 7** memory, matching & DEMs + Ch 10's three whiteboards (the project's own story) | P02 analysis → Ch 11; **P03 registered** (error budget, design set by P02's H2) and launched | P03 committed before first sample |
-| Thu 10-29 | **Ch 3** magic states (skim derivations; 60-second answer cold) + Ch 11's misrotation whiteboard | P03 analysis; Ch 12 draft | — |
-| Fri 10-30 | **Read** PRX paper Sec. II–III (esp. Eq. 2), App. D, G in the PDF | Ch 9 (α via Eq. 4, and how it relates to Eq. 2's misrotation term); Ch 12 headline figure | — |
-| Sat 10-31 | **Ch 5** Trotter & JW; Ch 6 STAR whiteboard cold | P03 analysis; Ch 9 (α via Eq. 4); Ch 12 | — |
-| Sun 11-01 | **Ch 4** Rydberg (60-second answer; skim pulse derivations); fix site, resume header, pinned repos | Ch 12 headline figure | — |
-| Mon 11-02 | Mock interview #1 (agent as interviewer) | 2–3 page note; Ch 13 threats | one-paragraph answer |
-| Tue 11-03 | Six core whiteboards cold, second day | README headline; tick-or-remove pass on every Agent Log | — |
-| **Wed 11-04** | — | **FREEZE.** repo public; `make release` | `make release` green |
-| Thu 11-05 | Mock interview #2 — with a human if possible | Cover letter (`application/`); re-run the two hiring reviewers on the real artifact | verdicts recorded |
-| **Fri 11-06** | — | **Submit** | confirmation email |
-| Sat 11-07 – Tue 11-10 | Drill bank, weakest chapter first | buffer only | — |
+| Tue 10-27 (night) | — | GPU inquiry + advisor consultation 2 (no GPU before submission); **P03 registered and CONFIRMED** (exact first-order calculation reproduces P02); **P04 registered** with committed predictions and launched; schedule brought forward | ✅ P03 in LEDGER |
+| Wed 10-28 | **Ch 7** memory, matching & DEMs; Ch 11's misrotation whiteboard; the enumeration whiteboard (Ch 12) | P04 analysis → LEDGER; **Ch 12** (exact budget, sampled check, what halving buys, d = 3–15, CZ-term sensitivities) and its headline figure; site | Ch 12 committed |
+| Thu 10-29 | Core whiteboards cold, day 1; **mock interview #1** (agent as interviewer) | **Ch 13** threats; the 2–3 page note; README headline; prior-art reading for Ch 12's wording (2303.17380, 2408.14848 App., 2609.12698) | note drafted |
+| **Fri 10-30** | Tick-or-remove pass on every Agent Log (author) | **FREEZE.** `make release`; book PDF on the site; repo final | `make release` green |
+| Sat 10-31 | Core whiteboards cold, day 2; fix site title, resume header, pinned repos | Cover letter (`application/`); re-run the two hiring reviewers on the frozen artifact | verdicts recorded |
+| Sun 11-01 | **Mock interview #2**, with a human if possible | buffer | — |
+| **Mon 11-02** | — | **Submit** | confirmation email |
+| Tue 11-03 – Tue 11-10 | Drill bank, weakest chapter first | buffer only; Part V may start after submission | — |
 
-**Scope guard.** If the re-noiser is not validated by the end of Fri 10-30,
-ship what is solid (P01 and its eight diagnostics, the note, the upstream
-finding) and register P03 as post-submission work. The study track is not
-cut: it is what the interview tests.
+**Scope guard.** If P04 is not reported by the end of Wed 10-28, Ch 12
+ships the P03-validated calculation alone, with P04 as a deviation noted
+in the threats chapter. The study track is not cut: it is what the
+interview tests.
 
-**Six core whiteboards** (the ones to master first, on two different days):
-transversal CNOT (Ch 2), STAR acceptance and angle (Ch 6), the Clifford
-proxy (Ch 7), why dropped hyperedges raise the floor (Ch 10), the sin²θ
-read-out artifact (Ch 10), and simulation vs. circuit volume (Ch 1).
+**Seven core whiteboards** (the ones to master first, on two different
+days): transversal CNOT (Ch 2), STAR acceptance and angle (Ch 6), the
+Clifford proxy (Ch 7), why dropped hyperedges raise the floor (Ch 10), the
+sin²θ read-out artifact (Ch 10), one Z fault as an invisible misrotation
+and the branch-matching enumeration (Ch 11–12), and simulation vs. circuit
+volume (Ch 1).
 
 ## Mastery plan
 
