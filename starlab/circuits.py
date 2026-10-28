@@ -61,6 +61,28 @@ def ideal_acceptance(physical_angle_in_pi: float, k: int) -> float:
     return math.cos(half) ** (2 * k) + math.sin(half) ** (2 * k)
 
 
+def branch_flip_shape(theta_rad: float, k: int) -> float:
+    """The angle dependence of the injection error, up to one constant.
+
+    The k rotations put the patch in a sum over Z-strings Z_S, S a subset
+    of the rotated qubits, with amplitude c^(k-|S|) (-i s)^|S|, where
+    c, s = cos, sin(theta*/2). Post-selection keeps S = {} and S = all.
+    One Z fault on rotated qubit j swaps which branches survive: {j} and
+    all-but-j. That happens with probability s^2 c^(2k-2) + c^2 s^(2k-2)
+    (relative to the fault-free c^2k + s^2k), and leaves a rotation with
+    tan(phi/2) = t^(k-2), t = s/c, of the opposite sign to the intended
+    tan(theta/2) = t^k, so the read-out fails with probability
+    sin^2(atan t^(k-2) + atan t^k). The product is this function; a
+    channel's fault rate only sets the constant (Protocol P02, H2).
+    """
+    half = abs(physical_angle(theta_rad / math.pi, k)) * math.pi / 2
+    c, s = math.cos(half), math.sin(half)
+    t = s / c
+    survive = s * s * c ** (2 * k - 2) + c * c * s ** (2 * k - 2)
+    wrong = math.sin(math.atan(t ** (k - 2)) + math.atan(t ** k)) ** 2
+    return survive / (c ** (2 * k) + s ** (2 * k)) * wrong
+
+
 def n_postselected(d: int) -> int:
     """Detectors that must all be zero for an injection to be accepted."""
     return 3 * (d * d - 1)

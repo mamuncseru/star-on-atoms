@@ -109,6 +109,133 @@ def test_restrict_noise_partitions_the_published_noise():
         assert noise_detector_positions(mem)[0] == 0
 
 
+def test_one_z_fault_flips_the_branches_as_derived():
+    # The mechanism behind starlab.branch_flip_shape, checked on the real
+    # circuit: a certain Z on one rotated qubit, nothing else. Its two
+    # factors -- the chance to survive post-selection and the chance the
+    # survivor reads out wrong -- must match the derivation.
+    import tsim
+    from starlab import renoise as rn
+    shots, theta = 40_000, 0.3
+    for d in (3, 5):
+        text = rn.renoise(starlab.star_text(d, theta), d, ())
+        rz = re.search(r"^R_Z\(.*\)((?:\s+\d+)+)$", text, re.M)
+        j = rz.group(1).split()[0]
+        text = text[:rz.end()] + f"\nZ_ERROR(1) {j}" + text[rz.end():]
+        sampler = tsim.Circuit(text).compile_detector_sampler(seed=5)
+        dets, obs = sampler.sample(shots, separate_observables=True)
+        keep = ~np.asarray(dets, bool).any(axis=1)
+        wrong = np.asarray(obs, bool)[keep, 0].mean()
+        half = abs(starlab.physical_angle(theta / math.pi, d)) * math.pi / 2
+        c, s = math.cos(half), math.sin(half)
+        t = s / c
+        survive = s * s * c ** (2 * d - 2) + c * c * s ** (2 * d - 2)
+        flip = math.sin(math.atan(t ** (d - 2)) + math.atan(t ** d)) ** 2
+        for got, want, n in ((keep.mean(), survive, shots),
+                             (wrong, flip, keep.sum())):
+            assert abs(got - want) < 5 * math.sqrt(want * (1 - want) / n), \
+                (d, got, want)
+    # Small angles: the shape is a power law, theta^(2 - 2/k).
+    for k in (3, 5, 7):
+        slope = math.log(starlab.branch_flip_shape(2e-12, k)
+                         / starlab.branch_flip_shape(1e-12, k)) / math.log(2)
+        assert abs(slope - (2 - 2 / k)) < 0.01, (k, slope)
+
+
+def _symptoms(text):
+    """A circuit's detector error model as {symptom: probability}, with
+    repeated symptoms merged, so two models compare regardless of order."""
+    import tsim
+    out = {}
+    dem = tsim.Circuit(text).stim_circuit.detector_error_model()
+    for inst in dem.flattened():
+        if inst.type == "error":
+            key = tuple(sorted(str(t) for t in inst.targets_copy()))
+            p, q = out.get(key, 0.0), inst.args_copy()[0]
+            out[key] = p * (1 - q) + q * (1 - p)
+    return out
+
+
+def _gap(a, b):
+    return max(abs(a.get(k, 0.0) - b.get(k, 0.0)) for k in set(a) | set(b))
+
+
+def test_uniform_renoise_reproduces_the_published_error_model():
+    # P02 check V1: the native rebuild under the published uniform model is
+    # the published circuit, fault for fault -- for every compilation
+    # variant, since none of them may change where uniform noise lands.
+    from starlab import renoise as rn
+    for d in (3, 5):
+        published = _symptoms(source(d))
+        for hadamards in ("minimal", "naive"):
+            for mover in ("ancilla", "data"):
+                text = rn.renoise(source(d), d, rn.uniform(1e-3),
+                                  hadamards=hadamards, mover=mover)
+                assert "CX " not in text.split("TICK[DISABLE_ERROR]")[0]
+                assert _gap(_symptoms(text), published) < 1e-15, \
+                    (d, hadamards, mover)
+    # The comparison is not vacuous: leaving out any one role breaks it.
+    for role in ("init", "spectator", "feedforward", "idle1", "measure"):
+        model = tuple(e for e in rn.uniform(1e-3) if e[1] != role)
+        assert _gap(_symptoms(rn.renoise(source(3), 3, model)),
+                    _symptoms(source(3))) > 1e-4, role
+
+
+def test_noiseless_native_circuit_is_the_same_circuit():
+    # The rebuild changes gates, not the computation: with no noise it
+    # accepts at the ideal rate, never fails, and its later rounds are silent.
+    import tsim
+    from starlab import renoise as rn
+    shots, theta = 20_000, 0.2
+    for d in (3, 5):
+        want = starlab.ideal_acceptance(
+            starlab.physical_angle(theta / math.pi, d), d)
+        for hadamards in ("minimal", "naive"):
+            text = rn.renoise(starlab.star_text(d, theta), d, (),
+                              hadamards=hadamards)
+            sampler = tsim.Circuit(text).compile_detector_sampler(seed=11)
+            dets, obs = sampler.sample(shots, separate_observables=True)
+            dets, obs = np.asarray(dets, bool), np.asarray(obs, bool)
+            keep = ~dets[:, :starlab.n_postselected(d)].any(axis=1)
+            sigma = math.sqrt(want * (1 - want) / shots)
+            assert abs(keep.mean() - want) < 5 * sigma, (d, hadamards)
+            assert not dets[keep][:, starlab.n_postselected(d):].any()
+            assert not obs[keep, 0].any()
+
+
+def test_table_ii_accounting():
+    # Eq. D1 on Table II gives 7.46e-3 (the paper rounds it to "7.3e-3");
+    # scaling hits the requested p_ph exactly and keeps every ratio.
+    from starlab import renoise as rn
+    assert len(rn.CZ_PAULI) == 15
+    assert math.isclose(sum(rn.CZ_PAULI), 4.56e-3)
+    assert math.isclose(rn.combined(rn.table_ii()), 7.46e-3)
+    model = rn.table_ii(1e-3)
+    assert math.isclose(rn.combined(model), 1e-3)
+    s = 1e-3 / 7.46e-3
+    for (_, _, a), (_, _, b) in zip(rn.table_ii(), model):
+        assert all(math.isclose(s * x, y) for x, y in zip(a.args, b.args))
+    # Loss acts in the whole entangling zone unless told otherwise.
+    roles = [r for row, r, _ in rn.table_ii() if row == "CZ loss"]
+    assert roles == ["cz_qubit", "spectator"]
+    assert [r for row, r, _ in rn.table_ii(loss_on_spectators=False)
+            if row == "CZ loss"] == ["cz_qubit"]
+    assert {row for row, _, _ in rn.only(model, "CZ gate")} == {"CZ gate"}
+
+
+def test_renoise_windows_partition_the_noise():
+    from starlab import renoise as rn
+    for d in (3, 5):
+        def noise_lines(window):
+            text = rn.renoise(source(d), d, rn.table_ii(1e-3),
+                              window=window)
+            return [line for line in text.splitlines()
+                    if line.split("(")[0] in rn.NOISE_GATES]
+        parts = [noise_lines(w) for w in ("injection", "memory")]
+        assert min(map(len, parts)) > 0
+        assert sorted(parts[0] + parts[1]) == sorted(noise_lines("all"))
+
+
 def test_wilson_interval():
     # At zero failures the lower end is zero only up to rounding (the same
     # slack tools/check_results.py allows); the upper end is near 3/n.

@@ -67,3 +67,28 @@ def sample_star(d: int, theta_rad: float, shots: int, seed: int,
                    "acceptance": accepted / shots, "seed": seed,
                    "batch_size": batch, "batches": batch_index})
     return record
+
+
+def sample_injection(circuit, shots: int, seed: int,
+                     batch: int = 100_000) -> dict:
+    """The injection error, decoder-free (Protocols P02, P03).
+
+    Accept a shot only if every detector is zero. With noise confined to the
+    injection window, the later rounds are perfect stabilizer measurements,
+    so an accepted shot carries no detectable error at all, and a flipped
+    observable is an error post-selection cannot see. No decoder, no floor.
+    """
+    sampler = circuit.compile_detector_sampler(seed=seed)
+    accepted = errors = done = batches = 0
+    while done < shots:
+        n = min(batch, shots - done)
+        dets, obs = sampler.sample(n, separate_observables=True)
+        keep = ~np.asarray(dets, dtype=bool).any(axis=1)
+        errors += int(np.asarray(obs, dtype=bool)[keep, 0].sum())
+        accepted += int(keep.sum())
+        done += n
+        batches += 1
+    record = rate_record(errors, accepted)
+    record.update({"shots_sampled": shots, "acceptance": accepted / shots,
+                   "seed": seed, "batch_size": batch, "batches": batches})
+    return record
