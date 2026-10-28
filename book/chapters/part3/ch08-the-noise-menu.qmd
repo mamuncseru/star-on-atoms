@@ -1,0 +1,252 @@
+# The Noise Menu: Table II as Pauli Channels {#sec-noise-menu}
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Read every row of the paper's hardware noise table as a stim noise
+   instruction, and say where in a circuit it acts.
+2. Compute the combined physical error rate $p_{\text{ph}}$ from Eq. D1
+   by hand, and say why the paper's "≈ 7.3 × 10⁻³" is really 7.46 × 10⁻³.
+3. Scale the table to an operating point without changing its mix.
+4. Name the readings the paper leaves open, and which of them this book
+   sweeps rather than guesses.
+:::
+
+```{python}
+#| include: false
+import pathlib
+import sys
+
+_here = pathlib.Path.cwd()
+sys.path.insert(0, str(next(p for p in (_here, *_here.parents)
+                            if (p / "starlab").is_dir())))
+from starlab import renoise as rn
+```
+
+## The table, as printed
+
+The published STAR circuits of Chapter 10 carry one number: every
+operation is followed by depolarizing noise at $p = 10^{-3}$. The paper
+behind them [@ismail2026transversal] simulates something richer. Its
+Appendix D builds a noise model from the physics of Chapter 4, one channel
+per physical process. Table II lists them; this is that table, copied from
+the PDF (p. 26) rather than from a summary of it:
+
+| Operation | Channel | Rate |
+|---|---|---|
+| initialization | depolarizing | $p_{\text{init}} = 3 \times 10^{-3}$ |
+| 1q gate | depolarizing | $3 \times 10^{-3}$ |
+| atom move | Pauli $[p_X, p_Y, p_Z]$ | $[4, 4, 20] \times 10^{-5}$ |
+| atom move loss | $Y$ error | $2 \times 10^{-5}$ |
+| CZ gate | two-qubit Pauli, 15 terms | see below |
+| CZ spectator | Pauli $[p_X, p_Y, p_Z]$ | $[5, 5, 13] \times 10^{-4}$ |
+| CZ loss | $Y$ error | $1.3 \times 10^{-3}$ |
+| measurement | bit flip | $4 \times 10^{-3}$ |
+
+The CZ row compresses fifteen numbers into three. A single $X$ or $Y$ on
+either atom ($IX, XI, IY, YI$) has $5 \times 10^{-4}$ each; a single $Z$
+on either atom ($IZ, ZI$) has $6.3 \times 10^{-4}$ each; the correlated
+$ZZ$ has $1.3 \times 10^{-3}$; the other eight terms are zero.
+
+```{python}
+names = ("IX IY IZ XI XX XY XZ YI YX YY YZ ZI ZX ZY ZZ").split()
+nonzero = {n: p for n, p in zip(names, rn.CZ_PAULI) if p}
+for n, p in nonzero.items():
+    print(f"  {n}  {p:.2e}")
+print(f"p_CZ = {sum(rn.CZ_PAULI):.3e}  (the other 8 terms are zero)")
+z_only = sum(nonzero[n] for n in ("IZ", "ZI", "ZZ"))
+print(f"share with no X or Y on either atom: "
+      f"{z_only / sum(rn.CZ_PAULI):.0%}")
+```
+
+More than half of the CZ's error is pure $Z$, and the spectator and move
+rows lean the same way. Appendix D calls this the "$Z$-bias characteristic
+of neutral atom hardware errors": the atoms mostly suffer phase errors, not
+bit flips.
+
+## A row is a stim instruction
+
+Each row maps onto one stim noise instruction, which is all a simulator
+needs:
+
+| Table II says | stim writes |
+|---|---|
+| depolarizing $p$ | `DEPOLARIZE1(p)` |
+| Pauli $[p_X, p_Y, p_Z]$ | `PAULI_CHANNEL_1(px, py, pz)` |
+| 15-term two-qubit Pauli | `PAULI_CHANNEL_2(...)`, in stim's fixed order $IX, IY, IZ, XI, \dots, ZZ$ |
+| $Y$ error (loss) | `Y_ERROR(p)` |
+| bit flip on a measurement | `X_ERROR(p)` before `M`, `Z_ERROR(p)` before `MX` |
+
+Two rows hide a convention. **Initialization** is a perfect reset followed
+by `DEPOLARIZE1(1.5 p_init)`: of the three Paulis a depolarizing channel
+applies, only two disturb a freshly prepared state ($X$ and $Y$ on
+$|0\rangle$), so the paper inflates the rate by 3/2 to make $p_{\text{init}}$
+the probability of a wrong state. **Loss** is modelled as a $Y$ error. A
+real loss event usually carries some location information, which helps a
+decoder; among Pauli errors, $Y$ is the one that trips both $X$- and
+$Z$-type stabilizers, so replacing loss by $Y$ is, in the paper's words, "a
+pessimistic but controlled upper bound". The paper benchmarks it against
+explicit-loss simulations from the literature (its Appendix D.1, Fig. 14).
+
+## Where each channel acts
+
+A channel is only half a noise model. The other half is *where* it is
+applied, and that depends on the native gate set. A neutral-atom machine
+has no CNOT; it has CZ, made by the Rydberg blockade of Chapter 4, and
+single-qubit rotations. So the circuit is rebuilt on those gates first
+($\text{CX}_{ct} = H_t \, \text{CZ}_{ct} \, H_t$), and then each channel
+goes where its process happens:
+
+| Process | Channel | Applied to |
+|---|---|---|
+| reset (`R`, `RX`) | initialization | the reset atoms, after |
+| Hadamard (from a CX) | 1q gate | its atom, after |
+| the STAR rotation `R_Z` | 1q gate | the $k$ rotated atoms, after |
+| transport before a CZ | move + move loss | one atom of each pair, before |
+| CZ pulse | CZ gate | each pair, after |
+| CZ pulse | CZ loss | every atom in the entangling zone, after |
+| CZ pulse | CZ spectator | every atom *not* in a pair, after |
+| measurement | bit flip | the measured atoms, before |
+
+The paper's own sentence fixes the transport rule: "one qubit from each
+target pair must first be transported into proximity with its partner",
+and D1 counts $p_{\text{move}}$ once per CZ "because transport affects only
+the single qubit being moved".
+
+```{python}
+model = rn.table_ii()
+for row, role, channel in model:
+    args = (", ".join(f"{a:.2g}" for a in channel.args)
+            if len(channel.args) < 15 else f"total {channel.total:.3g}")
+    print(f"{row:<15} {role:<10} {channel.gate:<16} {args}")
+```
+
+## Eq. D1, and the number on every x-axis
+
+The paper plots everything against one number, the combined physical error
+rate of a CZ including its transport:
+
+$$
+p_{\text{ph}} = p_{\text{CZ}} + 2\,p_{\text{CZ,loss}} + p_{\text{move}}
+              + p_{\text{move,loss}} .
+$$
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — Eq. D1 by hand, and the operating point"}
+**The sum.** $p_{\text{CZ}} = 4(5 \times 10^{-4}) + 2(6.3 \times 10^{-4})
++ 1.3 \times 10^{-3} = 4.56 \times 10^{-3}$. Loss can strike either atom,
+so it counts twice: $2.6 \times 10^{-3}$. One atom moves:
+$p_{\text{move}} = 2.8 \times 10^{-4}$, plus $2 \times 10^{-5}$ of loss.
+Total: $7.46 \times 10^{-3}$.
+
+**The discrepancy.** The paper says "$p_{\text{ph}} \approx 7.3 \times
+10^{-3}$". The rows do not sum to that; 7.46 rounds to 7.5. Nothing below
+depends on which is meant, because this book always scales the table to a
+stated target and recomputes D1 from the rows.
+
+**Scaling.** To run "Table II at $p_{\text{ph}} = 10^{-3}$", multiply
+*every* rate by $s = 10^{-3} / 7.46 \times 10^{-3} = 0.134$. The mix (CZ
+against spectators against measurement) is unchanged; only the overall
+strength moves. That puts the hardware model at the same headline $p$ as
+the published uniform circuits, so a difference between the two is a
+difference of *mix*, not of strength.
+
+**The point to say out loud.** $p_{\text{ph}}$ prices a CZ. It does not
+include the spectator, 1q-gate, initialization or measurement channels,
+which are present at every $p_{\text{ph}}$ in the same proportion.
+:::
+
+```{python}
+for label, m in (("Table II", rn.table_ii()),
+                 ("operating point", rn.table_ii(1e-3))):
+    print(f"{label:<16} p_ph = {rn.combined(m):.3e}")
+print(f"scale s = {1e-3 / rn.combined(rn.table_ii()):.4f}")
+```
+
+## What the paper leaves open
+
+A table of rates is not yet a circuit. Translating it means choosing,
+and every choice below is registered in Protocol P02 before any number is
+measured. Where the paper gives no number to choose between, the choice is
+named as a threat instead.
+
+1. **The 1q-gate channel.** Table II says depolarizing; the prose of
+   Appendix D says "a biased Pauli channel, reflecting the Z-bias", with
+   no numbers. The book follows the table and names the conflict.
+2. **Loss on spectators.** The CZ loss acts "on all qubits in the
+   entangling zone", which includes the spectators. The default does the
+   same; a variant applies it to the pair only.
+3. **Which atom moves.** The ancilla by default; a variant moves the data
+   atom.
+4. **How many Hadamards.** Compiling CX to CZ adds Hadamards. Adjacent
+   pairs cancel, and an H beside a reset or measurement folds into it
+   (the paper's Fig. 12 draws syndrome qubits with `RX`/`MX`). A variant
+   keeps every one.
+5. **The feed-forward.** The published circuit applies a classically
+   controlled $X$ before the rotation. That is a frame update, foldable
+   into the rotation's sign, so it is noiseless by default; a variant
+   charges it a 1q gate.
+6. **Idling.** Table II has no idle channel, so an atom that waits sees no
+   noise, as in the published model.
+
+Chapter 11 builds the circuit these readings define and checks it against
+the published one.
+
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 8"}
+| What a paper says | What it is |
+|---|---|
+| *Pauli channel* | apply $X$, $Y$ or $Z$ with given probabilities, else nothing |
+| *biased noise* | a channel whose $Z$ term dominates its $X$ and $Y$ terms |
+| *spectator* | an atom the Rydberg pulse reaches without a partner |
+| *effective $Y$ loss* | a lost atom modelled as a $Y$ error at the same rate |
+| *$p_{\text{ph}}$* | the error of one CZ plus its transport, Eq. D1 |
+| *operating point* | the table scaled so that $p_{\text{ph}}$ hits a target |
+:::
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 8"}
+**Delegated to the agent (Claude, 2026-10-27).** Reading Table II and
+Appendix D a–f from the PDF (arXiv:2509.18294v2, pp. 25–26); finding the
+D1 rounding and the 1q-gate prose/table conflict; the stim mapping in
+`starlab/renoise.py`; this chapter's prose and code.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] Every rate in the table above, against the PDF's Table II.
+- [ ] Eq. D1 summed on paper to 7.46 × 10⁻³.
+- [ ] The 1.5 p_init convention, against Appendix D a.
+- [ ] The stim `PAULI_CHANNEL_2` argument order, against stim's
+  documentation.
+
+**Caught.** An earlier summary of the paper gave the CZ row as three
+independent single-qubit rates and could not reproduce 7.3 × 10⁻³. Reading
+the PDF showed the row is a compressed 15-term channel, and that D1 sums
+to 7.46 × 10⁻³. The first draft of this book's notes also called the 1q
+gate "depolarizing" without noticing that the paper's own prose says
+otherwise.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **What is $p_{\text{ph}}$, and what does it leave out?** Give the
+   formula and two channels not in it.
+2. **Why is loss modelled as a $Y$ error?** And what would change if loss
+   were detected (heralded) instead?
+3. **Why initialize with depolarizing 1.5 $p_{\text{init}}$?**
+4. **What fraction of the CZ's error is pure $Z$, and why does a STAR
+   researcher care?** (Chapter 11 answers the second half.)
+5. **You must place "atom move" noise in a CNOT circuit that has no move
+   instructions. What do you do?**
+:::
+
+::: {.callout-caution title="💪 Exercises"}
+1. **D1 from the rows.** Recompute $p_{\text{ph}}$ with the CZ row read
+   wrongly as three per-qubit rates $[5, 6.3, 13] \times 10^{-4}$, and
+   show it cannot give the paper's 7.3 × 10⁻³ either.
+2. **Bias by row.** For each Pauli channel in the table, compute the
+   fraction of its error that is pure $Z$. Rank the rows.
+3. **Scaling keeps the mix.** Show that `rn.table_ii(1e-3)` and
+   `rn.table_ii()` have the same ratio between any two rows.
+4. **One CZ in stim.** Write a two-qubit stim circuit with one `CZ` and the
+   Table II channels around it, sample $10^6$ shots in the $X$ basis, and
+   compare the flip rates with the table.
+5. **The 3/2.** Prepare $|0\rangle$, apply `DEPOLARIZE1(1.5 p)`, measure in
+   $Z$. Show the flip probability is $p$.
+:::
