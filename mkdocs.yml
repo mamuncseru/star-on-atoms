@@ -1,0 +1,91 @@
+site_name: STAR on Atoms
+site_description: Small-angle rotations under real neutral-atom noise — which physical channel limits transversal STAR, measured on QuEra's published circuits, with every experiment registered before it runs.
+site_url: https://mamuncseru.github.io/star-on-atoms/
+repo_url: https://github.com/mamuncseru/star-on-atoms
+repo_name: mamuncseru/star-on-atoms
+edit_uri: ""
+
+# docs/ holds the home page, the site assets and symlinks into the repo
+# root (PROGRESS, OUTLINE, LEDGER, protocols, README) -- one source of truth.
+# The book itself is not published here before the freeze (OUTLINE: a
+# chapter with unticked Agent Log boxes stays out of the public build).
+exclude_docs: |
+  __pycache__/
+
+theme:
+  name: material
+  icon:
+    logo: material/atom-variant
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - navigation.indexes
+    - toc.follow
+    - content.code.copy
+
+hooks:
+  - tools/mkdocs_hooks.py
+
+extra_css:
+  - katex/katex.min.css          # vendored, as on the Quest site
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/katex.js
+  - katex/katex.min.js
+  - katex/auto-render.min.js
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - footnotes
+  - tables
+  # GitHub-compatible heading ids, so the same #anchor links work on the
+  # site and when the .md files are read on GitHub
+  - toc:
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+          percent_encode: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - Progress: PROGRESS.md
+  - Plan: OUTLINE.md
+  - Ledger: LEDGER.md
+  - Protocols:
+      - "P01 · Reproduce QuEra's curve": protocols/P01-reproduce-uniform-star.md
+      - "P02 · Table II re-noise": protocols/P02-renoise-table-ii.md
+      - "The protocol template": protocols/TEMPLATE.md
+  - About: about.md

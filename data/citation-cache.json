@@ -1,0 +1,166 @@
+{
+ "arxiv:0811.4262": {
+  "checked": "2026-10-27",
+  "title": "Restrictions on Transversal Encoded Quantum Gate Sets"
+ },
+ "arxiv:1208.0928": {
+  "checked": "2026-10-27",
+  "title": "Surface codes: Towards practical large-scale quantum computation"
+ },
+ "arxiv:1908.06101": {
+  "checked": "2026-10-27",
+  "title": "Parallel implementation of high-fidelity multi-qubit gates with neutral atoms"
+ },
+ "arxiv:1912.08854": {
+  "checked": "2026-10-27",
+  "title": "A Theory of Trotter Error"
+ },
+ "arxiv:2103.02202": {
+  "checked": "2026-10-27",
+  "title": "Stim: a fast stabilizer circuit simulator"
+ },
+ "arxiv:2112.03923": {
+  "checked": "2026-10-27",
+  "title": "A quantum processor based on coherent transport of entangled atom arrays"
+ },
+ "arxiv:2303.13181": {
+  "checked": "2026-10-27",
+  "title": "Partially Fault-tolerant Quantum Computing Architecture with Error-corrected Clifford Gates and Space-time Efficient Analog Rotations"
+ },
+ "arxiv:2303.15933": {
+  "checked": "2026-10-27",
+  "title": "Sparse Blossom: correcting a million errors per core second with minimum-weight matching"
+ },
+ "arxiv:2304.05420": {
+  "checked": "2026-10-27",
+  "title": "High-fidelity parallel entangling gates on a neutral atom quantum computer"
+ },
+ "arxiv:2312.03982": {
+  "checked": "2026-10-27",
+  "title": "Logical quantum processor based on reconfigurable atom arrays"
+ },
+ "arxiv:2403.06777": {
+  "checked": "2026-10-27",
+  "title": "Fast Classical Simulation of Quantum Circuits via Parametric Rewriting in the ZX-Calculus"
+ },
+ "arxiv:2406.17653": {
+  "checked": "2026-10-27",
+  "title": "Low-Overhead Transversal Fault Tolerance for Universal Quantum Computation"
+ },
+ "arxiv:2408.14848": {
+  "checked": "2026-10-27",
+  "title": "Practical quantum advantage on partially fault-tolerant quantum computer"
+ },
+ "arxiv:2409.17595": {
+  "checked": "2026-10-27",
+  "title": "Magic state cultivation: growing T states as cheap as CNOT gates"
+ },
+ "arxiv:2412.15165": {
+  "checked": "2026-10-27",
+  "title": "Experimental Demonstration of Logical Magic State Distillation"
+ },
+ "arxiv:2505.15907": {
+  "checked": "2026-10-27",
+  "title": "Resource Analysis of Low-Overhead Transversal Architectures for Reconfigurable Atom Arrays"
+ },
+ "arxiv:2509.18294": {
+  "checked": "2026-10-27",
+  "title": "Transversal architecture for megaquop-scale quantum simulation with neutral atoms"
+ },
+ "arxiv:2604.01059": {
+  "checked": "2026-10-27",
+  "title": "Tsim: Fast Universal Simulator for Quantum Error Correction"
+ },
+ "arxiv:2606.25011": {
+  "checked": "2026-10-27",
+  "title": "Fast and Parallel High-Rate STAR Architecture for Megaquop Quantum Simulation"
+ },
+ "arxiv:quant-ph/0004038": {
+  "checked": "2026-10-27",
+  "title": "Fast quantum gates for neutral atoms"
+ },
+ "arxiv:quant-ph/0403025": {
+  "checked": "2026-10-27",
+  "title": "Universal Quantum Computation with ideal Clifford gates and noisy ancillas"
+ },
+ "arxiv:quant-ph/0605138": {
+  "checked": "2026-10-27",
+  "title": "Topological Quantum Distillation"
+ },
+ "doi:10.1007/BF01331938": {
+  "checked": "2026-10-27",
+  "title": "\ufffdber das Paulische \ufffdquivalenzverbot"
+ },
+ "doi:10.1038/s41586-022-04592-6": {
+  "checked": "2026-10-27",
+  "title": "A quantum processor based on coherent transport of entangled atom arrays"
+ },
+ "doi:10.1038/s41586-023-06481-y": {
+  "checked": "2026-10-27",
+  "title": "High-fidelity parallel entangling gates on a neutral-atom quantum computer"
+ },
+ "doi:10.1038/s41586-023-06927-3": {
+  "checked": "2026-10-27",
+  "title": "Logical quantum processor based on reconfigurable atom arrays"
+ },
+ "doi:10.1038/s41586-025-09367-3": {
+  "checked": "2026-10-27",
+  "title": "Experimental demonstration of logical magic state distillation"
+ },
+ "doi:10.1038/s41586-025-09543-5": {
+  "checked": "2026-10-27",
+  "title": "Low-overhead transversal fault tolerance for universal quantum computation"
+ },
+ "doi:10.1103/PRXQuantum.5.010337": {
+  "checked": "2026-10-27",
+  "title": "Partially Fault-Tolerant Quantum Computing Architecture with Error-Corrected Clifford Gates and Space-Time Efficient Analog Rotations"
+ },
+ "doi:10.1103/PhysRevA.71.022316": {
+  "checked": "2026-10-27",
+  "title": "Universal quantum computation with ideal Clifford gates and noisy ancillas"
+ },
+ "doi:10.1103/PhysRevA.86.032324": {
+  "checked": "2026-10-27",
+  "title": "Surface codes: Towards practical large-scale quantum computation"
+ },
+ "doi:10.1103/PhysRevLett.102.110502": {
+  "checked": "2026-10-27",
+  "title": "Restrictions on Transversal Encoded Quantum Gate Sets"
+ },
+ "doi:10.1103/PhysRevLett.123.170503": {
+  "checked": "2026-10-27",
+  "title": "Parallel Implementation of High-Fidelity Multiqubit Gates with Neutral Atoms"
+ },
+ "doi:10.1103/PhysRevLett.77.793": {
+  "checked": "2026-10-27",
+  "title": "Error Correcting Codes in Quantum Theory"
+ },
+ "doi:10.1103/PhysRevLett.85.2208": {
+  "checked": "2026-10-27",
+  "title": "Fast Quantum Gates for Neutral Atoms"
+ },
+ "doi:10.1103/PhysRevLett.97.180501": {
+  "checked": "2026-10-27",
+  "title": "Topological Quantum Distillation"
+ },
+ "doi:10.1103/j2fw-ccmy": {
+  "checked": "2026-10-27",
+  "title": "Transversal Architecture for Megaquop-Scale Quantum Simulation with Neutral Atoms"
+ },
+ "doi:10.1145/3695053.3731039": {
+  "checked": "2026-10-27",
+  "title": "Resource Analysis of Low-Overhead Transversal Architectures for Reconfigurable Atom Arrays"
+ },
+ "doi:10.22331/q-2021-07-06-497": {
+  "checked": "2026-10-27",
+  "title": "Stim: a fast stabilizer circuit simulator"
+ },
+ "doi:10.22331/q-2025-01-20-1600": {
+  "checked": "2026-10-27",
+  "title": "Sparse Blossom: correcting a million errors per core second with minimum-weight matching"
+ },
+ "doi:10.4204/EPTCS.426.10": {
+  "checked": "2026-10-27",
+  "title": "Fast Classical Simulation of Quantum Circuits via Parametric Rewriting in the ZX-Calculus"
+ }
+}

@@ -11,12 +11,18 @@ small-angle rotation injection for the early-fault-tolerant "megaquop"
 regime — using QuEra's own published circuits and open-source tools
 (tsim, bloqade, stim).
 
-> **Status:** 🚧 started 2026-10-26. Chapters 1–7 drafted, including a
+> **Status (2026-10-27):** 🚧 Chapters 1–10 drafted, including a
 > four-chapter crash course (codes, magic states, Rydberg atoms, Trotter and
-> Jordan–Wigner). Protocol P01 (reproduce QuEra's uniform-noise STAR curve)
-> has run; its diagnosis is open.
-> [OUTLINE.md](OUTLINE.md) is the plan and the schedule;
-> [LEDGER.md](LEDGER.md) records every verdict.
+> Jordan–Wigner). Protocol P01 is settled. QuEra's published curve is
+> reproduced only under a decoder that drops faults flipping more than two
+> detectors (P01-R6), and its large-angle regime is a read-out artifact
+> (P01-R7). Protocol P02 (QuEra's Table II hardware noise, rebuilt on native
+> gates and validated) is running.
+>
+> **Where things stand, by date:** the
+> [project site](https://mamuncseru.github.io/star-on-atoms/) and
+> [PROGRESS.md](PROGRESS.md). [OUTLINE.md](OUTLINE.md) is the plan and the
+> schedule; [LEDGER.md](LEDGER.md) records every verdict.
 
 ## Why this exists
 

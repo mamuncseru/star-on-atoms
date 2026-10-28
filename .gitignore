@@ -40,3 +40,6 @@ scratch/
 # Local figure previews
 code/*/figures/
 code/*/_preview/
+
+# The project site's local build (make site); CI builds and deploys it.
+/site/

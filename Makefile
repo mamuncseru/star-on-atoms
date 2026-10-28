@@ -14,7 +14,7 @@ PYTHON ?= $(shell test -x $(HOME)/.venvs/star-book/bin/python && echo $(HOME)/.v
 export QUARTO_PYTHON := $(PYTHON)
 
 .PHONY: help check release fetch reference citations math structure citekeys \
-        results protocols test code kernel book html pdf clean
+        results protocols test code kernel book html pdf site clean
 
 help:
 	@echo "make fetch      download QuEra's STAR circuits, pinned + hash-checked"
@@ -24,6 +24,7 @@ help:
 	@echo "make book       render website + PDF into book/_book/"
 	@echo "make html       render the website only (fast)"
 	@echo "make pdf        render the PDF only"
+	@echo "make site       build the project site (mkdocs) into site/"
 	@echo "make kernel     register the star-book Jupyter kernel + capture env"
 	@echo "make clean      remove render output and the freeze cache"
 
@@ -96,5 +97,10 @@ html: fetch
 pdf: fetch
 	$(QUARTO) render book --to typst
 
+# The project site: progress, plan, ledger, protocols. Its front page is
+# assembled from PROGRESS.md by tools/mkdocs_hooks.py.
+site:
+	mkdocs build --strict --site-dir site
+
 clean:
-	rm -rf book/_book book/.quarto book/_freeze
+	rm -rf book/_book book/.quarto book/_freeze site

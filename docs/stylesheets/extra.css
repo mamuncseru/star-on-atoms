@@ -1,0 +1,212 @@
+/* STAR on Atoms -- the project site. The readability rules are the ones
+   the Quantum Advantage Quest site uses, so the two read as one family;
+   the progress components below are this site's own. */
+
+/* ---------- tokens ---------- */
+
+/* Status colours: the book's role palette (teal = accepted/done, amber =
+   the thing being moved now). Re-tuned for the dark scheme below. */
+:root {
+  --soa-done: #1baf7a;
+  --soa-now: #eda100;
+}
+
+/* Tokens built from Material's colours must be declared where the scheme
+   is (Material sets its colours on [data-md-color-scheme], not :root), or
+   they freeze at the light values and the dark scheme inherits them. */
+[data-md-color-scheme] {
+  --soa-next: var(--md-default-fg-color--lighter);
+  --soa-rail: var(--md-default-fg-color--lightest);
+  --soa-card: var(--md-code-bg-color);
+}
+
+[data-md-color-scheme="slate"] {
+  --soa-done: #3cc794;
+  --soa-now: #f0b429;
+}
+
+/* ---------- landing page ---------- */
+
+.md-typeset .soa-meta {
+  font-size: 0.72rem;
+  color: var(--md-default-fg-color--light);
+  margin-top: -0.4rem;
+}
+
+/* "Where we are": the status card the hook fills from PROGRESS.md. */
+.md-typeset .soa-status {
+  border-left: 4px solid var(--soa-now);
+  background: var(--soa-card);
+  padding: 0.2rem 1.1rem 0.4rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.md-typeset .soa-status .soa-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-default-fg-color--light);
+  margin: 0.7rem 0 -0.2rem;
+}
+
+/* The milestone timeline: date | dot on a rail | what. */
+.md-typeset ol.soa-timeline {
+  list-style: none;
+  margin: 1rem 0 0.6rem;
+  padding: 0;
+  position: relative;
+}
+
+.md-typeset ol.soa-timeline::before {
+  content: "";
+  position: absolute;
+  left: 6.15rem;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 2px;
+  background: var(--soa-rail);
+}
+
+.md-typeset ol.soa-timeline li {
+  display: grid;
+  grid-template-columns: 5.4rem 1.5rem 1fr;
+  align-items: start;
+  margin: 0 0 0.6rem;
+  line-height: 1.5;
+}
+
+.md-typeset .soa-date {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-default-fg-color--light);
+  text-align: right;
+  padding: 0.12rem 0.45rem 0 0;
+}
+
+.md-typeset .soa-dot {
+  position: relative;
+  z-index: 1;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin: 0.28rem auto 0;
+  border-radius: 50%;
+  border: 2px solid var(--soa-next);
+  background: var(--md-default-bg-color);
+}
+
+.md-typeset li.soa-done .soa-dot {
+  border-color: var(--soa-done);
+  background: var(--soa-done);
+}
+
+.md-typeset li.soa-now .soa-dot {
+  border-color: var(--soa-now);
+  background: var(--soa-now);
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--soa-now) 28%,
+                                       transparent);
+}
+
+.md-typeset li.soa-now .soa-what { font-weight: 600; }
+.md-typeset li.soa-next .soa-what { color: var(--md-default-fg-color--light); }
+
+.md-typeset .soa-pill {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  vertical-align: 0.08rem;
+  color: #1f1a0e;
+  background: var(--soa-now);
+}
+
+.md-typeset .soa-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0 0 1.2rem 6.15rem;
+  font-size: 0.66rem;
+  color: var(--md-default-fg-color--light);
+}
+
+.md-typeset .soa-key::before {
+  content: "";
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.35rem;
+  border-radius: 50%;
+  border: 2px solid var(--soa-next);
+  vertical-align: -0.05rem;
+}
+.md-typeset .soa-key.soa-done::before {
+  border-color: var(--soa-done); background: var(--soa-done);
+}
+.md-typeset .soa-key.soa-now::before {
+  border-color: var(--soa-now); background: var(--soa-now);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 30em) {
+  .md-typeset ol.soa-timeline::before { left: 4.85rem; }
+  .md-typeset ol.soa-timeline li {
+    grid-template-columns: 4.2rem 1.3rem 1fr;
+  }
+  .md-typeset .soa-legend { margin-left: 0; }
+}
+
+/* ---------- readability (shared with the Quest site) ---------- */
+
+/* Material's default h1/h2 are weight 300 in a light grey; on long
+   research pages they read as washed out. */
+.md-typeset h1 {
+  font-weight: 500;
+  color: var(--md-default-fg-color);
+}
+
+.md-typeset h2 {
+  font-weight: 500;
+}
+
+/* Blockquotes carry dated status lines (OUTLINE, README); the default
+   light grey made the most time-sensitive text the faintest. */
+.md-typeset blockquote {
+  color: var(--md-default-fg-color);
+}
+
+/* Material sets table text at 0.64rem; most tables here carry sentences,
+   not numbers. */
+.md-typeset table:not([class]) {
+  font-size: 0.7rem;
+  line-height: 1.55;
+}
+
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+  padding: 0.75em 0.8em;
+}
+
+/* ---------- content polish ---------- */
+
+figure {
+  margin: 1.4rem auto;
+}
+
+figcaption {
+  font-size: 0.78rem;
+  color: var(--md-default-fg-color--light);
+  max-width: 36rem;
+  margin: 0.5rem auto 0;
+}
