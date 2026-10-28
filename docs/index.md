@@ -62,7 +62,15 @@ result that would overturn it.
   against the rotation's branches reproduces 665 million sampled shots
   with no fitted parameter ([P03](protocols/P03-exact-first-order.md)).
   Only single *Z* faults on the rotated qubits survive post-selection.
-  Initialization, measurement and atom loss cost shots, never fidelity.
+  Initialization, measurement and atom loss cost shots, and no fidelity at
+  first order.
+- **The budget, tested blind.** The calculation's predictions, committed
+  before sampling, match every noise channel alone and d = 7, which had
+  never been sampled ([P04](protocols/P04-sampled-budget-blind-test.md)).
+  Single-qubit gates carry the largest share (43–52% at d = 3–7). Halving
+  their error buys ×1.32 in simulation volume at d = 5 (sampled: ×1.36).
+  The CZ's correlated *ZZ* error, its largest term, costs this injection
+  nothing.
 - **α is decided at large angles.** Composed through the paper's
   repeat-until-success sum (its Eq. 4), the injections at π/4 to π/16 carry
   61–79% of α. A budget measured there sets α.

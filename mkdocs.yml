@@ -87,5 +87,7 @@ nav:
   - Protocols:
       - "P01 · Reproduce QuEra's curve": protocols/P01-reproduce-uniform-star.md
       - "P02 · Table II re-noise": protocols/P02-renoise-table-ii.md
+      - "P03 · The exact first-order count": protocols/P03-exact-first-order.md
+      - "P04 · The budget, a blind test": protocols/P04-sampled-budget-blind-test.md
       - "The protocol template": protocols/TEMPLATE.md
   - About: about.md

@@ -112,8 +112,8 @@ author's request, from the interview topics the reviewers named.
 |---|---|---|---|
 | 10 | Reproducing QuEra's curve | ✅ | P01 (REPORTED 2026-10-27: refuted as registered; see LEDGER) |
 | 11 | Re-noising: Table II in stim, validated | ✅ | P02 (REPORTED 2026-10-27: H2 confirmed) |
-| 12 | An error budget for STAR injection: the exact first-order calculation, the sampled budget, what halving buys | 🚧 | P03 (REPORTED 2026-10-27: confirmed), P04 (running) |
-| 13 | Threats to validity | ⬜ | — |
+| 12 | An error budget for STAR injection: the exact first-order calculation, the sampled budget, what halving buys | ✅ drafted | P03 (REPORTED 2026-10-27: confirmed), P04 and P04-R1 (REPORTED 2026-10-28: confirmed) |
+| 13 | Threats to validity | ✅ drafted | P02–P04 deviations and readings |
 
 ### Part V — After the application (deferred 2026-10-27; nothing here starts before the submission)
 | Ch | Title | Status | Protocol |
@@ -151,8 +151,8 @@ project chapters assume it.
 | Tue 10-27 | **Ch 2** codes & transversal gates | P01 diagnostics R3–R7 (cause found: R6 decoder, R7 read-out artifact); Ch 10; advisors consulted; volume exponent fixed | ✅ P01 settled in LEDGER.md |
 | Tue 10-27 (evening, pulled forward) | — | Repo pushed (public); QAQ fix pushed; tsim issue finalised for the author; Ch 8; `starlab/renoise.py` validated (V1 exact at d = 3, 5, 7); **P02 registered and run** | ✅ P02 committed before its first sample |
 | Tue 10-27 (night) | — | GPU inquiry + advisor consultation 2 (no GPU before submission); **P03 registered and CONFIRMED** (exact first-order calculation reproduces P02); **P04 registered** with committed predictions and launched; schedule brought forward | ✅ P03 in LEDGER |
-| Wed 10-28 | **Ch 7** memory, matching & DEMs; Ch 11's misrotation whiteboard; the enumeration whiteboard (Ch 12) | P04 analysis → LEDGER; **Ch 12** (exact budget, sampled check, what halving buys, d = 3–15, CZ-term sensitivities) and its headline figure; site | Ch 12 committed |
-| Thu 10-29 | Core whiteboards cold, day 1; **mock interview #1** (agent as interviewer) | **Ch 13** threats; the 2–3 page note; README headline; prior-art reading for Ch 12's wording (2303.17380, 2408.14848 App., 2609.12698) | note drafted |
+| Wed 10-28 | **Ch 7** memory, matching & DEMs; Ch 11's misrotation whiteboard; the enumeration whiteboard (Ch 12) | P04 analysis → LEDGER; **Ch 12** (exact budget, sampled check, what halving buys, d = 3–15, CZ-term sensitivities) and its headline figure; **Ch 13** drafted a day early; site | ✅ P04, P04-R1 in LEDGER; Ch 12, 13 committed |
+| Thu 10-29 | Core whiteboards cold, day 1; **mock interview #1** (agent as interviewer) | the 2–3 page note; README headline; prior-art reading for Ch 12's wording (2303.17380, 2408.14848 App., 2609.12698) | note drafted |
 | **Fri 10-30** | Tick-or-remove pass on every Agent Log (author) | **FREEZE.** `make release`; book PDF on the site; repo final | `make release` green |
 | Sat 10-31 | Core whiteboards cold, day 2; fix site title, resume header, pinned repos | Cover letter (`application/`); re-run the two hiring reviewers on the frozen artifact | verdicts recorded |
 | Sun 11-01 | **Mock interview #2**, with a human if possible | buffer | — |

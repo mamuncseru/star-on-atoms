@@ -8,17 +8,16 @@ edit.
 
 ## Now
 
-**The error budget, sampled as a blind test
-([Protocol P04](protocols/P04-sampled-budget-blind-test.md)).** An exact
-first-order calculation now reproduces everything P02 sampled, with no
-fitted parameter ([P03](protocols/P03-exact-first-order.md)). Its
-per-channel predictions were committed before sampling. P04 now samples
-each Table II channel alone, the top channel halved, a second angle, and
-d = 7, which no protocol had sampled before. Every number is scored
-against the prediction already in the repository.
+**Writing it up.** The blind test passed
+([P04](protocols/P04-sampled-budget-blind-test.md), CONFIRMED). The
+calculator's predictions were committed before any shot was sampled. They
+match every Table II channel alone, the top channel halved, a second
+angle, and d = 7, which no protocol had sampled. The error-budget and
+threats chapters are drafted.
 
-**Next:** the error-budget chapter, then the threats chapter and a short
-note. The schedule moved earlier: **results freeze Fri 2026-10-30.**
+**Next:** a short note (2–3 pages) for readers who will not open the
+book, the README headline, and a first mock interview. **Results freeze
+Fri 2026-10-30.**
 
 ## Milestones
 
@@ -29,12 +28,42 @@ note. The schedule moved earlier: **results freeze Fri 2026-10-30.**
 | 2026-10-27 | Re-noiser validated against the published error model; P02 registered | ✅ |
 | 2026-10-27 | P02 reported: one constant times the misrotation shape fits both noise models | ✅ |
 | 2026-10-27 | P03: an exact first-order calculation reproduces P02 with no free parameter | ✅ |
-| 2026-10-27 | P04: the sampled error budget, a blind test of the calculation (d = 3, 5, 7) | 🚧 |
-| 2026-10-28 | Error-budget chapter and its headline figure | ⬜ |
-| 2026-10-29 | A short note (2–3 pages); threats to validity | ⬜ |
+| 2026-10-28 | P04: the sampled error budget, a blind test of the calculation (d = 3, 5, 7) | ✅ |
+| 2026-10-28 | Error-budget chapter and its headline figure; threats to validity | ✅ |
+| 2026-10-29 | A short note (2–3 pages); README headline; mock interview #1 | ⬜ |
 | 2026-10-30 | Freeze: results final, book PDF released | ⬜ |
 
 ## Log
+
+### 2026-10-28 · The blind test passes; the CZ's largest error is free
+
+-   **[P04](protocols/P04-sampled-budget-blind-test.md) CONFIRMED.** Every
+    prediction was committed before sampling (552 million shots, 79
+    minutes).
+    -   On all nine main arms, measured ÷ predicted lies between 0.95 and
+        1.10.
+    -   **d = 7, never sampled before:** 2.60×10⁻⁴ measured against
+        2.53×10⁻⁴ predicted.
+    -   Rows the calculation puts at exactly zero (initialization,
+        measurement, loss) sample a few errors, all below 0.7% of the
+        total. So they are zero at first order, not zero.
+-   **What halving buys.** Halving single-qubit-gate error multiplies the
+    simulation volume by 1.32 at d = 5. Sampled: 1.36 (1.21–1.52).
+    Halving spectator or CZ error buys 1.13–1.18.
+-   **Inside the CZ ([R1](protocols/P04-sampled-budget-blind-test.md),
+    CONFIRMED).** The CZ's correlated *ZZ* error, its largest term, costs
+    this injection nothing: 2 errors in 11 million accepted shots.
+    -   Every ancilla is prepared and measured in *X*, so the ancilla half
+        of a *ZZ* is always caught. A new test checks this one planted
+        fault at a time.
+    -   The same test found a piece the registration missed: an *X* on an
+        ancilla also hides, by spreading to the data.
+-   **Where first order bends.** At today's full hardware rates it is
+    10% low. The derivation in the threats chapter turns that into about
+    1% at the operating point.
+-   Chapters [12](book/chapters/part4/ch12-error-budget.qmd) (the error
+    budget) and [13](book/chapters/part4/ch13-threats.qmd) (threats to
+    validity) are drafted.
 
 ### 2026-10-27 (late night) · No GPU; an exact calculation instead
 
