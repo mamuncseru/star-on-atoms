@@ -1,6 +1,6 @@
 # Protocol P03: the exact first-order injection error, tested against P02
 
-- **Status:** COMMITTED
+- **Status:** REPORTED
 - **Chapter:** 12
 - **Registered:** 2026-10-27
 - **Artifacts:** p03_exact_vs_p02
@@ -104,4 +104,39 @@ One deterministic pass over the 32 points. There is no rerun.
 
 ## Deviations
 
-None yet.
+**2026-10-27, wording.** "Reported, not pass/fail" calls the χ² test
+"P02's 32 grid counts … (32 dof)". P02 has 24 grid points plus 8 variant
+points. The runner computed χ² over the 24 grid points (24 dof). Both
+versions are reported below. Neither is a criterion.
+
+**2026-10-27, after the run: the result.** One deterministic pass, 3.8 s
+in total. No deviation from method.
+
+- **CONFIRMED.**
+
+  | d | Model | A_C/p | A_P02/p | Ratio (window ×[0.92, 1.08]) |
+  |---|---|---|---|---|
+  | 3 | U | 6.256 | 6.441 | 0.971 |
+  | 3 | T | 3.424 | 3.411 | 1.004 |
+  | 5 | U | 8.588 | 8.542 | 1.005 |
+  | 5 | T | 4.693 | 4.925 | 0.953 |
+
+  Variants: **8/8** predicted ratios inside P02's Katz intervals:
+  - T-naiveH: 1.234 (d = 3), 1.228 (d = 5);
+  - T-datamove: 1.041, 1.036;
+  - T-pairloss: 1.000, 1.000;
+  - T-ffnoise: 1.156, 1.171.
+- **Reported.**
+  - **χ²:** 27.0 over the 24 grid points (p = 0.30); 35.0 over all 32
+    points (p = 0.33).
+  - **m = 1 share: 100% at every point.** No fault at m ≥ 2 survives at
+    all, beyond the registered ≥ 99%.
+  - **Census at π/16, Table II:** 3 of 271 symptom classes survive at
+    d = 3, and 5 of 955 at d = 5, one per rotated qubit. Every other
+    mechanism is detected.
+  - **Additivity over Table II rows:** Σ ÷ all-on = 1.0008 (d = 3),
+    1.0007 (d = 5).
+  - **Residual at π/128, uniform model:** P02 lies above C by 14% at
+    d = 3, outside P02's Wilson interval, and by 8% at d = 5, inside it.
+    This is the expected sign of a second-order, θ-independent term. It
+    shows first only where first order is smallest.
