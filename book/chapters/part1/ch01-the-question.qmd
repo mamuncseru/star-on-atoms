@@ -176,7 +176,9 @@ The work runs in four steps, each gated on the one before.
 3. **Budget.** Switch each channel on alone, under the paper's own
    hardware model, and measure its share of the injection error and of
    the acceptance loss; check additivity, and check the first-order
-   prediction by halving the largest shares (Protocol P03, Chapter 12).
+   prediction by halving the largest share. In the event, an exact
+   first-order calculation (Protocol P03) gave the budget first, and the
+   sampled budget became its blind test (Protocol P04, Chapter 12).
 4. **Propagate.** Turn the measured shares into volume gains with the
    whiteboard above, and check the first-order model against the direct
    measurements (Chapter 13). Then list every way the answer could be wrong

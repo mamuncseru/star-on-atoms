@@ -264,8 +264,8 @@ two-fault term would first show, if a later protocol goes to smaller angles.
 What H2 licenses is the design of the next protocol. A noise channel can
 change only $A$, not the shape, so its share of the injection error is the
 same at every angle. Chapter 9 showed that the same share then carries
-through Eq. 4 into $\alpha$. Protocol P03 can therefore measure the error
-budget at one angle.
+through Eq. 4 into $\alpha$. The error budget can therefore be measured at
+one angle (Chapter 12).
 
 ## The hardware model at the same $p_{\text{ph}}$
 
@@ -287,7 +287,7 @@ injection error of the uniform model: $A_T / A_U = 0.53$ at $d = 3$ and
 but at its low edge. The headline $p$ alone does not set the injection
 error; the mix does.
 
-The whiteboard suggests why, though P03, not this chapter, will test it.
+The whiteboard suggests why; Chapter 12's budget tests it.
 Only a net pure-$Z$ on the data survives post-selection. At equal
 $p_{\text{ph}}$, Table II puts more $Z$ into the CZ than uniform
 depolarizing does. But it puts much less into everything else:
