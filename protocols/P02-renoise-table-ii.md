@@ -200,4 +200,36 @@ when every point has stopped, or at the ceiling.
 
 ## Deviations
 
-None yet.
+**2026-10-27, after registration, while the run was in progress and before
+any of its results were read: attribution, no change of method.**
+
+The mechanism behind H2 is the paper's, not this book's. Sec. III C 3 of
+arXiv:2509.18294v2 (pp. 10–11) writes the injection infidelity as Eq. 2:
+
+  1 − F ≈ P_θ* ε_Z,t + Σ_j P_θ*,j [(1 − ε_tot,j) sin²(Δ_j) + ε_Z,j cos²(Δ_j)],
+
+where:
+- j runs over the wrong angles that post-selection can let through;
+- Δ_j = (θ − θ_j)/2 is the misrotation;
+- the second term "scaling as O(p_ph θ^(2(1 − 1/k))), is the main term
+  contributing to infidelity and it stems from the coherent misrotation
+  error … the physical Z error interferes with the wrong-angle
+  postselection".
+
+`starlab.branch_flip_shape` is that wrong-angle term evaluated in closed
+form for the one-Z-fault wrong angle of the k = d teaching circuits:
+- the survival factor gives P_θ*,j up to the fault rate;
+- sin²(atan t^(k − 2) + atan t^k) gives sin²(Δ_j);
+- its small-angle power, θ^(2 − 2/k), is the paper's θ^(2(1 − 1/k)).
+
+The book's contribution is therefore narrower than the protocol's wording
+suggests:
+- the exact shape at every angle, not only its leading power;
+- the fault-injection test that checks both factors on the published
+  circuits;
+- the measurement of whether one constant fits both models.
+
+Chapter 11 states this attribution. H2, its criterion and its budget are
+unchanged. The protocol's sentence contrasting θ^(2 − 2/d) with "the αpθ
+the paper derives" stands: the paper's αpθ law is for the teleported
+rotation's trace-distance error, and the paper itself contrasts the two.
