@@ -142,6 +142,75 @@ def test_one_z_fault_flips_the_branches_as_derived():
         assert abs(slope - (2 - 2 / k)) < 0.01, (k, slope)
 
 
+def test_branch_weight_limits_and_m1():
+    from starlab.enumerate import branch_weight
+    for k in (3, 5, 7):
+        for theta in (0.01, 0.1, math.pi / 16, math.pi / 4):
+            assert math.isclose(branch_weight(theta, k, 1),
+                                starlab.branch_flip_shape(theta, k),
+                                rel_tol=1e-12)
+            assert branch_weight(theta, k, 0) < 1e-15
+            assert math.isclose(branch_weight(theta, k, k), 1.0,
+                                rel_tol=1e-12)
+
+
+def _planted(d, theta, line):
+    """The noiseless native circuit with one fault line after the R_Z."""
+    from starlab import renoise as rn
+    clean = rn.renoise(starlab.star_text(d, theta), d, ())
+    rz = re.search(r"^R_Z\(.*\)((?:\s+\d+)+)$", clean, re.M)
+    return clean[:rz.end()] + "\n" + line + clean[rz.end():], clean
+
+
+def test_enumeration_classifies_planted_faults():
+    # Unit tests of the matching logic only: each circuit carries one
+    # planted fault and no noise model, so no P02 quantity is computed.
+    from starlab.enumerate import branch_table, matches
+    theta = 0.3
+    for d in (3, 5):
+        _, clean = _planted(d, theta, "")
+        rotated, table = branch_table(clean)
+        assert len(rotated) == d and len(table) == 2 ** (d - 1)
+        for j in rotated:
+            found, _ = matches(_planted(d, theta, f"Z_ERROR(0.001) {j}")[0],
+                               clean)
+            assert [(f.m, set(f.subset)) for f in found] == [(1, {j})]
+            found, census = matches(
+                _planted(d, theta, f"X_ERROR(0.001) {j}")[0], clean)
+            assert found == [] and census["detected"] == 1
+    _, clean = _planted(3, theta, "")
+    # Z0 Z1 is a boundary Z-stabilizer at d = 3, so Z1 acts as Z0.
+    found, _ = matches(_planted(3, theta, "Z_ERROR(0.001) 1")[0], clean)
+    assert [(f.m, set(f.subset)) for f in found] == [(1, {0})]
+    # Two rotated qubits: m = 2, picked by the observable bit.
+    found, _ = matches(_planted(3, theta, "E(0.001) Z0 Z3")[0], clean)
+    assert [(f.m, set(f.subset)) for f in found] == [(2, {0, 3})]
+    # The whole string is a logical Z: undetectable, always fails.
+    found, _ = matches(_planted(3, theta, "E(0.001) Z0 Z3 Z6")[0], clean)
+    assert [(f.m, set(f.subset)) for f in found] == [(3, {0, 3, 6})]
+
+
+def test_branch_weight_m2_against_tsim():
+    # The m = 2 weight checked on the real circuit, as the m = 1 weight is
+    # in test_one_z_fault_flips_the_branches_as_derived.
+    import tsim
+    from starlab.enumerate import branch_weight
+    shots, theta, k = 40_000, 0.3, 3
+    text, _ = _planted(k, theta, "E(1) Z0 Z3")
+    dets, obs = tsim.Circuit(text).compile_detector_sampler(
+        seed=9).sample(shots, separate_observables=True)
+    keep = ~np.asarray(dets, bool).any(axis=1)
+    half = abs(starlab.physical_angle(theta / math.pi, k)) * math.pi / 2
+    c, s = math.cos(half), math.sin(half)
+    survive = c ** 2 * s ** 4 + c ** 4 * s ** 2
+    wrong = branch_weight(theta, k, 2) * (c ** 6 + s ** 6) / survive
+    for got, want, n in ((keep.mean(), survive, shots),
+                         (np.asarray(obs, bool)[keep, 0].mean(), wrong,
+                          keep.sum())):
+        assert abs(got - want) < 5 * math.sqrt(want * (1 - want) / n), \
+            (got, want)
+
+
 def _symptoms(text):
     """A circuit's detector error model as {symptom: probability}, with
     repeated symptoms merged, so two models compare regardless of order."""
