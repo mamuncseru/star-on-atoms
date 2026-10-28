@@ -35,6 +35,7 @@ book:
     - part: "Part IV — The Experiment"
       chapters:
         - chapters/part4/ch10-reproducing-queras-curve.qmd
+        - chapters/part4/ch11-renoising.qmd
 
   appendices:
     - appendices/appA-reproducing-this-book.qmd

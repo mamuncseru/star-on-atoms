@@ -1,0 +1,400 @@
+# Re-noising: Table II on the Native Gates, Validated {#sec-renoise}
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Rebuild a CNOT circuit on CZ and Hadamards, and say which Hadamards
+   survive and why that is a modelling choice.
+2. Explain why "the uniform model through my rebuild reproduces the
+   published error model, fault for fault" is the right validation, and
+   why it needs a negative control.
+3. Derive, at a whiteboard, how one $Z$ fault on a rotated qubit becomes an
+   undetectable misrotation, and why its rate grows as
+   $\theta^{2 - 2/k}$.
+4. Read Protocol P02's verdict and say what it licenses for the error
+   budget of Chapter 12.
+:::
+
+```{python}
+#| include: false
+import json
+import math
+import pathlib
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.style.use("../../styles/star.mplstyle")
+sys.path.insert(0, "../../styles")
+import palette
+
+_here = pathlib.Path.cwd()
+ROOT = next(p for p in (_here, *_here.parents) if (p / "starlab").is_dir())
+sys.path.insert(0, str(ROOT))
+import starlab
+from starlab import renoise as rn
+
+RESULTS = ROOT / "data" / "results"
+val = json.loads((RESULTS / "p02_validation.json").read_text())
+p02 = json.loads((RESULTS / "p02_injection_error.json").read_text())
+pts = p02["points"]
+ana = p02["analysis"]
+```
+
+## What changes, and what must not
+
+Chapter 10 ended with two lessons. The published circuits' large-angle
+error is mostly memory read out through a perfect unrotation, so from
+here on the book measures the **injection error** alone: noise only up
+to the last post-selected round, every detector post-selected, no
+decoder. And the published noise is uniform, while the paper's own
+results use the hardware model of Chapter 8. This chapter builds that
+model into the circuits (Protocol P02) and asks the first question of it.
+
+Rebuilding a circuit is the step most likely to go silently wrong. The
+noise might land one tick late, or a Hadamard might cancel across a gate
+it should not cross; any such mistake changes every number downstream,
+and nothing would warn us. So the rebuild is checked before it is used.
+
+## From CNOT to CZ
+
+The atoms have no CNOT. Each `CX c t` becomes `H t · CZ c t · H t`, and
+that adds Hadamards. Many of them are redundant. A $Z$-check ancilla is
+the target of four CNOTs in a row, so its inner Hadamards meet in pairs
+and cancel; the outer two fold into its reset and measurement
+($R \cdot H = R_X$, $H \cdot M = M_X$). That is how the paper's Fig. 12
+draws syndrome extraction, and it is this book's default (`minimal`).
+The Hadamards that remain sit on data qubits, between the CZs of
+$X$-checks. The `naive` variant keeps every Hadamard the rule produces,
+each with its 1q-gate noise.
+
+```{python}
+#| echo: false
+h = val["V3"]["hadamards"]
+print(f"{'':<14}{'injection window':>18}{'all noisy rounds':>18}")
+for key, row in h.items():
+    print(f"{key:<14}{row['injection_window']:>18}"
+          f"{row['all_noisy_rounds']:>18}")
+```
+
+## The check that makes it trustworthy
+
+The test is simple to state. Put the *published* uniform model through the
+rebuild, then compare its detector error model with the published
+circuit's. Each model lists every fault mechanism the circuit can
+suffer, which detectors and observable it flips, and its probability. If
+the rebuild places noise correctly, the two lists must agree exactly:
+same mechanisms, same probabilities.
+
+```{python}
+#| echo: false
+for r in val["V1"]:
+    print(f"d={r['d']}  {r['hadamards']:<8}{r['mover']:<8}"
+          f"{r['symptoms']:>6} mechanisms   max |dp| = "
+          f"{r['max_abs_gap']:.1e}")
+print("negative controls (drop one role, d = 3):")
+for role, gap in val["V1_negative_controls"].items():
+    print(f"  without {role:<12} max |dp| = {gap:.1e}")
+```
+
+Every variant reproduces the published model to the last bit, at $d = 3$,
+5 and 7. A check that always passes proves nothing, so the negative
+controls matter as much: drop any one placement rule and the comparison
+fails by orders of magnitude. The test suite adds two more checks. With no
+noise, the rebuilt circuits accept at the ideal rate and never fail. And
+one certain $Z$ fault does exactly what the next whiteboard says it does.
+
+## One $Z$ fault, two branches
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — How one Z fault becomes an invisible misrotation"}
+**The branches.** Rotating each of the $k$ qubits on a logical-$Z$ string
+by $\theta^*$ multiplies the patch by
+$\prod_j (c\,I - i s\,Z_j)$, with $c, s = \cos, \sin(\theta^*/2)$. Expand
+the product: a sum over subsets $S$ of the string, with amplitude
+$c^{k-|S|} (-is)^{|S|}$ on $Z_S$. A partial string anticommutes with some
+$X$-check, so post-selection discards every term except $S = \{\}$ and
+$S = $ all, the logical $Z$. That leaves a logical rotation with
+$\tan(\theta/2) = \pm t^k$, where $t = s/c$ (Chapter 6).
+
+**The fault.** Now let one $Z$ error hit rotated qubit $j$ before the next
+$X$-check reads it. It multiplies every branch by $Z_j$:
+$Z_S \to Z_{S \triangle \{j\}}$. The survivors are now the branches that
+*become* trivial: $S = \{j\}$ and $S = $ all-but-$j$. Post-selection
+cannot tell: every detector reads 0.
+
+**The cost.** Those branches survive with probability
+$s^2 c^{2k-2} + c^2 s^{2k-2}$ (against $c^{2k} + s^{2k}$ without the
+fault), and they carry a rotation with $\tan(\varphi/2) = \mp t^{k-2}$:
+the wrong size *and* the opposite sign. After the perfect unrotation, the
+read-out fails with probability
+$\sin^2(\arctan t^{k-2} + \arctan t^k)$.
+
+**The shape.** The product of the two is $f_k(\theta)$,
+`starlab.branch_flip_shape`. For small angles, $t^k \propto \theta$, so
+$f_k \propto t^2 \cdot t^{2(k-2)} = t^{2k-2} \propto \theta^{2-2/k}$.
+
+**The point to say out loud.** Only a net $Z$ on the data can do this. An
+$X$ or $Y$ on the data trips a $Z$-check and is thrown away, so it costs
+acceptance, not fidelity. A channel matters through the faults that leave
+a pure $Z$ on the data, and those include an $X$ on a $Z$-check ancilla
+(prepared in $|+\rangle$), which its CZs copy onto the data as $Z$. Those
+faults set the constant in front of $f_k$; no single fault can change its
+shape.
+:::
+
+This mechanism is the paper's. Its Eq. 2 writes the injection
+infidelity as a sum over the wrong angles that post-selection lets
+through, each weighted by $\sin^2$ of its misrotation, and names the
+leading term "coherent misrotation … the physical $Z$ error interferes
+with the wrong-angle postselection", scaling as
+$O(p_{\text{ph}} \theta^{2(1-1/k)})$ [@ismail2026transversal]. What this
+book adds is narrower: the exact shape at every angle for the $k = d$
+teaching circuits, a test that checks both of its factors on the
+published circuits, and a measurement of whether one constant fits.
+
+```{python}
+print("f_k at theta = pi/4, pi/8, ..., pi/128:")
+for k in (3, 5):
+    row = " ".join(f"{starlab.branch_flip_shape(math.pi / 2**n, k):.1e}"
+                   for n in range(2, 8))
+    print(f"  k={k}: {row}")
+```
+
+## The measurement
+
+Protocol P02 (`protocols/P02-renoise-table-ii.md`) measures the injection
+error of the $d = 3$ and $d = 5$ circuits at six angles, $\pi/4$ down to
+$\pi/128$, under two models at the same headline strength:
+
+- **U**, the published uniform model, $p = 10^{-3}$;
+- **T**, Table II scaled so that $p_{\text{ph}} = 10^{-3}$.
+
+Noise acts only in the injection window, every detector is post-selected,
+and nothing is decoded. Each point ran until it had 400 errors, or hit its
+shot cap. The registered test (H2) is whether one constant $A$ per
+(distance, model) makes $A\,f_d(\theta)$ match all six points to within a
+factor 1.5.
+
+::: {.callout-tip .evidence title="🔬 Evidence — P02, as registered"}
+```{python}
+#| echo: false
+grid = [p for p in pts if p["role"] == "grid"]
+print(f"{'d':>2}{'model':>6}{'theta':>9}{'errors':>7}{'accepted':>11}"
+      f"{'rate':>10}{'rate/(p f)':>11}")
+for p in grid:
+    print(f"{p['d']:>2}{p['model']:>6}{p['theta_rad']:>9.2e}"
+          f"{p['logical_errors']:>7}{p['shots']:>11}"
+          f"{p['logical_error_rate']:>10.2e}"
+          f"{p['logical_error_rate'] / p['shape'] / 1e-3:>11.2f}")
+print()
+print(f"H2 (shape): {ana['H2_shape']['verdict']}")
+for s in ana["H2_shape"]["per_pair"]:
+    print(f"  d={s['d']} {s['model']}: spread {s['spread']:.3f} "
+          f"(limit 1.5) over {len(s['usable_n'])} points; "
+          f"A/p = {s['A'] / 1e-3:.2f}")
+```
+Every rate carries a 95% Wilson interval in
+`data/results/p02_injection_error.json`. Points at $\pi/128$ hit the shot
+cap with 168–401 errors, above the registered 100-error floor.
+:::
+
+```{python}
+#| fig-cap: "P02. Top: the injection error against the logical angle under Table II at p_ph = 10⁻³ (blue, circles, solid) and the published uniform model at p = 10⁻³ (slate, diamonds, dashed); bars are 95% Wilson intervals, and each line is one fitted constant times the misrotation shape f_d. Bottom: the same points divided by p f_d(θ). A flat row is the registered hypothesis; each shaded band spans the registered factor of 1.5, centred on its fit."
+fig, axes = plt.subplots(2, 2, figsize=(6.4, 5.2), sharex=True,
+                         sharey="row")
+fine = np.geomspace(math.pi / 160, math.pi / 3.6, 120)
+fits = {(s["d"], s["model"]): s["A"] for s in ana["H2_shape"]["per_pair"]}
+for col, d in enumerate((3, 5)):
+    top, bottom = axes[0, col], axes[1, col]
+    for model, role, label in (("T", "quantum", "Table II"),
+                               ("U", "classical", "uniform")):
+        st = palette.style(role)
+        sel = [p for p in pts if p["d"] == d and p["model"] == model
+               and p["role"] == "grid"]
+        th = np.array([p["theta_rad"] for p in sel])
+        r = np.array([p["logical_error_rate"] for p in sel])
+        lo = np.array([p["wilson_95"][0] for p in sel])
+        hi = np.array([p["wilson_95"][1] for p in sel])
+        f = np.array([p["shape"] for p in sel])
+        a = fits[(d, model)]
+        curve = [a * starlab.branch_flip_shape(x, d) for x in fine]
+        top.plot(fine, curve, color=st["color"], dashes=st["dashes"],
+                 lw=1.4, label=label)
+        top.errorbar(th, r, yerr=[r - lo, hi - r], ls="none",
+                     marker=st["marker"], color=st["color"], ms=4.5,
+                     capsize=2, mec=palette.PAPER, mew=0.8)
+        k = 1e-3
+        bottom.axhspan(a / k / 1.5 ** 0.5, a / k * 1.5 ** 0.5,
+                       color=st["color"], alpha=0.10, lw=0)
+        bottom.axhline(a / k, color=st["color"], dashes=st["dashes"],
+                       lw=1.2)
+        bottom.errorbar(th, r / f / k, yerr=[(r - lo) / f / k,
+                                             (hi - r) / f / k],
+                        ls="none", marker=st["marker"], color=st["color"],
+                        ms=4.5, capsize=2, mec=palette.PAPER, mew=0.8)
+        bottom.annotate(f"{label}: A/p = {a / k:.1f}",
+                        (fine[0], a / k * 1.5 ** 0.5),
+                        textcoords="offset points", xytext=(0, 2),
+                        va="bottom", fontsize=8, color=palette.INK)
+    top.set_title(f"d = {d}", fontsize=10)
+    top.set_yscale("log")
+    bottom.set_xscale("log")
+    bottom.set_ylim(0, 12)
+    bottom.set_xlabel(r"logical angle $\theta$ (rad)")
+axes[0, 0].set_ylabel("injection error")
+axes[1, 0].set_ylabel(r"rate / ($p\, f_d$)")
+axes[0, 0].legend(loc="lower right", fontsize=8, frameon=False)
+fig.tight_layout()
+plt.show()
+```
+
+## One constant fits
+
+The verdict is **H2 CONFIRMED**. Across a factor of 150 to 400 in rate,
+from $\pi/4$ to $\pi/128$, the ratio of rate to shape varies by at most a factor
+of 1.15 in every one of the four (distance, model) pairs. The registered
+limit was 1.5. The paper's misrotation term, evaluated exactly, is the
+whole injection error of these circuits at these angles, under both noise
+models. The one pattern worth a second look: under uniform noise the
+smallest angle sits 8–11% above the fit at both distances. That is inside
+the point's interval, and it is where a $\theta$-independent
+two-fault term would first show, if a later protocol goes to smaller angles.
+
+What H2 licenses is the design of the next protocol. A noise channel can
+change only $A$, not the shape, so its share of the injection error is the
+same at every angle. Chapter 9 showed that the same share then carries
+through Eq. 4 into $\alpha$. Protocol P03 can therefore measure the error
+budget at one angle.
+
+## The hardware model at the same $p_{\text{ph}}$
+
+```{python}
+#| echo: false
+s_k = {k: sum(2**j * starlab.branch_flip_shape(math.pi / 2**j, k)
+              for j in range(2, 60)) / math.pi for k in (3, 5)}
+print(f"{'':>6}{'A/p (U)':>9}{'A/p (T)':>9}{'T / U':>7}"
+      f"{'alpha (U)':>11}{'alpha (T)':>11}")
+for d in (3, 5):
+    u, t = fits[(d, "U")] / 1e-3, fits[(d, "T")] / 1e-3
+    print(f"{'d=' + str(d):>6}{u:>9.2f}{t:>9.2f}{t / u:>7.2f}"
+          f"{u * s_k[d]:>11.1f}{t * s_k[d]:>11.1f}")
+```
+
+At the same combined error, QuEra's hardware model gives **about half** the
+injection error of the uniform model: $A_T / A_U = 0.53$ at $d = 3$ and
+0.58 at $d = 5$. That is inside the registered expectation of $[0.5, 2]$,
+but at its low edge. The headline $p$ alone does not set the injection
+error; the mix does.
+
+The whiteboard suggests why, though P03, not this chapter, will test it.
+Only a net pure-$Z$ on the data survives post-selection. At equal
+$p_{\text{ph}}$, Table II puts more $Z$ into the CZ than uniform
+depolarizing does. But it puts much less into everything else:
+- spectators carry $1.7 \times 10^{-4}$ of $Z$, against $3.3 \times 10^{-4}$
+  for a uniform idle;
+- single-qubit gates carry $1.3 \times 10^{-4}$, against $3.3 \times 10^{-4}$;
+- the feed-forward and the idles carry none at all.
+
+The last two columns run each $A$ through Eq. 4 (Chapter 9) with a
+noiseless teleportation CNOT. For these teaching circuits, $\alpha$ is about
+8.5 under Table II and about 15 under uniform noise. The paper reports
+$\alpha \approx 1.5$ at $d = 7$. That figure is for its own optimised
+protocol: $k = 3$, two initialization rounds, tuned against the $Z$ bias.
+The comparison measures how much that optimisation buys, not a
+disagreement.
+
+## The readings the paper leaves open
+
+```{python}
+#| echo: false
+expect = {"T-naiveH": "raises it", "T-datamove": "< 10% change",
+          "T-pairloss": "< 10%, acc. up", "T-ffnoise": "none registered"}
+print(f"{'d':>2} {'variant':<11}{'error ratio':>12}{'95% CI':>15}"
+      f"{'acc.':>7}  expected")
+for e in ana["E2_variants_vs_T"]:
+    lo, hi = e["ci95"]
+    print(f"{e['d']:>2} {e['variant']:<11}{e['ratio']:>12.2f}"
+          f"   [{lo:.2f}, {hi:.2f}]{e['acceptance_ratio']:>7.2f}"
+          f"  {expect[e['variant']]}")
+```
+
+Each variant changes one reading and is compared with T at $\pi/16$:
+
+- **Keeping every Hadamard** (`naive`) raises the injection error by 20–25%
+  and cuts acceptance. As expected: the extra Hadamards sit on data
+  qubits, and a third of their depolarizing noise is $Z$. How the CNOTs
+  are compiled is a real part of the budget, not a detail.
+- **Moving the data atom instead of the ancilla** changes nothing
+  measurable: $+1\%$ and $+11\%$, with both intervals containing 1. At
+  $d = 5$ the point estimate sits just past the registered "< 10%", and this
+  budget cannot resolve it either way.
+- **Loss on the pair only**, not on spectators, lowers the error by
+  4–7%, inside its intervals, and *raises acceptance* by 1–3%. This is the
+  whiteboard's prediction in miniature: loss is a $Y$ error, post-selection
+  throws it away, and it costs shots, not fidelity.
+- **Charging the feed-forward a 1q gate** raises the error by about 15%.
+  No expectation was registered. The feed-forward sits on the rotated
+  qubits just before the rotation, the most sensitive place in the
+  circuit, so whether real hardware applies it physically or folds it into
+  the rotation's sign is worth 15%. It goes on Chapter 13's list of threats.
+
+Acceptance runs at 0.81–0.84 of the noiseless ideal at $d = 3$, and
+0.55–0.60 at $d = 5$, under both models: the larger patch has more places
+for a detectable fault.
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 11"}
+**Delegated to the agent (Claude, 2026-10-27).** `starlab/renoise.py` and
+its tests; the derivation of `branch_flip_shape` and the fault-injection
+test; Protocol P02 and its runner; the run; this chapter.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] The whiteboard, cold: the branch sum, what one $Z$ fault does to
+  it, and the $\theta^{2-2/k}$ power.
+- [ ] One `CX` and its `H · CZ · H` rebuild, multiplied out as matrices.
+- [ ] The V1 table regenerated by `python tools/measure_p02.py` (first
+  stage) or `tests/test_starlab.py`.
+- [ ] The attribution: Eq. 2 and Sec. III C 3 of the paper, read in the
+  PDF.
+- [ ] H2's spreads and the A/p values, recomputed from
+  `data/results/p02_injection_error.json` by `tools/analyze_p02.py`.
+- [ ] The Z content per channel quoted in "The hardware model at the same
+  p_ph", recomputed from Table II and s = 0.134.
+
+**Caught.** The agent derived the misrotation shape before noticing that
+the paper had already named the mechanism and its leading power. It
+recorded the attribution in P02's Deviations, dated before any result was
+read. Its first small-angle slope test was evaluated at an angle that is
+not yet asymptotic for $k = 7$, and failed; the test now uses
+$\theta \sim 10^{-12}$.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **How did you know your re-noised circuit was right?** Name the check
+   and its negative control.
+2. **Why does a single $Z$ fault survive post-selection in STAR, and why
+   does its effect grow with the angle?**
+3. **Why does the injection error scale as $\theta^{4/3}$ at $d = 3$
+   rather than linearly?** And where does the paper's $\alpha p \theta$
+   come from, then?
+4. **Which noise costs you acceptance and which costs you fidelity?**
+5. **At the same $p_{\text{ph}}$, why does QuEra's hardware model give
+   about half the injection error of uniform depolarizing noise?**
+6. **Your teaching circuits give $\alpha \approx 8.5$; the paper says 1.5.
+   What explains the gap?**
+:::
+
+::: {.callout-caution title="💪 Exercises"}
+1. **Count the survivors.** For $k = 3$, write out all eight branches
+   $Z_S$, apply $Z_1$, and list which become trivial.
+2. **The sign.** Show that the faulted rotation always has the opposite
+   sign to the intended one, for every odd $k$.
+3. **Two faults.** Repeat the whiteboard for a $Z$ on two rotated qubits.
+   What power of $\theta$ does it give at $k = 3$, and why is it
+   negligible at $p = 10^{-3}$?
+4. **Hadamard bookkeeping.** For the $d = 3$ circuit, list every
+   Hadamard that survives `minimal` in one syndrome round, by qubit.
+5. **The negative control.** Remove the `measure` role and explain, fault
+   by fault, why the error model changes.
+:::

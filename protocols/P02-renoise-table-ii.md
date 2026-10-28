@@ -1,6 +1,6 @@
 # Protocol P02: re-noise STAR with QuEra's Table II; measure the injection error
 
-- **Status:** COMMITTED
+- **Status:** REPORTED
 - **Chapter:** 11
 - **Registered:** 2026-10-27
 - **Artifacts:** p02_validation, p02_injection_error
@@ -233,3 +233,41 @@ Chapter 11 states this attribution. H2, its criterion and its budget are
 unchanged. The protocol's sentence contrasting θ^(2 − 2/d) with "the αpθ
 the paper derives" stands: the paper's αpθ law is for the teleported
 rotation's trace-distance error, and the paper itself contrasts the two.
+
+**2026-10-27, after the run: the result.** No deviation from method.
+- **The run.** 665 million shots in 2,083 s of wall time (ceiling 2.5 h).
+  29 of 32 points stopped at 400 errors. Three hit the cap, all at π/128:
+  d = 3 T (316 errors), d = 5 U (278), d = 5 T (168). All three are above
+  the 100-error floor.
+- **V1 PASS.** max |dp| = 0 at d = 3, 5 and 7, for all four variants.
+  Negative controls moved some symptom by 6.6×10⁻⁴ to 3.0×10⁻³.
+- **V2 PASS.** 12 of 12 tests.
+- **V3.**
+  - Eq. D1 = 7.46×10⁻³; the operating point is 1.000×10⁻³, with
+    s = 0.1340.
+  - Hadamards in the injection window: 55 (minimal) or 201 (naive) at
+    d = 3; 165 or 657 at d = 5.
+- **H2 CONFIRMED.** Every pair had all six points usable. Spreads and
+  A/p_ph:
+
+  | d | Model | Spread | A/p_ph |
+  |---|---|---|---|
+  | 3 | U | 1.154 | 6.44 |
+  | 3 | T | 1.116 | 3.41 |
+  | 5 | U | 1.130 | 8.54 |
+  | 5 | T | 1.123 | 4.92 |
+
+- **E1.** A_T / A_U = 0.53 (d = 3) and 0.58 (d = 5): inside the expected
+  [0.5, 2], at its low edge.
+- **E2.** Each variant's error relative to T at π/16, with its Katz 95%
+  interval and its acceptance relative to T:
+
+  | Variant | Error, d = 3 | Error, d = 5 | Acceptance, d = 3 / d = 5 | Against expectation |
+  |---|---|---|---|---|
+  | T-naiveH | 1.25 [1.10, 1.42] | 1.20 [1.05, 1.37] | 0.95 / 0.84 | raises it, as expected |
+  | T-datamove | 1.01 [0.89, 1.16] | 1.11 [0.97, 1.28] | 1.00 / 1.00 | consistent with no change; the d = 5 point estimate is past 10%, unresolved at this budget |
+  | T-pairloss | 0.97 [0.84, 1.10] | 0.93 [0.82, 1.06] | 1.01 / 1.03 | as expected |
+  | T-ffnoise | 1.16 [1.02, 1.32] | 1.14 [1.00, 1.31] | — | no expectation registered |
+
+- **E3.** Acceptance ÷ ideal: 0.81 (U) and 0.84 (T) at d = 3; 0.55 (U)
+  and 0.60 (T) at d = 5. Flat in θ.

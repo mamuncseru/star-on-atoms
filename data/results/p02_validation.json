@@ -1,0 +1,133 @@
+{
+  "protocol": "P02",
+  "captured": "2026-10-27",
+  "seed": "none: deterministic checks",
+  "environment": {
+    "python": "3.11.12",
+    "platform": "Linux-4.18.0-553.8.1.el8_10.x86_64-x86_64-with-glibc2.28",
+    "numpy": "2.2.6",
+    "stim": "1.16.0",
+    "PyMatching": "2.4.0",
+    "bloqade-tsim": "0.1.5",
+    "jax": "0.10.2"
+  },
+  "V1_pass": true,
+  "V1": [
+    {
+      "d": 3,
+      "hadamards": "minimal",
+      "mover": "ancilla",
+      "symptoms": 706,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 3,
+      "hadamards": "minimal",
+      "mover": "data",
+      "symptoms": 706,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 3,
+      "hadamards": "naive",
+      "mover": "ancilla",
+      "symptoms": 706,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 3,
+      "hadamards": "naive",
+      "mover": "data",
+      "symptoms": 706,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 5,
+      "hadamards": "minimal",
+      "mover": "ancilla",
+      "symptoms": 3401,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 5,
+      "hadamards": "minimal",
+      "mover": "data",
+      "symptoms": 3401,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 5,
+      "hadamards": "naive",
+      "mover": "ancilla",
+      "symptoms": 3401,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 5,
+      "hadamards": "naive",
+      "mover": "data",
+      "symptoms": 3401,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 7,
+      "hadamards": "minimal",
+      "mover": "ancilla",
+      "symptoms": 9188,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 7,
+      "hadamards": "minimal",
+      "mover": "data",
+      "symptoms": 9188,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 7,
+      "hadamards": "naive",
+      "mover": "ancilla",
+      "symptoms": 9188,
+      "max_abs_gap": 0.0
+    },
+    {
+      "d": 7,
+      "hadamards": "naive",
+      "mover": "data",
+      "symptoms": 9188,
+      "max_abs_gap": 0.0
+    }
+  ],
+  "V1_negative_controls": {
+    "init": 0.0013221735491025458,
+    "spectator": 0.0029802569637833124,
+    "feedforward": 0.0006634723393433932,
+    "idle1": 0.0013278304895537334,
+    "measure": 0.00066524508450768
+  },
+  "V2_pass": true,
+  "V3": {
+    "p_ph_table_ii": 0.00746,
+    "p_ph_operating_point": 0.001,
+    "scale": 0.13404825737265416,
+    "p_cz": 0.00456,
+    "hadamards": {
+      "d=3 minimal": {
+        "injection_window": 55,
+        "all_noisy_rounds": 110
+      },
+      "d=3 naive": {
+        "injection_window": 201,
+        "all_noisy_rounds": 369
+      },
+      "d=5 minimal": {
+        "injection_window": 165,
+        "all_noisy_rounds": 422
+      },
+      "d=5 naive": {
+        "injection_window": 657,
+        "all_noisy_rounds": 1577
+      }
+    }
+  }
+}
