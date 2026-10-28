@@ -1,0 +1,440 @@
+# An Error Budget for STAR Injection {#sec-budget}
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Compute a STAR circuit's first-order injection error by matching every
+   fault against the rotation's branch symptoms, and say exactly what
+   makes a fault survive.
+2. Explain why initialization, measurement and atom loss cost acceptance
+   but never fidelity.
+3. Read the budget (single-qubit gates, spectators, the CZ) and say what
+   halving each one buys in $\alpha$ and in simulation volume.
+4. Explain why the CZ's correlated $ZZ$ error, its largest term, costs this
+   injection nothing, and what that tells a hardware team.
+5. Say what was computed, what was sampled blind, and how each tests the
+   other.
+:::
+
+```{python}
+#| include: false
+import json
+import math
+import pathlib
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.style.use("../../styles/star.mplstyle")
+sys.path.insert(0, "../../styles")
+import palette
+
+_here = pathlib.Path.cwd()
+ROOT = next(p for p in (_here, *_here.parents) if (p / "starlab").is_dir())
+sys.path.insert(0, str(ROOT))
+import starlab
+
+RESULTS = ROOT / "data" / "results"
+p03 = json.loads((RESULTS / "p03_exact_vs_p02.json").read_text())
+exact = json.loads((RESULTS / "exact_budget.json").read_text())["budget"]
+p04 = json.loads((RESULTS / "p04_sampled_budget.json").read_text())
+r1 = json.loads((RESULTS / "p04_r1_cz_terms.json").read_text())
+```
+
+## From one fault to every fault
+
+Chapter 11 ended with a sharp fact. Under both noise models, the injection
+error of the published circuits is one constant times the misrotation
+shape. Every error that survives post-selection is a single fault that a
+rotation branch hides. If that is the whole story, the constant need not
+be sampled at all: it can be counted.
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — A fault survives if and only if its symptom is a branch symptom"}
+**Symptoms.** In the $\theta = 0$ Clifford proxy (Chapter 7), stim's
+detector error model lists every fault $E$ with its probability $p_E$, the
+set of detectors $D_E$ it flips, and whether it flips the read-out,
+$O_E$.
+
+**Branches.** The rotation writes the patch as a sum of branches $Z_S$, one
+for each subset $S$ of the rotated qubits $K$. A $Z$ on qubit $j$ at the
+rotation flips detectors $D_j$, so branch $S$ carries the symptom
+$D_S = \bigoplus_{j \in S} D_j$.
+
+**The rule.** Every detector is post-selected. So $E$ survives only
+alongside a branch whose symptom cancels its own: $D_E = D_S$. Two
+branches share each symptom, $S$ and $K \setminus S$, because $Z_K$ is the
+logical $Z_L$, which no detector sees. The read-out bit picks which of the
+two $E$ acts as: $S^*$, with $O_{S^*} = O_E$.
+
+**The cost.** $E$ fails with probability $w_m(\theta)$, where
+$m = |S^*|$. That is the survival of the branch pair $S^*, K \setminus S^*$
+times the misrotation it leaves; $w_1$ is Chapter 11's $f_k$. So, to first
+order,
+$$
+r(\theta) = \sum_{E:\ D_E \in \{D_S\}} p_E \, w_{|S^*_E|}(\theta).
+$$
+
+**The point to say out loud.** Any fault whose symptom is not a branch
+symptom is detected, whatever its probability. It costs shots, never
+fidelity.
+:::
+
+This is first-order fault counting, the oldest tool in fault tolerance
+[@aliferis2006threshold]. Analytic treatments of post-selected rotation
+preparation [@choi2023rotations] and enumerations of accepted faults
+across a non-Clifford layer [@gao2026lowcost] already exist. What this
+chapter adds is narrow, and testable. The count is done exactly, from the
+published circuits' own error model (`starlab/enumerate.py`, about a
+hundred lines). It was registered as a prediction before it was compared
+with anything. And it was then tested blind.
+
+## The test against 665 million shots
+
+Protocol P03 asked one question, registered before the calculator saw
+any of P02's quantities: does the count, with no free parameter, reproduce
+what P02 sampled?
+
+::: {.callout-tip .evidence title="🔬 Evidence — P03, as registered"}
+```{python}
+#| echo: false
+s = p03["summary"]
+print(f"verdict: {s['verdict']}  (window x[0.92, 1.08] on all four)")
+print(f"{'d':>2}{'model':>7}{'A/p sampled':>13}{'A/p exact':>11}"
+      f"{'ratio':>8}")
+for p in s["pairs"]:
+    print(f"{p['d']:>2}{p['model']:>7}{p['A_P02_over_p']:>13.3f}"
+          f"{p['A_C_over_p']:>11.3f}{p['ratio']:>8.3f}")
+print(f"variant ratios inside P02's intervals: {s['variants_inside']}")
+print(f"chi-square over the 24 grid points: {s['chi2']:.1f} "
+      f"(p = {s['chi2_p']:.2f})")
+c3 = next(q["census"] for q in p03["points"]
+          if q["d"] == 3 and q["model"] == "T" and q["n"] == 4)
+c5 = next(q["census"] for q in p03["points"]
+          if q["d"] == 5 and q["model"] == "T" and q["n"] == 4)
+for d, c in ((3, c3), (5, c5)):
+    hidden = c["mechanisms"] - c["detected"] - c["harmless"]
+    print(f"d={d}: {hidden} of {c['mechanisms']} fault classes survive "
+          f"post-selection")
+```
+:::
+
+All four constants match: three to within 3%, and the $d = 5$ Table II one
+to within 5%. All eight variant ratios fall inside P02's intervals. Two
+facts stand out:
+- **Every surviving fault acts as a $Z$ on exactly one rotated qubit**
+  ($m = 1$). None acts on two or more.
+- **Almost nothing survives.** At $d = 3$, 271 classes of fault are
+  possible in the injection window; 268 are detected, and the 3 that remain
+  are one per rotated qubit. At $d = 5$ it is 5 out of 955. The whole
+  injection error lives in those $k$ classes.
+
+## Who pays for the error
+
+```{python}
+#| echo: false
+rows = ["1q gate", "CZ spectator", "CZ gate", "atom move",
+        "initialization", "measurement", "CZ loss", "atom move loss"]
+print(f"{'d':>3}{'A_T/p':>7}{'T/U':>6}" + "".join(
+    f"{label:>8}" for label in ("1q gate", "spect.", "CZ gate", "move"))
+    + f"{'others':>8}{'alpha_T':>9}")
+for b in exact:
+    sh = b["shares"]
+    rest = sum(sh[r] for r in rows[4:])
+    print(f"{b['d']:>3}{b['A_T_over_p']:>7.2f}{b['T_over_U']:>6.2f}"
+          + "".join(f"{sh[r]:>8.3f}" for r in rows[:4])
+          + f"{rest:>8.3f}{b['alpha_T']:>9.2f}")
+```
+
+The table is the calculator's first-order budget at $\theta = \pi/16$,
+under Table II scaled to $p_{\text{ph}} = 10^{-3}$. Columns: each row's
+share of the injection error (gate, spectator, CZ, move, then all the
+others together), and $\alpha$ through Chapter 9's composition. Four
+things are worth saying out loud.
+
+1. **Initialization, measurement and both kinds of loss carry exactly
+   zero** at first order, at every distance. A wrong initial state, a
+   flipped measurement and a $Y$ (loss) error all trip a detector that no
+   branch trips. They cost acceptance and nothing else.
+2. **Single-qubit gates are the largest share**, 43% at $d = 3$ rising
+   to 57% at $d = 15$. This row is the noise on the rotation itself and on
+   the Hadamards left on data qubits. Spectators come second, then the
+   CZ. Moves barely register.
+3. **Table II gives 0.55 of the uniform model's error at every
+   distance.** The hardware mix is uniformly kinder to this injection
+   than uniform depolarizing noise at the same $p_{\text{ph}}$.
+4. **$\alpha$ is smallest at $d = 5$ and then grows.** Each rotated qubit
+   brings its own surviving fault class, so $A$ grows linearly with
+   $k = d$, by about $0.64\,p$ per qubit. Meanwhile Eq. 4's factor $S_k$
+   saturates. The teaching circuits' choice of $k = d$ therefore costs
+   fidelity as the code grows. That is one quantitative argument for
+   keeping $k$ small and fixed, which is what the paper's own protocol
+   does ($k = 3$).
+
+## The blind test
+
+A calculation that reproduces the data it was checked against has passed
+only half its exam. Protocol P04 committed the calculator's prediction for
+every arm to the repository *before* any of these arms was sampled:
+- each Table II row switched on alone, at $d = 3$ and 5;
+- the single-qubit-gate row at half rate;
+- the same row at a second angle, $\pi/64$;
+- $d = 7$, which no protocol had sampled.
+
+::: {.callout-tip .evidence title="🔬 Evidence — P04, predicted before sampled"}
+```{python}
+#| echo: false
+print(f"verdict: {p04['summary']['verdict']}")
+print(f"{'arm':<22}{'errors':>7}{'measured':>10}{'95% interval':>21}"
+      f"{'predicted':>10}")
+for a in p04["arms"]:
+    lo, hi = a["wilson_95"]
+    print(f"{a['arm']:<22}{a['logical_errors']:>7}"
+          f"{a['logical_error_rate']:>10.2e}  [{lo:.2e}, {hi:.2e}]"
+          f"{a['predicted_rate']:>10.2e}")
+add = p04["summary"]["sampled_sum_over_P02_all_on"]
+print("sum of single-on rows / P02 all-on: "
+      + ", ".join(f"d={d}: {v:.2f}" for d, v in add.items()))
+```
+The full record, with acceptances, seeds and the score of every arm, is
+`data/results/p04_sampled_budget.json`. The predictions it was scored
+against are `data/predictions/p04_exact.json`, committed in `480d93a`.
+:::
+
+```{python}
+#| fig-cap: "P04. Every arm's sampled injection error (blue, 95% Wilson intervals) against the calculator's prediction, committed before sampling. The slate line is equality; the band is the registered model tolerance (×0.92–1.08). Arms the calculator puts at exactly zero are drawn at the left edge as 95% upper limits."
+fig, ax = plt.subplots(figsize=(6.4, 4.4))
+lo_edge, hi_edge = 4e-7, 6e-3
+grid = np.geomspace(lo_edge, hi_edge, 50)
+st, ref = palette.style("quantum"), palette.style("classical")
+ax.fill_between(grid, grid * 0.92, grid * 1.08, color=ref["color"],
+                alpha=0.12, lw=0)
+ax.plot(grid, grid, color=ref["color"], dashes=ref["dashes"], lw=1.2)
+for a in p04["arms"] + r1["arms"]:
+    lo, hi = a["wilson_95"]
+    c, r = a["predicted_rate"], a["logical_error_rate"]
+    if c == 0 or a["logical_errors"] == 0:
+        # Nothing to put on a log axis: draw the 95% upper limit.
+        ax.plot(c if c > 0 else lo_edge * 1.4, hi, ls="none", marker="v",
+                color=st["color"], ms=5)
+        continue
+    ax.errorbar(c, r, yerr=[[r - lo], [hi - r]], ls="none",
+                marker=st["marker"], color=st["color"], ms=4.5, capsize=2,
+                mec=palette.PAPER, mew=0.8)
+for a in p04["arms"]:
+    if a["arm"] in ("d7 all-on", "d5 1q gate x0.5", "d3 1q gate pi/64",
+                    "d3 s=1 all-on"):
+        left = a["kind"] == "report"
+        ax.annotate(a["arm"], (a["predicted_rate"],
+                               a["logical_error_rate"]),
+                    textcoords="offset points",
+                    xytext=(-8, 4) if left else (6, -10),
+                    ha="right" if left else "left",
+                    fontsize=7.5, color=palette.INK)
+ax.set_xscale("log")
+ax.set_yscale("log")
+ax.set_xlim(lo_edge, hi_edge)
+ax.set_xlabel("predicted injection error (calculator, committed first)")
+ax.set_ylabel("sampled injection error")
+plt.show()
+```
+
+Every arm came back consistent with its prediction, and the verdict is
+CONFIRMED. Four results carry the weight.
+
+- **The blind distance.** At $d = 7$ the sampled error is
+  $2.60 \times 10^{-4}$, against a predicted $2.53 \times 10^{-4}$.
+  Nothing at $d = 7$ had been sampled when the prediction was committed.
+- **The scored arms agree to within 10%.** Measured ÷ predicted lies
+  between 0.95 and 1.10, and the single-row arms add up to P02's all-on
+  rate (1.04 at $d = 3$, 0.97 at $d = 5$).
+- **"Exactly zero" means zero at first order.** The four rows the
+  calculator puts at zero produced 11 errors in 44 million accepted
+  shots at $d = 3$. Those rates, near $10^{-7}$, are about the size
+  expected of two-fault events at these probabilities. Every 95% upper
+  limit is below 0.7% of the all-on rate. These rows still cost
+  acceptance: each accepts less often than the noiseless circuit.
+- **First order bends where it should.** The two largest excesses are at
+  the smallest angle ($\pi/64$, +9%) and at Table II's full strength
+  (+10% at $d = 3$, with the prediction just outside the interval). A
+  two-fault term matters most in both places. One residual has no such
+  explanation: the $d = 3$ spectator row, 10% high, with the prediction
+  on the edge of its interval.
+
+## Inside the CZ
+
+Table II's CZ channel has three parameters:
+- a single $X$ or $Y$ on either atom ($5 \times 10^{-4}$ for each term);
+- a single $Z$ ($6.3 \times 10^{-4}$);
+- a correlated $ZZ$ ($1.3 \times 10^{-3}$, the largest).
+
+The calculator says the largest one costs this injection nothing, and
+that the $X$/$Y$ terms cost more than the $Z$ terms. Two facts about
+frames explain both.
+
+1. **Every ancilla is prepared and measured in $X$.** The Hadamards that
+   compile each CNOT into a CZ fold into the ancilla's reset and
+   measurement (Chapter 11). A $Z$ on an ancilla commutes with every
+   later CZ and flips the measurement, so the ancilla half of a $ZZ$
+   always trips a detector that no branch trips. The fault is caught
+   whatever its data half does. An $X$ on an ancilla is different: the
+   ancilla's remaining CZs copy it onto the data as $Z$s, and those can
+   hide.
+2. **During an X-check, the data qubit sits in the Hadamard frame.**
+   There $HXH = Z$, so a single $X$ on the data atom is a $Z$ in the
+   code's frame, the kind a branch can hide. Outside that frame, the
+   single $Z$ is the dangerous term. A $Y$ is caught in both.
+
+So the $X$/$Y$ parameter reaches the injection twice: through data
+qubits in the Hadamard frame, and through ancillas. The $Z$ parameter
+reaches it once. Both facts were checked one planted fault at a time
+(`test_cz_faults_hide_only_as_the_frame_predicts` in
+`tests/test_starlab.py`). At $d = 3$, the hideable $X$ sites (4 on data,
+3 on ancillas) and $Z$ sites (5) are exactly the sensitivities below: 7
+and 5. The three parameters were then sampled separately, as a
+diagnostic (R1) registered while P04 ran.
+
+::: {.callout-tip .evidence title="🔬 Evidence — R1, the CZ by parameter"}
+```{python}
+#| echo: false
+print(f"{'d':>3}  dA/dp per unit of each CZ parameter (minimal Hadamards)")
+print(f"{'':>3}{'p_XY':>8}{'p_Z':>8}{'p_ZZ':>8}")
+for b in exact:
+    g = b["cz_sensitivity"]["minimal"]["groups"]
+    print(f"{b['d']:>3}{g['p_XY']:>8.1f}{g['p_Z']:>8.1f}{g['p_ZZ']:>8.1f}")
+print()
+print(f"R1 (sampled, registered): {r1['summary']['verdict']}")
+for a in r1["arms"]:
+    lo, hi = a["wilson_95"]
+    print(f"  {a['arm']:<24}{a['logical_errors']:>6}"
+          f"{a['logical_error_rate']:>10.2e}  [{lo:.2e}, {hi:.2e}]"
+          f"  predicted {a['predicted_rate']:.2e}")
+```
+:::
+
+**What it tells a hardware team.** For this injection, a CZ whose error
+is mostly correlated $ZZ$ beats one with the same total spread over
+single-atom terms. The calculator gives the same zero with every Hadamard
+kept, at every distance from 3 to 15. But the claim is limited: it holds
+in the post-selected injection window, to first order. In the memory
+rounds that follow, a $ZZ$ is an ordinary error for the decoder.
+
+## What halving buys
+
+Chapter 1 promised one number per channel: what halving it buys.
+Chapter 9 showed that a channel's share of the injection error is its
+share of $\alpha$, through Eq. 4. So halving a channel with share $f$
+multiplies $\alpha$ by $1 - f/2$:
+- the simulation volume $N_s T \propto 1/(l_1 \alpha p)$ grows by
+  $G^{\text{sim}} = 1/(1 - f/2)$;
+- the circuit volume grows by its square.
+
+```{python}
+#| echo: false
+print(f"{'row':<16}" + "".join(f"{'d=' + str(b['d']):>8}"
+                                 for b in exact[:3])
+      + "   (simulation-volume gain from halving the row)")
+for row in rows:
+    print(f"{row:<16}" + "".join(
+        f"{1 / (1 - b['shares'][row] / 2):>8.3f}" for b in exact[:3]))
+sys.path.insert(0, str(ROOT / "tools"))
+from analyze_p02 import ratio
+all_on = next(p for p in json.loads(
+    (RESULTS / "p02_injection_error.json").read_text())["points"]
+    if p["d"] == 5 and p["model"] == "T" and p["n"] == 4)
+half = next(a for a in p04["arms"] if a["arm"] == "d5 1q gate x0.5")
+g = ratio(all_on, half)
+print(f"\nsampled, d=5, 1q gate halved (P04): {g['ratio']:.2f} "
+      f"[{g['ci95'][0]:.2f}, {g['ci95'][1]:.2f}]")
+```
+
+Read the table by rows.
+- **Halving the single-qubit-gate error buys the most:** ×1.27 in
+  simulation volume at $d = 3$, ×1.32 at $d = 5$ and ×1.35 at $d = 7$, so
+  ×1.6–1.8 in circuit volume.
+- **Halving the spectator or the CZ error** buys ×1.13–1.18.
+- **Halving the moves** buys 0.2%.
+- **Halving initialization, measurement or loss buys nothing here.**
+  What they buy is acceptance, which sets the time per accepted rotation,
+  not its error. This chapter does not price it.
+
+One entry was sampled, as registered. P04 ran $d = 5$ with the
+single-qubit-gate row at half rate, and set against P02's all-on rate it
+gains ×1.36 (95% interval 1.21–1.52). The calculation says ×1.32.
+
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 12"}
+| What a paper says | What it is |
+|---|---|
+| *first-order fault counting* | summing the probabilities of single faults that lead to failure |
+| *symptom* | the set of detectors a fault flips, plus its effect on the read-out |
+| *branch symptom* | the symptom a $Z$ string on the rotated qubits would have |
+| *single-on arm* | one noise channel switched on, every other off |
+| *blind test* | predictions committed before the data they are scored against exist |
+| *sensitivity* | the change in the error per unit change of one noise parameter |
+:::
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 12"}
+**Delegated to the agent (Claude, 2026-10-27/28).**
+- The enumeration idea, raised in the GPU inquiry.
+- `starlab/enumerate.py`, with the corrections the simulated MIT advisor
+  made to the first sketch (both branches' weights, the observable bit
+  instead of a second observable, the general $w_m$).
+- Protocols P03, P04 and P04-R1, and their runs.
+- `tools/exact_budget.py`, the prior-art reading, and this chapter.
+- The planted-fault test of the frame account, written after R1's run.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] The whiteboard, cold: symptoms, branch symptoms, the $\{S, K
+  \setminus S\}$ pairs, and the read-out bit.
+- [ ] One surviving fault traced through the $d = 3$ circuit by hand: the
+  1q-gate $Z$ after the rotation on qubit 0. Its contribution is
+  $(p_{1q}/3) \cdot w_1$.
+- [ ] Why the CZ's $ZZ$ term is always detected, argued from which atom
+  holds which half and in which frame.
+- [ ] P03's and P04's verdicts recomputed from their committed JSON.
+- [ ] The prior-art sentences checked against the three abstracts cited.
+
+**Caught.**
+- The first sketch of the method, in the brief to the advisors, weighted
+  a fault by one branch instead of both, and asked for a $Z_L$
+  observable that stim cannot provide. The MIT advisor caught both.
+- A test ran at an angle not yet asymptotic (Chapter 11).
+- The first P04 launch was killed when its agent session ended. It was
+  rerun with identical seeds and recorded as a deviation.
+- R1's registered reason named only the data qubits' frame. The
+  planted-fault test found the rest: an $X$ on an ancilla spreads to the
+  data and hides too. The sensitivities did not add up without it.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **How do you compute the injection error without sampling, and why is
+   it exact to first order?**
+2. **Why do initialization, measurement and atom loss cost this STAR
+   injection nothing in fidelity?** What do they cost instead?
+3. **Which hardware improvement would you buy first for STAR on atoms,
+   and what does it buy in simulation volume?**
+4. **The CZ's largest error term is correlated $ZZ$. Why does it not
+   matter here, and when would it?**
+5. **Why does $\alpha$ grow with distance for these circuits, and what
+   does the paper do about it?**
+6. **How did you make sure your calculation was not fitted to the data
+   it reproduces?**
+:::
+
+::: {.callout-caution title="💪 Exercises"}
+1. **Count by hand.** In the $d = 3$ circuit, list the fault locations in
+   the injection window where a single $Z$ on a data qubit has the same
+   symptom as $Z_0$ at the rotation.
+2. **Loss is free.** Show that a $Y$ on any data qubit, at any point in
+   the injection window, flips at least one $Z$-check detector.
+3. **The frame.** Using $HYH = -Y$, show that a single $Y$ on a data qubit
+   is caught whether or not it sits in the Hadamard frame, while $X$ and
+   $Z$ each hide in one frame. Then trace one ancilla $X$ through the
+   ancilla's remaining CZs and find the data $Z$s it leaves.
+4. **Change the compilation.** Rerun `tools/exact_budget.py` with
+   `hadamards="naive"` and report how the 1q-gate share moves.
+5. **Second order.** Estimate how small $\theta$ must be before a
+   two-fault, angle-independent term of order $p^2$ overtakes the
+   first-order error at $d = 3$.
+:::

@@ -36,6 +36,8 @@ book:
       chapters:
         - chapters/part4/ch10-reproducing-queras-curve.qmd
         - chapters/part4/ch11-renoising.qmd
+        - chapters/part4/ch12-error-budget.qmd
+        - chapters/part4/ch13-threats.qmd
 
   appendices:
     - appendices/appA-reproducing-this-book.qmd

@@ -1,0 +1,217 @@
+# Threats to Validity {#sec-threats}
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. List, unprompted, every way this book's main claims could be wrong, and
+   say for each one what was done about it.
+2. Separate what is *scoped* (true only for these circuits), what is
+   *approximate* (true to first order), and what is a *reading* (a choice
+   the paper leaves open).
+3. Answer "what would change your mind?" for each headline result.
+:::
+
+```{python}
+#| include: false
+import json
+import pathlib
+
+_here = pathlib.Path.cwd()
+ROOT = next(p for p in (_here, *_here.parents) if (p / "starlab").is_dir())
+RESULTS = ROOT / "data" / "results"
+p02 = json.loads((RESULTS / "p02_injection_error.json").read_text())
+p03 = json.loads((RESULTS / "p03_exact_vs_p02.json").read_text())
+p04 = json.loads((RESULTS / "p04_sampled_budget.json").read_text())
+```
+
+## Why a chapter of objections
+
+A result is only as useful as its stated limits. An interviewer will not
+ask what the budget says; they will ask why it might be wrong. This
+chapter answers first, in four groups.
+
+## 1 · Scope: what these circuits are, and are not
+
+- **The circuits are QuEra's public teaching circuits, not the paper's
+  protocol.** They rotate $k = d$ qubits after one pre-rotation round. The
+  paper's own injection uses $k = 3$ with two initialization rounds,
+  tuned against the $Z$ bias. Every number here describes the teaching
+  circuits. Chapter 12 shows $\alpha$ grows with $d$ when $k = d$, which
+  is itself a reason the paper's protocol differs.
+- **The metric is the injection error alone.** Noise acts only in the
+  injection window, every detector is post-selected, and the later rounds
+  are perfect (P01-R7 showed why: otherwise the read-out measures memory,
+  not injection). The error of a teleported rotation also contains the
+  teleportation CNOT and the memory around it. Chapter 9's $\alpha$
+  assumes a noiseless CNOT, as the paper's Fig. 7c–d does.
+- **Distances 3, 5 and 7 are sampled; 9 to 15 are computed.** The
+  calculator is validated at $d = 3$ and 5 (P03) and blind at $d = 7$
+  (P04). Beyond that it is an extrapolation of a validated method, not a
+  measurement.
+
+## 2 · Approximation: first order
+
+- **The calculation keeps single faults only.**
+  - At $p_{\text{ph}} = 10^{-3}$, P03's agreement (within 5%) bounds what
+    is left out.
+  - The one place it shows is the uniform model's smallest angle: $d = 3$
+    at $\pi/128$ samples 14% above the calculation, outside its interval.
+    That is the expected sign of an angle-independent two-fault term,
+    which takes over only where the first-order term is smallest.
+- **At full Table II strength, first order is already 10% low.** P04's
+  $s = 1$ row at $d = 3$ ($p_{\text{ph}} = 7.46 \times 10^{-3}$) samples
+  1.10 times the first-order count (interval 1.01–1.19). At $d = 5$, 33
+  errors are too few to tell (the evidence box below). The budget's shares
+  are first-order shares. At today's hardware rates the total carries a
+  correction of about 10% that this book does not split by channel.
+- **Zero at first order is not zero.** The rows the calculator puts at
+  exactly zero (initialization, measurement, both losses, the CZ's $ZZ$)
+  sampled a few errors: 11 in 44 million accepted shots over the four
+  $d = 3$ rows. Every 95% upper limit is below 0.7% of the all-on rate.
+  That these are two-fault events is the natural reading, not a tested
+  one.
+- **One residual is unexplained.** P04's $d = 3$ spectator row sampled
+  10% above its prediction, inside the registered tolerance but with the
+  prediction on the edge of its interval. Neither a small angle nor a
+  large $p$ accounts for it.
+- **stim's `approximate_disjoint_errors`** treats a Pauli channel's terms
+  as independent. The error this introduces is of second order in $p$.
+
+::: {.callout-tip .evidence title="🔬 Evidence — the readings priced, and first order at full strength"}
+```{python}
+#| echo: false
+print("Readings the paper leaves open (error relative to the default,")
+print("at pi/16; P02 sampled, P03 computed):")
+calc = {(v["d"], v["variant"]): v["predicted_ratio"]
+        for v in p03["summary"]["variants"]}
+for e in p02["analysis"]["E2_variants_vs_T"]:
+    lo, hi = e["ci95"]
+    print(f"  d={e['d']} {e['variant']:<11} sampled {e['ratio']:.2f} "
+          f"[{lo:.2f}, {hi:.2f}]  computed "
+          f"{calc[(e['d'], e['variant'])]:.2f}")
+print()
+print("Table II at full strength (s = 1, p_ph = 7.46e-3), pi/16:")
+for a in p04["arms"]:
+    if a["kind"] == "report":
+        print(f"  {a['arm']:<15} sampled {a['logical_error_rate']:.2e}"
+              f"  first-order {a['predicted_rate']:.2e}"
+              f"  ratio {a['logical_error_rate'] / a['predicted_rate']:.2f}"
+              f"  acceptance {a['acceptance']:.3f}")
+```
+:::
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — How far first order can be trusted"}
+**Expand.** At a fixed angle, write the injection error as a series in
+the physical error rate:
+$$
+r(\theta, p) = p\,a(\theta) + p^2\, b(\theta) + O(p^3),
+\qquad a(\theta) = A\, f_k(\theta).
+$$
+The first-order calculator returns $p\,a$. Its relative error is
+$$
+\delta = \frac{r}{p\,a} - 1 \approx p\,\frac{b(\theta)}{a(\theta)},
+$$
+linear in $p$.
+
+**Read it off the data.** At full Table II strength ($s = 1$), P04
+measured $\delta = 0.10$ at $d = 3$ (0.01–0.19). The operating point is
+$s = 0.134$, so $\delta \approx 0.013$ there (0.001–0.025). That is far
+inside the 8% tolerance that P03 and P04 registered.
+
+**Two ways to break it.** $\delta$ grows with $p$, and it grows as
+$\theta$ shrinks if $b$ does not shrink with $\theta$. An
+angle-independent two-fault term has $b$ constant while
+$a \propto \theta^{2 - 2/k}$, so $\delta \propto p\,\theta^{-(2 - 2/k)}$.
+First order fails where $\delta \approx 1$.
+
+**The point to say out loud.** First order fails at large $p$ and at small
+$\theta$. The data show both, and only at the edges: +10% at full
+strength, and +9% to +14% at the smallest angles sampled.
+:::
+
+## 3 · Readings: choices the paper leaves open
+
+The paper's Table II gives rates, not a circuit. Every reading below was
+registered before results (P02), and the ones that can be swept were
+priced (the evidence box above).
+
+| Reading | This book's default | Alternative | What it is worth |
+|---|---|---|---|
+| Hadamards from CX → CZ | cancel and fold into resets and measurements (Fig. 12) | keep every one | +20–25% |
+| The pre-rotation feed-forward | a frame update, noiseless | a physical 1q gate | +15% |
+| Which atom moves | the ancilla | the data atom | within noise |
+| CZ loss | every atom in the entangling zone | the pair only | within noise; acceptance only |
+| 1q-gate channel | depolarizing, as Table II prints | "biased Pauli", as the prose says, without numbers | cannot be priced |
+| Idle noise | none (Table II lists none) | — | not swept |
+
+The feed-forward reading and the Hadamard count are the two that matter.
+A hardware implementation that applies the feed-forward physically, or
+compiles CNOTs naively, should add 15–25% to the budget's 1q-gate row.
+
+## 4 · Software and process
+
+- **The re-noiser's placement is exactly validated only in uniform mode**
+  (P02's V1: every fault probability equal, at $d = 3$, 5 and 7). That
+  check exercises every placement rule; Table II mode uses the same rules
+  with different channels. Agreement between sampler and calculator (P03,
+  P04) validates the *calculation*, not the placement: both read the same
+  circuit, so a misplaced channel would fool them identically. Placement
+  rests on V1, the tests, and the readings above.
+- **tsim 0.1.5 samples every number.** The decoder-free metric removes the
+  decoder question that P01 raised.
+- **An AI agent wrote most of the code.** Each chapter's Agent Log lists
+  what was delegated and what the author must verify by hand before the
+  freeze. Chapters whose boxes are not ticked are left out of the public
+  build.
+- **Pre-registration was kept, with one disclosed exception.** P03's
+  author knew P02's data. The calculator has no fitted parameter, and P04
+  is the blind test that does not have this weakness.
+
+## What would change the headline
+
+| Claim | What would overturn it |
+|---|---|
+| The injection error is one constant times the misrotation shape (P02) | a channel, angle or $p$ at which rate ÷ $f_d$ departs from flat by more than ×1.5 |
+| The first-order count is the injection error (P03, P04) | a sampled point outside its interval × [0.92, 1.08] at $p_{\text{ph}} \lesssim 10^{-3}$ |
+| Initialization, measurement and loss cost no fidelity | any of them, alone, producing a sampled injection error above 1% of the all-on rate |
+| The CZ's $ZZ$ term costs nothing (P04-R1) | a compilation whose ancillas are not prepared and measured in $X$, so the ancilla half of $ZZ$ need not be caught |
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 13"}
+**Delegated to the agent (Claude, 2026-10-28).** Collecting every
+deviation, reading and approximation recorded in the protocols and the
+decision log into one place; this chapter.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] Every row of the readings table, against P02's registered list.
+- [ ] Each "what would overturn it" sentence, against the LEDGER.
+- [ ] The three scope statements, said aloud in under a minute.
+- [ ] The whiteboard, cold: why δ is linear in p, and what 0.10 at s = 1
+  implies at s = 0.134.
+
+**Caught.** A draft of §4 said that the sampler and the calculator
+agreeing validates the noise placement. It does not: both read the same
+circuit, so a misplaced channel would fool them identically. Placement
+rests on V1.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **Your circuits are not the paper's protocol. Why should I care about
+   your numbers?**
+2. **What does first order miss, and where did you see it?**
+3. **Which modelling choice changes your budget most, and by how much?**
+4. **What would make you retract the claim that loss costs no fidelity?**
+:::
+
+::: {.callout-caution title="💪 Exercises"}
+1. **Price the idle.** Add a small idle channel ($p/10$ depolarizing) to
+   every atom during 1q layers and measurements, and compute the change
+   with `starlab.enumerate`.
+2. **The biased 1q gate.** Replace the 1q depolarizing channel by a
+   $Z$-biased one with the same total, and compute how the 1q-gate row
+   moves.
+3. **Second order.** Find the angle below which the $d = 3$ uniform model's
+   two-fault term would dominate, given the 14% excess at $\pi/128$.
+4. **Write the threat you think is missing**, and say what experiment
+   would test it.
+:::
