@@ -1,0 +1,165 @@
+{
+  "protocol": "P04 (diagnostic R1, registered 2026-10-27)",
+  "captured": "2026-10-28",
+  "seed_base": "2e7 + 1e5 arm + chunk",
+  "environment": {
+    "python": "3.11.12",
+    "platform": "Linux-4.18.0-553.8.1.el8_10.x86_64-x86_64-with-glibc2.28",
+    "numpy": "2.2.6",
+    "stim": "1.16.0",
+    "PyMatching": "2.4.0",
+    "bloqade-tsim": "0.1.5",
+    "jax": "0.10.2"
+  },
+  "arms": [
+    {
+      "shots": 11139834,
+      "logical_errors": 2,
+      "logical_error_rate": 1.7953588895489824e-07,
+      "wilson_95": [
+        4.923521739283117e-08,
+        6.546761853488335e-07
+      ],
+      "arm": "d3 CZ ZZ only",
+      "d": 3,
+      "kind": "zero",
+      "theta_rad": 0.19634954084936207,
+      "shots_sampled": 20000000,
+      "acceptance": 0.5569917,
+      "stopped_by": "cap",
+      "chunks": 20,
+      "seed_first": 20000000,
+      "predicted_rate": 0,
+      "score": {
+        "share_upper": 0.0029149909446508516,
+        "share_lower": 0.00021922320693786433,
+        "consistent": true,
+        "inconsistent": false
+      }
+    },
+    {
+      "shots": 13934654,
+      "logical_errors": 402,
+      "logical_error_rate": 2.884894020332331e-05,
+      "wilson_95": [
+        2.6163342648748276e-05,
+        3.1810198436543234e-05
+      ],
+      "arm": "d3 CZ single Z only",
+      "d": 3,
+      "kind": "main",
+      "theta_rad": 0.19634954084936207,
+      "shots_sampled": 25000000,
+      "acceptance": 0.55738616,
+      "stopped_by": "errors",
+      "chunks": 25,
+      "seed_first": 20100000,
+      "predicted_rate": 2.772826759734946e-05,
+      "score": {
+        "consistent": true,
+        "inconsistent": false,
+        "predicted_over_measured": 0.9611537686280499
+      }
+    },
+    {
+      "shots": 12740842,
+      "logical_errors": 402,
+      "logical_error_rate": 3.155207481577748e-05,
+      "wilson_95": [
+        2.861484122687036e-05,
+        3.4790796745184e-05
+      ],
+      "arm": "d3 CZ single X/Y only",
+      "d": 3,
+      "kind": "main",
+      "theta_rad": 0.19634954084936207,
+      "shots_sampled": 23000000,
+      "acceptance": 0.553949652173913,
+      "stopped_by": "errors",
+      "chunks": 23,
+      "seed_first": 20200000,
+      "predicted_rate": 3.0808178557796716e-05,
+      "score": {
+        "consistent": true,
+        "inconsistent": false,
+        "predicted_over_measured": 0.9764232221708354
+      }
+    },
+    {
+      "shots": 3630944,
+      "logical_errors": 0,
+      "logical_error_rate": 0.0,
+      "wilson_95": [
+        0.0,
+        1.0579768834554608e-06
+      ],
+      "arm": "d5 CZ ZZ only",
+      "d": 5,
+      "kind": "zero",
+      "theta_rad": 0.19634954084936207,
+      "shots_sampled": 20000000,
+      "acceptance": 0.1815472,
+      "stopped_by": "cap",
+      "chunks": 10,
+      "seed_first": 20300000,
+      "predicted_rate": 0,
+      "score": {
+        "share_upper": 0.004579330673840525,
+        "share_lower": 0.0,
+        "consistent": true,
+        "inconsistent": false
+      }
+    },
+    {
+      "shots": 17101021,
+      "logical_errors": 400,
+      "logical_error_rate": 2.3390416279823293e-05,
+      "wilson_95": [
+        2.120778619434324e-05,
+        2.5797669112200868e-05
+      ],
+      "arm": "d5 CZ single Z only",
+      "d": 5,
+      "kind": "main",
+      "theta_rad": 0.19634954084936207,
+      "shots_sampled": 94000000,
+      "acceptance": 0.18192575531914892,
+      "stopped_by": "errors",
+      "chunks": 47,
+      "seed_first": 20400000,
+      "predicted_rate": 2.3732788705875413e-05,
+      "score": {
+        "consistent": true,
+        "inconsistent": false,
+        "predicted_over_measured": 1.0146372951193456
+      }
+    },
+    {
+      "shots": 12110320,
+      "logical_errors": 407,
+      "logical_error_rate": 3.360769987911137e-05,
+      "wilson_95": [
+        3.049744901519943e-05,
+        3.7035134719801165e-05
+      ],
+      "arm": "d5 CZ single X/Y only",
+      "d": 5,
+      "kind": "main",
+      "theta_rad": 0.19634954084936207,
+      "shots_sampled": 68000000,
+      "acceptance": 0.1780929411764706,
+      "stopped_by": "errors",
+      "chunks": 34,
+      "seed_first": 20500000,
+      "predicted_rate": 3.139186228877942e-05,
+      "score": {
+        "consistent": true,
+        "inconsistent": false,
+        "predicted_over_measured": 0.9340675619485287
+      }
+    }
+  ],
+  "summary": {
+    "verdict": "CONFIRMED"
+  }
+}

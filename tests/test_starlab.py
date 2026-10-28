@@ -190,6 +190,50 @@ def test_enumeration_classifies_planted_faults():
     assert [(f.m, set(f.subset)) for f in found] == [(3, {0, 3, 6})]
 
 
+def test_cz_faults_hide_only_as_the_frame_predicts():
+    # Chapter 12's account of P04-R1, planted fault by fault at d = 3. On
+    # the ancilla half of any injection-window CZ, a Z or Y is always
+    # detected (every ancilla is prepared and measured in X); an X can hide
+    # only by spreading through the ancilla's later CZs into Zs on data. On
+    # the data half, only an X inside the Hadamard frame or a Z outside it
+    # can hide; Y never.
+    from starlab import renoise as rn
+    from starlab.enumerate import matches
+    d = 3
+    text = starlab.star_text(d, math.pi / 16)
+    cz = next(c for _, role, c in rn.table_ii(1e-3) if role == "cz")
+    noisy = rn.renoise(text, d, (("CZ gate", "cz", cz),), window="injection")
+    clean_text = rn.renoise(text, d, (), window="injection")
+    clean, sites, frame, measured = [], [], {}, {}
+    for line in noisy.splitlines():
+        if line.startswith("PAULI_CHANNEL_2"):
+            qubits = line.split(")", 1)[1].split()
+            sites += [(len(clean), q, frame.get(q, 0)) for q in qubits]
+            continue
+        op, *qubits = line.split() or [""]
+        for q in qubits:
+            if op == "H":
+                frame[q] = frame.get(q, 0) ^ 1
+            elif op in ("M", "MX"):
+                measured[q] = measured.get(q, 0) + 1
+        clean.append(line)
+
+    def hides(pauli, pos, q):
+        planted = clean[:pos] + [f"{pauli}_ERROR(0.001) {q}"] + clean[pos:]
+        return bool(matches("\n".join(planted), clean_text)[0])
+
+    hidden_by_kind = {"ancilla X": 0, "data X": 0, "data Z": 0}
+    for pos, q, in_h in sites:
+        hidden = {p for p in "XYZ" if hides(p, pos, q)}
+        if measured.get(q, 0) > 1:                     # an ancilla
+            assert hidden <= {"X"}
+            hidden_by_kind["ancilla X"] += bool(hidden)
+        else:
+            assert hidden <= ({"X"} if in_h else {"Z"})
+            hidden_by_kind["data X" if in_h else "data Z"] += bool(hidden)
+    assert len(sites) == 2 * 84 and min(hidden_by_kind.values()) > 0
+
+
 def test_branch_weight_m2_against_tsim():
     # The m = 2 weight checked on the real circuit, as the m = 1 weight is
     # in test_one_z_fault_flips_the_branches_as_derived.

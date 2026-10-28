@@ -1,9 +1,9 @@
 # Protocol P04: the error budget, sampled as a blind test of the exact calculation
 
-- **Status:** COMMITTED
+- **Status:** REPORTED
 - **Chapter:** 12
 - **Registered:** 2026-10-27
-- **Artifacts:** p04_sampled_budget
+- **Artifacts:** p04_sampled_budget, p04_r1_cz_terms
 
 ## The question
 
@@ -170,3 +170,75 @@ read: diagnostic R1 registered (the CZ channel by parameter).**
   finished arms reproduce exactly. R1 follows it as registered. Both run
   detached from the session (`setsid nohup`), still under
   `nice -n 19 taskset -c 0-31`.
+
+**2026-10-28, after the rerun: the result.** No deviation from method.
+- **The run.** 552 million shots in 4,712 s of wall time (ceiling 2.5 h).
+  All nine main arms stopped at their error targets; the other twelve at
+  their caps, as registered. `d7 all-on` took 7.8×10⁷ shots.
+- **CONFIRMED.** Every main, zero and small arm is consistent.
+
+  | Arm | Errors | Measured | Predicted | Measured ÷ predicted |
+  |---|---|---|---|---|
+  | d3 1q gate | 416 | 9.41×10⁻⁵ | 9.68×10⁻⁵ | 0.97 |
+  | d3 CZ spectator | 416 | 7.54×10⁻⁵ | 6.87×10⁻⁵ | 1.10 |
+  | d3 CZ gate | 425 | 6.08×10⁻⁵ | 5.85×10⁻⁵ | 1.04 |
+  | d5 1q gate | 409 | 1.15×10⁻⁴ | 1.07×10⁻⁴ | 1.07 |
+  | d5 CZ spectator | 410 | 5.65×10⁻⁵ | 5.71×10⁻⁵ | 0.99 |
+  | d5 CZ gate | 406 | 5.23×10⁻⁵ | 5.51×10⁻⁵ | 0.95 |
+  | d5 1q gate ×0.5 | 1,010 | 1.70×10⁻⁴ | 1.67×10⁻⁴ | 1.02 |
+  | d3 1q gate π/64 | 402 | 1.35×10⁻⁵ | 1.24×10⁻⁵ | 1.09 |
+  | d7 all-on | 404 | 2.60×10⁻⁴ | 2.53×10⁻⁴ | 1.03 |
+
+  - **Small rows.** `atom move`: 31 errors at d = 3 (99% Poisson
+    interval of the prediction [12, 37]); 6 at d = 5 ([2, 16]).
+  - **Zero rows.** Not zero, but far below the 1% limit: 11 errors in
+    4.4×10⁷ accepted shots over the four d = 3 rows, 2 in 1.4×10⁷ at
+    d = 5. The largest 95% upper bound is 0.67% of the all-on rate
+    (`d5 measurement`).
+- **Reported.**
+  - **Sampled additivity:** 1.04 (d = 3), 0.97 (d = 5).
+  - **Acceptance.** As registered. Every single-on arm accepts more often
+    than P02's all-on (0.538–0.565 against 0.475 at d = 3; 0.162–0.191
+    against 0.115 at d = 5), and every zero row accepts less than the
+    noiseless ideal. For `atom move loss` the drop is only about 0.01
+    percentage points, too small to resolve at 2×10⁷ shots.
+  - **s = 1 rows.** Measured ÷ first order = 1.10 [1.01, 1.19] at d = 3
+    (566 errors, acceptance 0.155), and 1.19 [0.85, 1.67] at d = 5 (33
+    errors, acceptance 0.0043). At d = 3 the excess is resolved: first
+    order is already 10% low at today's hardware rates.
+  - **Halving, sampled.** P02's all-on ÷ `d5 1q gate x0.5` = 1.36
+    [1.21, 1.52] (Katz). The calculator's G^sim = 1/(1 − f/2) = 1.32.
+  - **The largest residuals sit where first order is weakest:** the
+    smallest angle (π/64, +9%) and full strength (+10%). The exception is
+    `d3 CZ spectator` (+10%, the prediction on the edge of its Wilson
+    interval), which nothing singles out.
+
+**2026-10-28, after the R1 run: the result.** No deviation from method.
+250 million shots in 876 s of wall time.
+- **CONFIRMED.**
+
+  | Arm | Errors / accepted | Measured | Predicted |
+  |---|---|---|---|
+  | d3 CZ ZZ only | 2 / 1.11×10⁷ | 1.8×10⁻⁷ (upper 0.29% of all-on) | 0 |
+  | d3 CZ single Z only | 402 / 1.39×10⁷ | 2.89×10⁻⁵ | 2.77×10⁻⁵ |
+  | d3 CZ single X/Y only | 402 / 1.27×10⁷ | 3.16×10⁻⁵ | 3.08×10⁻⁵ |
+  | d5 CZ ZZ only | 0 / 3.6×10⁶ | 0 (upper 0.46% of all-on) | 0 |
+  | d5 CZ single Z only | 400 / 1.71×10⁷ | 2.34×10⁻⁵ | 2.37×10⁻⁵ |
+  | d5 CZ single X/Y only | 407 / 1.21×10⁷ | 3.36×10⁻⁵ | 3.14×10⁻⁵ |
+
+- **The mechanism, checked after the run** by planting one fault at a
+  time in the d = 3 circuit
+  (`test_cz_faults_hide_only_as_the_frame_predicts`):
+  - every ancilla is prepared and measured in X, so a Z or Y on the
+    ancilla half of any window CZ flips a detector that no branch flips
+    (84 of 84 sites at d = 3; 280 of 280 at d = 5). This is why ZZ is
+    free;
+  - an X on the ancilla half can hide, by spreading through the
+    ancilla's later CZs into Zs on data (3 sites at d = 3, 4 at d = 5);
+  - on the data half, only an X inside the Hadamard frame (4 sites at
+    d = 3, 6 at d = 5) or a Z outside it (5, 6) can hide, and a Y never
+    does;
+  - the hideable X sites add up to the computed X/Y sensitivity (7 at
+    d = 3, 10 at d = 5) and the Z sites to the Z sensitivity (5, 6). R1's
+    registered reason named the data qubits' frame only; the ancilla's X
+    is the rest.
