@@ -102,14 +102,14 @@ author's request, from the interview topics the reviewers named.
 |---|---|---|---|
 | 6 | One small rotation: STAR injection from first principles | ✅ | — |
 | 7 | Memory and matching: detectors, error models, and the Clifford proxy | ✅ | — |
-| 8 | The noise menu: Table II of the PRX paper as Pauli channels (a short chapter: one table, pinned from the PDF) | ⬜ | — |
-| 9 | From an injected state to a teleported rotation: α via Eq. 4 (a short whiteboard chapter) | ⬜ | — |
+| 8 | The noise menu: Table II of the PRX paper as Pauli channels (a short chapter: one table, pinned from the PDF) | ✅ | — |
+| 9 | From an injected state to a teleported rotation: α via Eq. 4 (a short whiteboard chapter) | ✅ | — |
 
 ### Part IV — The Experiment
 | Ch | Title | Status | Protocol |
 |---|---|---|---|
 | 10 | Reproducing QuEra's curve | ✅ | P01 (REPORTED 2026-10-27: refuted as registered; see LEDGER) |
-| 11 | Re-noising: Table II in stim, validated | ⬜ | P02 |
+| 11 | Re-noising: Table II in stim, validated | 🚧 | P02 (registered 2026-10-27) |
 | 12 | An error budget for STAR injection (shares, additivity, what halving buys) | ⬜ | P03 |
 | 13 | Threats to validity | ⬜ | — |
 
@@ -147,9 +147,10 @@ project chapters assume it.
 |---|---|---|---|
 | **Mon 10-26** | — | Repo, guards, PDF; P01 registered and run; Ch 1–3, 6–7 drafted; crash course drafted | `make check` green |
 | Tue 10-27 | **Ch 2** codes & transversal gates | P01 diagnostics R3–R7 (cause found: R6 decoder, R7 read-out artifact); Ch 10; advisors consulted; volume exponent fixed | ✅ P01 settled in LEDGER.md |
-| Wed 10-28 | **Ch 7** memory, matching & DEMs + Ch 10's three whiteboards (the project's own story) | Ch 8 (Table II); **P02 registered**: re-noiser + injection-window metric; start `starlab/renoise.py` | P02 committed |
-| Thu 10-29 | **Ch 3** magic states (skim derivations; 60-second answer cold) | P02 run: uniform mode reproduces the published DEM; Table II at p_ph = 1e-3; both H variants; Ch 11 | re-noiser validated |
-| Fri 10-30 | **Read** PRX paper Sec. II–III, App. D, G in the PDF | **P03 registered** (error budget); launched ≤ 32 cores; upstream issue drafted for the author | P03 committed before first sample |
+| Tue 10-27 (evening, pulled forward) | — | Repo pushed (public); QAQ fix pushed; tsim issue finalised for the author; Ch 8; `starlab/renoise.py` validated (V1 exact at d = 3, 5, 7); **P02 registered and run** | ✅ P02 committed before its first sample |
+| Wed 10-28 | **Ch 7** memory, matching & DEMs + Ch 10's three whiteboards (the project's own story) | P02 analysis → Ch 11; **P03 registered** (error budget, design set by P02's H2) and launched | P03 committed before first sample |
+| Thu 10-29 | **Ch 3** magic states (skim derivations; 60-second answer cold) + Ch 11's misrotation whiteboard | P03 analysis; Ch 12 draft | — |
+| Fri 10-30 | **Read** PRX paper Sec. II–III (esp. Eq. 2), App. D, G in the PDF | Ch 9 (α via Eq. 4, and how it relates to Eq. 2's misrotation term); Ch 12 headline figure | — |
 | Sat 10-31 | **Ch 5** Trotter & JW; Ch 6 STAR whiteboard cold | P03 analysis; Ch 9 (α via Eq. 4); Ch 12 | — |
 | Sun 11-01 | **Ch 4** Rydberg (60-second answer; skim pulse derivations); fix site, resume header, pinned repos | Ch 12 headline figure | — |
 | Mon 11-02 | Mock interview #1 (agent as interviewer) | 2–3 page note; Ch 13 threats | one-paragraph answer |

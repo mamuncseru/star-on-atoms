@@ -31,6 +31,7 @@ book:
         - chapters/part3/ch06-one-small-rotation.qmd
         - chapters/part3/ch07-memory-and-matching.qmd
         - chapters/part3/ch08-the-noise-menu.qmd
+        - chapters/part3/ch09-from-injection-to-alpha.qmd
     - part: "Part IV — The Experiment"
       chapters:
         - chapters/part4/ch10-reproducing-queras-curve.qmd

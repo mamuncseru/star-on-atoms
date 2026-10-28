@@ -1,0 +1,192 @@
+# From an Injected State to a Teleported Rotation: α via Eq. 4 {#sec-alpha}
+
+::: {.callout-note title="🎯 Learning Goals"}
+By the end of this chapter you can:
+
+1. Run the repeat-until-success (RUS) chain that turns an injected state
+   into a rotation, and say why it always ends in a Clifford.
+2. Write the paper's Eq. 4 and read each term.
+3. Show that an injection error growing as $\theta^{2-2/k}$ composes into a
+   teleported error linear in $\theta$, and compute the constant.
+4. Say which injected angles set $\alpha$, and why a channel's share of
+   the injection error is its share of $\alpha$.
+:::
+
+```{python}
+#| include: false
+import math
+import pathlib
+import sys
+
+_here = pathlib.Path.cwd()
+sys.path.insert(0, str(next(p for p in (_here, *_here.parents)
+                            if (p / "starlab").is_dir())))
+import starlab
+```
+
+## Two error laws that are both right
+
+Chapter 1 used the paper's headline: a teleported rotation by $\theta$
+fails with probability $p_L \approx \alpha\, p\, \theta$, so a computation
+can afford a total angle of about $1/(\alpha p)$. Chapter 11 measures
+something that looks different: the error of *injecting* the state grows
+as $\theta^{2-2/k}$, which is $\theta^{4/3}$ at $k = 3$. Both are right. They
+describe different objects, and the paper's Eq. 4 is the bridge between
+them. This chapter crosses it.
+
+## The repeat-until-success chain
+
+An injected state $|m_\theta\rangle = R_Z(\theta)|+\rangle$ is consumed by
+gate teleportation: a logical CNOT onto the data, a measurement, and a
+correction. With probability ½ the data receives $R_Z(\theta)$, as
+wanted. With probability ½ it receives $R_Z(-\theta)$ instead. The
+repair is to inject and teleport $R_Z(2\theta)$, which again succeeds or
+overshoots with probability ½, and so on, doubling the angle each time.
+
+Choose $\theta = \pi/2^n$. After $m$ failures the next angle is
+$\pi/2^{n-m}$, and after $n - 2$ failures it is $\pi/2$: an $S$ gate,
+which is Clifford and can be applied exactly, transversally. The chain
+always ends. On average it takes two attempts.
+
+## Eq. 4, term by term
+
+Weight each attempt's error by the probability of reaching it:
+
+$$
+p_L\left(\theta = \frac{\pi}{2^n}\right)
+  = \frac{1}{2^{n-1}}\, E_S
+  + \sum_{m=0}^{n-2} \frac{1}{2^m}\, E\left(\frac{\pi}{2^{n-m}}\right).
+$$
+
+$E(\phi)$ is the error of one injected-and-teleported rotation by $\phi$.
+$E_S$ is the error of the closing $S$ gate, reached with probability
+$2^{-(n-1)}$. With a noiseless teleportation CNOT (the paper's Fig. 7c–d,
+the setting in which it quotes $\alpha \approx 1.5$ at $d = 7$), $E$ is
+the injection error alone. Set $E_S = 0$ for now; Exercise 4 shows it only
+adds another term linear in $\theta$.
+
+::: {.callout-important .whiteboard title="🧑‍🏫 Whiteboard — Why θ^(2−2/k) composes into a law linear in θ"}
+**The input.** Let the injection error be $E(\phi) = A\, f_k(\phi)$, the
+misrotation shape of Chapter 11, which behaves as $C\phi^{\beta}$ with
+$\beta = 2 - 2/k$ at small $\phi$.
+
+**The sum.** Put it in Eq. 4, writing $j = n - m$ for the attempt's
+angle $\pi/2^j$:
+$$
+p_L = \sum_{j=2}^{n} 2^{\,j-n}\, A f_k\left(\frac{\pi}{2^j}\right)
+    = \frac{\theta}{\pi}\; A \sum_{j=2}^{n} 2^{j} f_k\left(\frac{\pi}{2^j}\right),
+$$
+using $2^{-n} = \theta/\pi$.
+
+**Why it converges.** For large $j$ the summand is
+$2^j (\pi/2^j)^{\beta}$, which is proportional to $2^{-j(\beta - 1)}$.
+That is geometric and
+shrinking whenever $\beta > 1$, which holds for every $k \ge 3$. So as
+$n \to \infty$:
+$$
+p_L \to \alpha\, p\, \theta, \qquad
+\alpha = \frac{A}{p} \cdot \frac{1}{\pi}\sum_{j \ge 2} 2^j f_k\left(\frac{\pi}{2^j}\right)
+       = \frac{A}{p}\, S_k .
+$$
+
+**The point to say out loud.** The linear law is a property of the
+*chain*, not of any single injection. Each injection's error falls faster
+than $\theta$; the chain's last few steps, at large angles, are reached
+with probabilities ½, ¼, …, so they dominate. Hence $\alpha$ is set by the
+injections at $\pi/4$, $\pi/8$ and $\pi/16$, not by the small angle you
+asked for.
+:::
+
+```{python}
+f = starlab.branch_flip_shape
+for k in (3, 5):
+    terms = [2**j * f(math.pi / 2**j, k) for j in range(2, 60)]
+    s_k = sum(terms) / math.pi
+    top = sum(terms[:3]) / sum(terms)
+    print(f"k={k}: S_k = {s_k:.3f}; pi/4, pi/8, pi/16 carry {top:.0%}")
+```
+
+The convergence is visible at finite $n$ too. The ratio
+$p_L/(A\theta)$ climbs to $S_k$ as the target angle shrinks, while the
+single-injection ratio $E/(A\theta)$ falls without limit:
+
+```{python}
+def teleported(n, k):
+    return sum(2.0**-m * f(math.pi / 2**(n - m), k) for m in range(n - 1))
+
+print(f"{'n':>3}{'theta':>10}{'p_L/(A theta)':>15}{'E/(A theta)':>13}")
+for n in (4, 8, 12, 16, 20):
+    th = math.pi / 2**n
+    print(f"{n:>3}{th:>10.2e}{teleported(n, 3) / th:>15.3f}"
+          f"{f(th, 3) / th:>13.2e}")
+```
+
+## What this means for an error budget
+
+Two consequences carry into Chapter 12.
+
+1. **Shares transfer.** If every channel's injection error has the same
+   shape $f_k$ (the hypothesis P02 tests), then $\alpha = (A/p)\,S_k$
+   splits exactly as $A$ does. A channel's share of the injection error
+   at any one angle *is* its share of $\alpha$, and so of the
+   simulation volume $N_s T \propto 1/(l_1 \alpha p)$.
+2. **The angle to measure at is not the angle you care about.**
+   Applications want $\theta \ll 0.01$. But $\alpha$ is set by injections
+   near $\pi/8$, so a budget measured there is not a compromise. It is
+   where the budget is decided.
+
+A caution on scope. These are the $k = d$ teaching circuits, with one
+pre-rotation round. The paper's $\alpha \approx 1.5$ comes from its own
+optimised $k = 3$ protocol with two initialization rounds at $d = 7$. The
+composition above applies to both; the constants do not.
+
+::: {.callout-tip .rosetta title="🔤 Vocabulary — The Words in Chapter 9"}
+| What a paper says | What it is |
+|---|---|
+| *gate teleportation* | consuming an injected state to apply its rotation to data |
+| *repeat-until-success (RUS)* | retry at double the angle after each overshoot |
+| *$E_S$* | the error of the Clifford $S$ that ends every chain |
+| *$\alpha$* | the slope of the chain's error, $p_L / (p\,\theta)$, at small $\theta$ |
+| *$S_k$* | $\frac{1}{\pi}\sum_j 2^j f_k(\pi/2^j)$, which turns $A/p$ into $\alpha$ |
+:::
+
+::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 9"}
+**Delegated to the agent (Claude, 2026-10-27).** Reading Eq. 4 and its
+setting (Sec. III C 4, Fig. 7) in the PDF; the composition argument; the
+values of $S_k$; this chapter.
+
+**Verified by hand — the author must tick each before freeze.**
+
+- [ ] The RUS chain for $\theta = \pi/16$, drawn as a tree with its
+  probabilities.
+- [ ] The change of index from $m$ to $j$ in Eq. 4, on paper.
+- [ ] The convergence condition $\beta > 1$, and what happens at
+  $k = 1$ ($\beta = 0$).
+
+**Caught.** The plan for this chapter (OUTLINE.md) assumed
+$\alpha$ would be estimated at small angles. Working the sum showed it is
+dominated by the chain's largest angles, which changes where Chapter 12
+measures.
+:::
+
+::: {.callout-note .drill title="🎤 Interview Drill"}
+1. **Your injection error scales as $\theta^{4/3}$, but the paper says
+   $\alpha p \theta$. Who is right?**
+2. **Which injected angles set $\alpha$, and why?**
+3. **Why does every RUS chain end, and in what gate?**
+4. **If halving the CZ's $Z$ terms cuts the injection error by 20%, what
+   happens to $\alpha$ and to the simulation volume?**
+:::
+
+::: {.callout-caution title="💪 Exercises"}
+1. **The tree.** For $\theta = \pi/32$, list every path through the RUS
+   chain with its probability and the angles injected along it. Check that
+   Eq. 4 is the expectation of the summed injection errors.
+2. **$k = 1$.** Put $E(\phi) = C$ (independent of angle) into Eq. 4. Show
+   $p_L$ does not vanish as $\theta \to 0$, and explain why that rules out
+   $k = 1$ at small angles.
+3. **Pure power law.** For $E = C\phi^\beta$, sum Eq. 4 in closed form as
+   $n \to \infty$ and compare with $S_k$ computed from the exact $f_k$.
+4. **With Cliffords.** Add $E_S = \epsilon$ and show it contributes
+   $(2\epsilon/\pi)\,\theta$ to $p_L$: also linear, so it adds to $\alpha$.
+:::
