@@ -158,3 +158,15 @@ read: diagnostic R1 registered (the CZ channel by parameter).**
 - **Seeds and order.** Seed = 2×10⁷ + 10⁵·arm + chunk. Run after P04
   finishes, so the two never share the 32 cores.
 - **Artifact:** `data/results/p04_r1_cz_terms.json`.
+
+**2026-10-28: first launch interrupted; rerun identically.**
+- **What happened.** The first launch (2026-10-27, 22:15) was killed at
+  1,365 s, when the agent session that started it ended. 20 of the 21
+  arms had stopped; `d7 all-on` had not.
+- **What was lost and seen.** Per-chunk counts lived only in the
+  runner's memory. No artifact was written, and no rate or error count
+  was read: the log holds only stop lines.
+- **The rerun.** Same code, seeds, chunks and stopping rules, so the 20
+  finished arms reproduce exactly. R1 follows it as registered. Both run
+  detached from the session (`setsid nohup`), still under
+  `nice -n 19 taskset -c 0-31`.
