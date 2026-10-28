@@ -1,0 +1,191 @@
+{
+  "d3 1q gate": {
+    "predicted_rate": 9.68139030328405e-05,
+    "census": {
+      "mechanisms": 105,
+      "detected": 102,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d3 CZ spectator": {
+    "predicted_rate": 6.865890956234542e-05,
+    "census": {
+      "mechanisms": 93,
+      "detected": 90,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d3 CZ gate": {
+    "predicted_rate": 5.8527526829045284e-05,
+    "census": {
+      "mechanisms": 271,
+      "detected": 268,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d3 atom move": {
+    "predicted_rate": 1.0564238965592343e-06,
+    "census": {
+      "mechanisms": 127,
+      "detected": 125,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d3 initialization": {
+    "predicted_rate": 0,
+    "census": {
+      "mechanisms": 35,
+      "detected": 35,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d3 measurement": {
+    "predicted_rate": 0,
+    "census": {
+      "mechanisms": 28,
+      "detected": 28,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d3 CZ loss": {
+    "predicted_rate": 0,
+    "census": {
+      "mechanisms": 168,
+      "detected": 168,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d3 atom move loss": {
+    "predicted_rate": 0,
+    "census": {
+      "mechanisms": 84,
+      "detected": 84,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d3 s=1 all-on": {
+    "predicted_rate": 0.0016660588315176414,
+    "census": {
+      "mechanisms": 271,
+      "detected": 268,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d5 1q gate": {
+    "predicted_rate": 0.00010672105252528631,
+    "census": {
+      "mechanisms": 319,
+      "detected": 314,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 CZ spectator": {
+    "predicted_rate": 5.713412290902768e-05,
+    "census": {
+      "mechanisms": 205,
+      "detected": 201,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 CZ gate": {
+    "predicted_rate": 5.5117759080739435e-05,
+    "census": {
+      "mechanisms": 955,
+      "detected": 950,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 atom move": {
+    "predicted_rate": 1.0046500164585818e-06,
+    "census": {
+      "mechanisms": 424,
+      "detected": 421,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 initialization": {
+    "predicted_rate": 0,
+    "census": {
+      "mechanisms": 105,
+      "detected": 105,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 measurement": {
+    "predicted_rate": 0,
+    "census": {
+      "mechanisms": 84,
+      "detected": 84,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 CZ loss": {
+    "predicted_rate": 0,
+    "census": {
+      "mechanisms": 560,
+      "detected": 560,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 atom move loss": {
+    "predicted_rate": 0,
+    "census": {
+      "mechanisms": 280,
+      "detected": 280,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 s=1 all-on": {
+    "predicted_rate": 0.0016304280139763532,
+    "census": {
+      "mechanisms": 955,
+      "detected": 950,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d5 1q gate x0.5": {
+    "predicted_rate": 0.00016652493679575103,
+    "census": {
+      "mechanisms": 955,
+      "detected": 950,
+      "harmless": 0,
+      "k": 5
+    }
+  },
+  "d3 1q gate pi/64": {
+    "predicted_rate": 1.2354388025530256e-05,
+    "census": {
+      "mechanisms": 105,
+      "detected": 102,
+      "harmless": 0,
+      "k": 3
+    }
+  },
+  "d7 all-on": {
+    "predicted_rate": 0.0002527039178368291,
+    "census": {
+      "mechanisms": 2051,
+      "detected": 2044,
+      "harmless": 0,
+      "k": 7
+    }
+  }
+}
