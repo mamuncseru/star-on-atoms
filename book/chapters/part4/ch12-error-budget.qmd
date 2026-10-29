@@ -81,13 +81,21 @@ fidelity.
 :::
 
 This is first-order fault counting, the oldest tool in fault tolerance
-[@aliferis2006threshold]. Analytic treatments of post-selected rotation
-preparation [@choi2023rotations] and enumerations of accepted faults
-across a non-Clifford layer [@gao2026lowcost] already exist. What this
-chapter adds is narrow, and testable. The count is done exactly, from the
-published circuits' own error model (`starlab/enumerate.py`, about a
-hundred lines). It was registered as a prediction before it was compared
-with anything. And it was then tested blind.
+[@aliferis2006threshold], and it has been applied to post-selected
+rotations before:
+- Choi *et al.* identify three leading-order types of undetected fault
+  and check them against Clifford simulation [@choi2023rotations].
+- Toshio *et al.*, introducing STAR, count the rotation gate's own errors
+  and take every other single error to be detected
+  [@toshio2024practical].
+- Exact low-order enumeration of accepted faults also exists for
+  magic-state preparation [@gao2026lowcost].
+
+What this chapter adds is narrow, and testable. The count runs
+mechanically over every fault in the published circuits' own error model
+(`starlab/enumerate.py`, about a hundred lines). It was registered as a
+prediction before it was compared with anything. And it was then tested
+blind.
 
 ## The test against 665 million shots
 
@@ -136,20 +144,24 @@ facts stand out:
 rows = ["1q gate", "CZ spectator", "CZ gate", "atom move",
         "initialization", "measurement", "CZ loss", "atom move loss"]
 print(f"{'d':>3}{'A_T/p':>7}{'T/U':>6}" + "".join(
-    f"{label:>8}" for label in ("1q gate", "spect.", "CZ gate", "move"))
+    f"{label:>8}" for label in ("1q gate", "R_Z", "spect.", "CZ gate",
+                                "move"))
     + f"{'others':>8}{'alpha_T':>9}")
 for b in exact:
     sh = b["shares"]
     rest = sum(sh[r] for r in rows[4:])
     print(f"{b['d']:>3}{b['A_T_over_p']:>7.2f}{b['T_over_U']:>6.2f}"
-          + "".join(f"{sh[r]:>8.3f}" for r in rows[:4])
+          + f"{sh[rows[0]]:>8.3f}{b['rotation_gate_share']:>8.3f}"
+          + "".join(f"{sh[r]:>8.3f}" for r in rows[1:4])
           + f"{rest:>8.3f}{b['alpha_T']:>9.2f}")
 ```
 
 The table is the calculator's first-order budget at $\theta = \pi/16$,
 under Table II scaled to $p_{\text{ph}} = 10^{-3}$. Columns: each row's
 share of the injection error (gate, spectator, CZ, move, then all the
-others together), and $\alpha$ through Chapter 9's composition. Four
+others together), and $\alpha$ through Chapter 9's composition. The
+`R_Z` column is the part of the gate share that comes from the rotation
+gate itself. Four
 things are worth saying out loud.
 
 1. **Initialization, measurement and both kinds of loss carry exactly
@@ -157,9 +169,14 @@ things are worth saying out loud.
    flipped measurement and a $Y$ (loss) error all trip a detector that no
    branch trips. They cost acceptance and nothing else.
 2. **Single-qubit gates are the largest share**, 43% at $d = 3$ rising
-   to 57% at $d = 15$. This row is the noise on the rotation itself and on
-   the Hadamards left on data qubits. Spectators come second, then the
-   CZ. Moves barely register.
+   to 57% at $d = 15$. But the rotation gate itself carries only 12% at
+   $d = 3$ and 18% at $d = 15$. The rest is the Hadamards that the
+   CNOT-to-CZ compilation leaves on data qubits. A $Z$ on a rotated qubit
+   anywhere between the rotation and its first $X$-check looks exactly
+   like a branch, whichever gate put it there. A count of the rotation
+   gate's errors alone, the accounting the original STAR analysis uses for
+   its own protocol, would capture 12–18% of the error in these circuits.
+   Spectators come second, then the CZ. Moves barely register.
 3. **Table II gives 0.55 of the uniform model's error at every
    distance.** The hardware mix is uniformly kinder to this injection
    than uniform depolarizing noise at the same $p_{\text{ph}}$.
@@ -393,7 +410,9 @@ gains ×1.36 (95% interval 1.21–1.52). The calculation says ×1.32.
 - [ ] Why the CZ's $ZZ$ term is always detected, argued from which atom
   holds which half and in which frame.
 - [ ] P03's and P04's verdicts recomputed from their committed JSON.
-- [ ] The prior-art sentences checked against the three abstracts cited.
+- [ ] The prior-art sentences checked against the papers: Choi *et al.*'s
+  Eq. 11 and its "three types of logical errors"; Toshio *et al.*'s
+  Eq. 12 and the sentence before it; Gao *et al.*'s abstract.
 
 **Caught.**
 - The first sketch of the method, in the brief to the advisors, weighted
@@ -402,6 +421,11 @@ gains ×1.36 (95% interval 1.21–1.52). The calculation says ×1.32.
 - A test ran at an angle not yet asymptotic (Chapter 11).
 - The first P04 launch was killed when its agent session ended. It was
   rerun with identical seeds and recorded as a deviation.
+- The prior-art paragraph was first written from abstracts. Reading the
+  papers showed that the STAR paper itself counts undetected single
+  faults at first order. The claim was narrowed to what is new here: a
+  mechanical, per-channel count over the published circuits, tested
+  blind.
 - R1's registered reason named only the data qubits' frame. The
   planted-fault test found the rest: an $X$ on an ancilla spreads to the
   data and hides too. The sensitivities did not add up without it.

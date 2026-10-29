@@ -8,7 +8,8 @@ per-row budget and d = 7 blind. Chapter 12 reports these numbers only
 under those two verdicts.
 
 For each distance it records:
-- each Table II row's share of the injection error;
+- each Table II row's share of the injection error, and the share of the
+  rotation gate's own 1q channel (part of the `1q gate` row);
 - A/p for both models, and alpha = (A/p) S_k (Chapter 9);
 - the CZ channel's sensitivity to its three Table II parameters: a single
   X or Y on either atom (p_XY), a single Z (p_Z), and the correlated ZZ
@@ -63,6 +64,17 @@ def budget(d: int) -> dict:
     total, uniform = rate(full), rate(rn.uniform(1e-3))
     rows = sorted({row for row, _, _ in full})
     shares = {row: rate(rn.only(full, row)) / total for row in rows}
+    # The rotation gate's own channel alone: the noiseless circuit with the
+    # line after R_Z put back.
+    noisy = rn.renoise(star_text(d, THETA), d, full,
+                       window="injection").splitlines()
+    i = next(n for n, line in enumerate(noisy) if line.startswith("R_Z"))
+    assert noisy[i + 1].startswith("DEPOLARIZE1"), noisy[i + 1]
+    lines = clean["minimal"].splitlines()
+    j = next(n for n, line in enumerate(lines) if line.startswith("R_Z"))
+    only_rz = "\n".join(lines[:j + 1] + [noisy[i + 1]] + lines[j + 1:])
+    rotation = injection_error(matches(only_rz, clean["minimal"])[0],
+                               THETA, d) / total
     sens = {}
     for hadamards in ("minimal", "naive"):
         per_term = {}
@@ -80,7 +92,7 @@ def budget(d: int) -> dict:
             "A_U_over_p": uniform / f / 1e-3, "T_over_U": total / uniform,
             "S_k": s_k(d), "alpha_T": total / f / 1e-3 * s_k(d),
             "alpha_U": uniform / f / 1e-3 * s_k(d), "shares": shares,
-            "cz_sensitivity": sens}
+            "rotation_gate_share": rotation, "cz_sensitivity": sens}
 
 
 def main() -> int:
@@ -91,6 +103,7 @@ def main() -> int:
         g = b["cz_sensitivity"]["minimal"]["groups"]
         print(f"d={d:>2}  A_T/p {b['A_T_over_p']:5.2f}  alpha_T "
               f"{b['alpha_T']:5.2f}  1q {b['shares']['1q gate']:.3f}  "
+              f"R_Z {b['rotation_gate_share']:.3f}  "
               f"CZ dA/dp: XY {g['p_XY']:.0f} Z {g['p_Z']:.0f} "
               f"ZZ {g['p_ZZ']:.0f}", flush=True)
     record = {"computed_by": "tools/exact_budget.py (starlab.enumerate)",
