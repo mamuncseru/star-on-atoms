@@ -35,6 +35,31 @@ Agent Log ticked by the author or the chapter left out.
 
 ## Log
 
+### 2026-10-29 (evening) · A paper? Not yet; five claims scoped
+
+-   **The question:** should this become an arXiv paper? Both simulated
+    advisors, consulted independently, said not before the application
+    decision. Each claim they relied on was checked before it was
+    accepted.
+    -   The counting idea is already published: Toshio *et al.*, Choi *et
+        al.*, and Liu *et al.* (2604.05126, App. F).
+    -   The circuits are teaching circuits, not the paper's protocol.
+    -   This book's α is about six times the paper's, and the gap is not
+        yet explained.
+-   **The paper worth writing** applies the same count to QuEra's own
+    k = 3 protocol, and must reproduce the paper's α. It will be
+    registered after the application, with a kill date of 12-15.
+-   **Five fixes, whatever happens to the paper:**
+    -   "*ZZ* is free" now holds only for syndrome extraction with a
+        single-qubit rotation. Veroni, Deger and Daley (2610.26471) show
+        that *ZZ* is the critical fault when the rotation is a two-qubit
+        R_ZZ gate.
+    -   "Loss" means Table II's *Y* error.
+    -   The metric is called an idealized injection error.
+    -   The prior art is credited.
+    -   A new test checks the θ = 0 proxy, which tsim issue #226 shows
+        would be wrong for R_ZZ.
+
 ### 2026-10-29 · The note; the rotation gate is a minority of its own error
 
 -   **The prior art, read.** Two earlier papers already count undetected

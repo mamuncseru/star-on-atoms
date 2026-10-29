@@ -118,7 +118,7 @@ author's request, from the interview topics the reviewers named.
 ### Part V — After the application (deferred 2026-10-27; nothing here starts before the submission)
 | Ch | Title | Status | Protocol |
 |---|---|---|---|
-| 14 | The paper's own protocol: k = 3 TMR, then a high-rate STAR gadget; GPU sampling if its gates pass (DECISIONS, consultation 2) | ⬜ | P05 |
+| 14 | The paper's own protocol: k = 3 TMR, then a high-rate STAR gadget; GPU sampling if its gates pass (DECISIONS, consultation 2). **The candidate preprint** (consultation 3, 2026-10-29): no posting before the application decision; register P05 after 11-02; gate: reproduce the paper's α at d = 7 (Fig. 7c–d) within ×[0.8, 1.25] with no fitted parameter; kill date 12-15; the proxy must be built by deleting the rotation lines (tsim #226: R_ZZ → S); idle dephasing as a sensitivity | ⬜ | P05 |
 | 15 | Upstream: what this project gave back | ⬜ | — |
 
 Cut 2026-10-27 on advisor recommendations (see `application/advisors/DECISIONS.md`,
