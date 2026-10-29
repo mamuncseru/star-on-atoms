@@ -67,8 +67,9 @@ result that would overturn it.
 - **The budget, tested blind.** The calculation's predictions, committed
   before sampling, match every noise channel alone and d = 7, which had
   never been sampled ([P04](protocols/P04-sampled-budget-blind-test.md)).
-  Single-qubit gates carry the largest share (43–52% at d = 3–7). Halving
-  their error buys ×1.32 in simulation volume at d = 5 (sampled: ×1.36).
+  Single-qubit gates carry the largest share (43–52% at d = 3–7), but the
+  rotation gate itself only 12–16%. Halving single-qubit-gate error buys
+  ×1.32 in simulation volume at d = 5 (sampled: ×1.36).
   The CZ's correlated *ZZ* error, its largest term, costs this injection
   nothing.
 - **α is decided at large angles.** Composed through the paper's

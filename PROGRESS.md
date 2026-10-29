@@ -8,16 +8,15 @@ edit.
 
 ## Now
 
-**Writing it up.** The blind test passed
-([P04](protocols/P04-sampled-budget-blind-test.md), CONFIRMED). The
-calculator's predictions were committed before any shot was sampled. They
-match every Table II channel alone, the top channel halved, a second
-angle, and d = 7, which no protocol had sampled. The error-budget and
-threats chapters are drafted.
+**Ready to freeze.** The three-page note is written
+([`note/`](note/star-on-atoms-note.qmd)), and the README leads with the
+answer. The prior-art reading is done. It narrowed one claim and sharpened
+another: in these circuits the rotation gate itself carries only 12–16% of
+the injection error.
 
-**Next:** a short note (2–3 pages) for readers who will not open the
-book, the README headline, and a first mock interview. **Results freeze
-Fri 2026-10-30.**
+**Next:** the first mock interview, then the **freeze on Fri 2026-10-30**:
+`make release`, the book and note PDFs on the site, and each chapter's
+Agent Log ticked by the author or the chapter left out.
 
 ## Milestones
 
@@ -30,10 +29,33 @@ Fri 2026-10-30.**
 | 2026-10-27 | P03: an exact first-order calculation reproduces P02 with no free parameter | ✅ |
 | 2026-10-28 | P04: the sampled error budget, a blind test of the calculation (d = 3, 5, 7) | ✅ |
 | 2026-10-28 | Error-budget chapter and its headline figure; threats to validity | ✅ |
-| 2026-10-29 | A short note (2–3 pages); README headline; mock interview #1 | ⬜ |
+| 2026-10-29 | A short note (3 pages) and the README headline; prior art read | ✅ |
+| 2026-10-29 | Mock interview #1 | ⬜ |
 | 2026-10-30 | Freeze: results final, book PDF released | ⬜ |
 
 ## Log
+
+### 2026-10-29 · The note; the rotation gate is a minority of its own error
+
+-   **The prior art, read.** Two earlier papers already count undetected
+    single faults at first order: Choi *et al.* (2303.17380) and the
+    original STAR paper (Toshio *et al.*, 2408.14848, Eq. 12).
+    -   So the claim is narrowed to what is new here: a mechanical count,
+        channel by channel, over every fault in QuEra's published
+        circuits, tested blind.
+-   **The rotation gate is a minority.** The STAR paper treats the
+    rotation gate's errors as the only undetectable ones. In these
+    circuits that gate carries only 11.7% of the injection error at
+    d = 3 (18.2% at d = 15).
+    -   The rest of the single-qubit share is the Hadamards that the
+        CNOT-to-CZ compilation leaves on data qubits.
+    -   Halving the rotation gate's error alone buys ×1.08 in simulation
+        volume. Halving every single-qubit gate buys ×1.32.
+-   **The note.** A three-page summary for readers who will not open the
+    book: the answer in four points, the method and its prior art, the
+    blind test, the budget, a sourced table of the paper's open readings,
+    and the limits. Its numbers come straight from the committed results.
+-   **The README** now leads with the answer.
 
 ### 2026-10-28 · The blind test passes; the CZ's largest error is free
 
