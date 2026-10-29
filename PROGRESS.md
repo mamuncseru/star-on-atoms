@@ -14,6 +14,9 @@ answer. The prior-art reading is done. It narrowed one claim and sharpened
 another: in these circuits the rotation gate itself carries only 12–16% of
 the injection error.
 
+**Upstream:** [tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232)
+is posted.
+
 **Next:** the first mock interview, then the **freeze on Fri 2026-10-30**:
 `make release`, the book and note PDFs on the site, and each chapter's
 Agent Log ticked by the author or the chapter left out.
@@ -59,6 +62,11 @@ Agent Log ticked by the author or the chapter left out.
     -   The prior art is credited.
     -   A new test checks the θ = 0 proxy, which tsim issue #226 shows
         would be wrong for R_ZZ.
+-   **Upstream.** The decoding pitfall from P01-R6 is now
+    [tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232),
+    posted by the author. It covers matching on tsim's default error
+    model, which silently drops every fault that flips more than two
+    detectors.
 
 ### 2026-10-29 · The note; the rotation gate is a minority of its own error
 

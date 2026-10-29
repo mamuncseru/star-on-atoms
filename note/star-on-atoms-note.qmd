@@ -101,7 +101,8 @@ model at $p_{\text{ph}} = 10^{-3}$.
   curve's angle-dependent error is memory $X$ errors, read out in
   proportion to $\sin^2\theta$. And that curve is reproduced only when
   matching on tsim's undecomposed error model, from which PyMatching drops
-  every fault that flips more than two detectors.
+  every fault that flips more than two detectors (reported as tsim issue
+  #232).
 
 # Method: count instead of sample
 

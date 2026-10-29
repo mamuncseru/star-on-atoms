@@ -139,6 +139,10 @@ and arXiv ID and compares the returned title with the one cited.
 
 ## Credits
 
+**Upstream.** A decoding pitfall found along the way (matching on tsim's
+default error model silently drops faults that flip more than two
+detectors) is reported as [tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232).
+
 The STAR circuits and the reference plot are QuEra Computing's, published
 for the ETH QHack 2026 challenge
 ([QuEraComputing/ETH_QHACK_2026](https://github.com/QuEraComputing/ETH_QHACK_2026)).

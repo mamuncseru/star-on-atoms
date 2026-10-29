@@ -214,7 +214,8 @@ of the faults fails more often, and it fails most at small distance, where
 there is least slack. The hypothesis came from outside: a public ETH QHack
 submission decoded the circuit exactly this way and printed a number close
 to the reference's. It was registered, with its reading rule, before a
-single R6 sample existed.
+single R6 sample existed. The pitfall is reported upstream as
+[tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232) (posted by the author, 2026-10-29).
 
 There is also a check that needs no reference at all. Going from $d = 3$ to
 $d = 5$ at $\theta = 10^{-4}$, the reference's floor drops 79-fold; this
@@ -405,10 +406,10 @@ in with a styling change; it was split before anything was pushed.
 3. **Acceptance check.** In R4 the stim-sampled acceptance at $d = 5$ is
    higher than tsim's. Show that the ratio is the noiseless acceptance at
    $\theta = 10^{-4}$, and explain why.
-4. **Write the issue.** Draft a short GitHub issue for QuEra's tsim
-   repository reporting that matching on `Circuit.detector_error_model()`
-   silently drops non-graph-like faults, with the two floors and one link.
-   (Do not post it without the author's decision.)
+4. **Read the issue.** The author posted it as
+   [tsim #232](https://github.com/QuEraComputing/tsim/issues/232). Say in two sentences why its reproducer
+   post-selects the first 24 detectors, and why the "decomposed Clifford
+   proxy" is exact for faults after the injection layer.
 5. **Count it yourself.** Write ten lines that count the mechanisms in
    tsim's default model of `star_d=5.stim` that flip more than two
    detectors, and their share of the total probability.
