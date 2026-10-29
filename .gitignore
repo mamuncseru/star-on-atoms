@@ -43,3 +43,8 @@ code/*/_preview/
 
 # The project site's local build (make site); CI builds and deploys it.
 /site/
+
+# The note's render output (published at the freeze, not before)
+note/star-on-atoms-note.pdf
+note/*_files/
+note/.quarto/

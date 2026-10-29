@@ -11,18 +11,36 @@ small-angle rotation injection for the early-fault-tolerant "megaquop"
 regime — using QuEra's own published circuits and open-source tools
 (tsim, bloqade, stim).
 
-> **Status (2026-10-27):** 🚧 Chapters 1–10 drafted, including a
-> four-chapter crash course (codes, magic states, Rydberg atoms, Trotter and
-> Jordan–Wigner). Protocol P01 is settled. QuEra's published curve is
-> reproduced only under a decoder that drops faults flipping more than two
-> detectors (P01-R6), and its large-angle regime is a read-out artifact
-> (P01-R7). Protocol P02 (QuEra's Table II hardware noise, rebuilt on native
-> gates and validated) is running.
->
-> **Where things stand, by date:** the
-> [project site](https://mamuncseru.github.io/star-on-atoms/) and
-> [PROGRESS.md](PROGRESS.md). [OUTLINE.md](OUTLINE.md) is the plan and the
-> schedule; [LEDGER.md](LEDGER.md) records every verdict.
+## The answer so far
+
+Under QuEra's Table II hardware model at p_ph = 10⁻³, for QuEra's
+published STAR circuits at d = 3, 5 and 7:
+
+- **Single-qubit gates carry the largest share of the injection error,
+  43–52%, but the rotation gate itself carries only 12–16%.** The rest is
+  the Hadamards that the CNOT-to-CZ compilation leaves on data qubits.
+  Spectators and the CZ carry about a quarter each. Initialization,
+  measurement and atom loss carry nothing at first order: they cost
+  acceptance only.
+- **Halving single-qubit-gate error buys ×1.32 in simulation volume at
+  d = 5** (sampled: ×1.36, 95% interval 1.21–1.52).
+- **The CZ's correlated ZZ error, its largest term, costs this injection
+  nothing**, because every ancilla is prepared and measured in X.
+- **How it was measured.** An exact first-order count over every fault
+  in the circuits' own error model ([`starlab/enumerate.py`](starlab/enumerate.py))
+  was committed as a prediction, then tested blind on 802 million sampled
+  shots, including d = 7 ([P04](protocols/P04-sampled-budget-blind-test.md),
+  CONFIRMED).
+
+The three-page summary is [`note/star-on-atoms-note.qmd`](note/star-on-atoms-note.qmd)
+(`make note` renders the PDF). Every verdict, with what would overturn
+it, is in [LEDGER.md](LEDGER.md).
+
+> **Status (2026-10-29):** results freeze Fri 2026-10-30. Chapters 1–13
+> are drafted; the author's hand-verification of each chapter's Agent Log
+> is in progress. Dated progress is on the
+> [project site](https://mamuncseru.github.io/star-on-atoms/) and in
+> [PROGRESS.md](PROGRESS.md); [OUTLINE.md](OUTLINE.md) is the plan.
 
 ## Why this exists
 
@@ -44,8 +62,10 @@ curve.
   git commit dates with the dates inside every result file.
 - **Every rate is a measurement** with shots, logical errors, seed,
   environment and a 95% Wilson interval, checked by a guard.
-- **Validation before novelty.** Nothing new is claimed until the
-  pipeline reproduces QuEra's own uniform-noise STAR curve (Protocol P01).
+- **Validation before novelty.** The rebuilt circuits reproduce QuEra's
+  published error model exactly before any new noise model is used
+  (P02), and the calculator was tested blind before its budget was
+  reported (P04).
 - **Inputs are pinned, not copied.** QuEra's circuits are fetched at one
   commit and checked by SHA-256; the upstream repository has no license, so
   they are never redistributed here.
@@ -83,7 +103,9 @@ book/          Quarto source — one source for website and PDF
   appendices/  Back matter
   styles/      Design system: palette, figure style, web themes, PDF template
   bib/         references.bib — every ID resolved before release
-starlab/       The library: circuits at any angle, sampling, statistics
+note/          The three-page summary for readers who will not open the book
+starlab/       The library: circuits at any angle, re-noising, sampling,
+               the exact first-order count, statistics
 tests/         Tests for starlab, against facts that exist independently of it
 tools/         Guards, the circuit fetcher, the digitizer, protocol runners
 protocols/     Pre-registered experiments (committed before they run)
@@ -102,7 +124,7 @@ LEDGER.md      Every verdict, with what would change it
 | Guard | What it prevents |
 |---|---|
 | `tools/check_math.py` | LaTeX that renders on the web and silently corrupts the PDF |
-| `tools/check_structure.py` | A chapter dropping a mastery element (🎯 🧑‍🏫 🤖 🎤 💪, 🔬 in Part III) |
+| `tools/check_structure.py` | A chapter dropping a mastery element (🎯 🧑‍🏫 🤖 🎤 💪, 🔬 in Part IV) |
 | `tools/check_citekeys.py` | A citation whose key is not in the bibliography |
 | `tools/check_results.py` | A committed rate without its shots, seed, environment or interval |
 | `tools/check_protocols.py` | A result that predates its own protocol |
