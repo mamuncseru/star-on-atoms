@@ -38,10 +38,18 @@ chapter answers first, in four groups.
   tuned against the $Z$ bias. Every number here describes the teaching
   circuits. Chapter 12 shows $\alpha$ grows with $d$ when $k = d$, which
   is itself a reason the paper's protocol differs.
-- **The metric is the injection error alone.** Noise acts only in the
+- **This book's $\alpha$ is about six times the paper's, and the gap is
+  not explained.** It is 8.6–9.1 under Table II and 14–17 under uniform
+  noise ($d = 3$–7), against the paper's $\alpha \approx 1.5$ at $d = 7$
+  for its own protocol (Fig. 7c–d). The protocols differ in $k$, in the
+  rounds before the rotation, and in the rotation gate. Which of these
+  accounts for the factor has not been tested. Never quote one number
+  beside the other without saying so.
+- **The metric is an idealized injection error.** Noise acts only in the
   injection window, every detector is post-selected, and the later rounds
   are perfect (P01-R7 showed why: otherwise the read-out measures memory,
-  not injection). The error of a teleported rotation also contains the
+  not injection). A real protocol decodes some faults that this metric
+  rejects, so its injection error is not this number. The error of a teleported rotation also contains the
   teleportation CNOT and the memory around it. Chapter 9's $\alpha$
   assumes a noiseless CNOT, as the paper's Fig. 7c–d does.
 - **Distances 3, 5 and 7 are sampled; 9 to 15 are computed.** The
@@ -143,10 +151,17 @@ priced (the evidence box above).
 | CZ loss | every atom in the entangling zone | the pair only | within noise; acceptance only |
 | 1q-gate channel | depolarizing, as Table II prints | "biased Pauli", as the prose says, without numbers | cannot be priced |
 | Idle noise | none (Table II lists none) | — | not swept |
+| Atom loss | a $Y$ error, as Table II models it | heralded or unheralded loss, which is not Pauli | not priced |
 
 The feed-forward reading and the Hadamard count are the two that matter.
 A hardware implementation that applies the feed-forward physically, or
 compiles CNOTs naively, should add 15–25% to the budget's 1q-gate row.
+
+Idle noise is the largest choice not priced. By Chapter 12's own
+mechanism, a $Z$ on a rotated qubit at any time before its first
+$X$-check hides. So any idle dephasing there, while other atoms move or
+gate, would add straight to the budget. Table II lists no idle channel,
+and this book adds none.
 
 ## 4 · Software and process
 
@@ -174,7 +189,7 @@ compiles CNOTs naively, should add 15–25% to the budget's 1q-gate row.
 | The injection error is one constant times the misrotation shape (P02) | a channel, angle or $p$ at which rate ÷ $f_d$ departs from flat by more than ×1.5 |
 | The first-order count is the injection error (P03, P04) | a sampled point outside its interval × [0.92, 1.08] at $p_{\text{ph}} \lesssim 10^{-3}$ |
 | Initialization, measurement and loss cost no fidelity | any of them, alone, producing a sampled injection error above 1% of the all-on rate |
-| The CZ's $ZZ$ term costs nothing (P04-R1) | a compilation whose ancillas are not prepared and measured in $X$, so the ancilla half of $ZZ$ need not be caught |
+| A syndrome CZ's $ZZ$ term costs nothing (P04-R1) | a compilation whose ancillas are not prepared and measured in $X$. It never applied to a rotation built from $R_{ZZ}(\theta)$ gates, where $ZZ$ is the critical fault [@veroni2026endtoend] |
 
 ::: {.callout-warning .agentlog title="🤖 Agent Log — Chapter 13"}
 **Delegated to the agent (Claude, 2026-10-28).** Collecting every
@@ -201,6 +216,9 @@ rests on V1.
 2. **What does first order miss, and where did you see it?**
 3. **Which modelling choice changes your budget most, and by how much?**
 4. **What would make you retract the claim that loss costs no fidelity?**
+5. **Your $\alpha$ is six times ours. Why?**
+6. **How does "$ZZ$ is free" square with STAR protocols built on
+   $R_{ZZ}$ gates?**
 :::
 
 ::: {.callout-caution title="💪 Exercises"}

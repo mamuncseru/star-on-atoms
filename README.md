@@ -20,12 +20,15 @@ published STAR circuits at d = 3, 5 and 7:
   43–52%, but the rotation gate itself carries only 12–16%.** The rest is
   the Hadamards that the CNOT-to-CZ compilation leaves on data qubits.
   Spectators and the CZ carry about a quarter each. Initialization,
-  measurement and atom loss carry nothing at first order: they cost
-  acceptance only.
+  measurement and atom loss (a Y error, as Table II models it) carry
+  nothing at first order: they cost acceptance only.
 - **Halving single-qubit-gate error buys ×1.32 in simulation volume at
   d = 5** (sampled: ×1.36, 95% interval 1.21–1.52).
-- **The CZ's correlated ZZ error, its largest term, costs this injection
-  nothing**, because every ancilla is prepared and measured in X.
+- **In syndrome extraction, the CZ's correlated ZZ error, its largest
+  term, costs this injection nothing**, because every ancilla is prepared
+  and measured in X. This holds for a single-qubit rotation gate. In STAR
+  protocols that rotate with two-qubit R_ZZ gates, a ZZ at the rotation is
+  the critical fault (Veroni, Deger and Daley, arXiv:2610.26471).
 - **How it was measured.** An exact first-order count over every fault
   in the circuits' own error model ([`starlab/enumerate.py`](starlab/enumerate.py))
   was committed as a prediction, then tested blind on 802 million sampled
@@ -52,8 +55,8 @@ Trotter steps) as 1/(α p)². QuEra's papers scale every physical noise
 channel together by one knob, p. A hardware programme has to decide which
 error to halve next. This book measures that — an error budget for STAR
 injection under QuEra's published hardware model, one channel at a time,
-with intervals — on a pipeline first shown to reproduce QuEra's published
-curve.
+with intervals — on a pipeline first shown to reproduce the reference
+curve in QuEra's challenge repository.
 
 ## What makes it trustworthy
 

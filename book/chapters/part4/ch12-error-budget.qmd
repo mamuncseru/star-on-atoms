@@ -11,7 +11,8 @@ By the end of this chapter you can:
 3. Read the budget (single-qubit gates, spectators, the CZ) and say what
    halving each one buys in $\alpha$ and in simulation volume.
 4. Explain why the CZ's correlated $ZZ$ error, its largest term, costs this
-   injection nothing, and what that tells a hardware team.
+   injection nothing in syndrome extraction, and why that does not carry
+   over to a rotation built from two-qubit gates.
 5. Say what was computed, what was sampled blind, and how each tests the
    other.
 :::
@@ -88,14 +89,21 @@ rotations before:
 - Toshio *et al.*, introducing STAR, count the rotation gate's own errors
   and take every other single error to be detected
   [@toshio2024practical].
+- Liu *et al.* count, in a circuit's detector error model, the
+  mechanisms that flip a logical observable without firing any detector,
+  for Clifford ($|Y\rangle$) injection [@liu2026insitu, App. F].
+- Veroni *et al.* name the window in which a phase flip near the rotation
+  goes unseen, for STAR on neutral atoms [@veroni2026endtoend].
 - Exact low-order enumeration of accepted faults also exists for
   magic-state preparation [@gao2026lowcost].
 
-What this chapter adds is narrow, and testable. The count runs
-mechanically over every fault in the published circuits' own error model
-(`starlab/enumerate.py`, about a hundred lines). It was registered as a
-prediction before it was compared with anything. And it was then tested
-blind.
+What this chapter adds is narrow, and testable. It extends the
+error-model count from Clifford injection to an arbitrary angle: a fault
+is matched against all $2^k$ branch symptoms and weighted by
+$w_{|S^*|}(\theta)$. The count runs mechanically over every fault in the
+published circuits' own error model (`starlab/enumerate.py`, about a
+hundred lines). It was registered as a prediction before it was compared
+with anything. And it was then tested blind.
 
 ## The test against 665 million shots
 
@@ -166,14 +174,18 @@ things are worth saying out loud.
 
 1. **Initialization, measurement and both kinds of loss carry exactly
    zero** at first order, at every distance. A wrong initial state, a
-   flipped measurement and a $Y$ (loss) error all trip a detector that no
-   branch trips. They cost acceptance and nothing else.
+   flipped measurement and a $Y$ error all trip a detector that no branch
+   trips. They cost acceptance and nothing else. "Loss" here is Table II's
+   model of it, a $Y$ error. Real atom loss is not a Pauli error, and
+   this row does not price it.
 2. **Single-qubit gates are the largest share**, 43% at $d = 3$ rising
    to 57% at $d = 15$. But the rotation gate itself carries only 12% at
    $d = 3$ and 18% at $d = 15$. The rest is the Hadamards that the
    CNOT-to-CZ compilation leaves on data qubits. A $Z$ on a rotated qubit
    anywhere between the rotation and its first $X$-check looks exactly
-   like a branch, whichever gate put it there. A count of the rotation
+   like a branch, whichever gate put it there. The mechanism is known: it
+   is Choi *et al.*'s flip-projection error, and the window Veroni *et
+   al.* describe. What is new is its size here. A count of the rotation
    gate's errors alone, the accounting the original STAR analysis uses for
    its own protocol, would capture 12–18% of the error in these circuits.
    Spectators come second, then the CZ. Moves barely register.
@@ -292,15 +304,22 @@ frames explain both.
 1. **Every ancilla is prepared and measured in $X$.** The Hadamards that
    compile each CNOT into a CZ fold into the ancilla's reset and
    measurement (Chapter 11). A $Z$ on an ancilla commutes with every
-   later CZ and flips the measurement, so the ancilla half of a $ZZ$
-   always trips a detector that no branch trips. The fault is caught
-   whatever its data half does. An $X$ on an ancilla is different: the
-   ancilla's remaining CZs copy it onto the data as $Z$s, and those can
-   hide.
+   later CZ and flips the measurement. An $X$ on an ancilla is different:
+   the ancilla's remaining CZs copy it onto the data as $Z$s, and those
+   can hide.
 2. **During an X-check, the data qubit sits in the Hadamard frame.**
    There $HXH = Z$, so a single $X$ on the data atom is a $Z$ in the
    code's frame, the kind a branch can hide. Outside that frame, the
    single $Z$ is the dangerous term. A $Y$ is caught in both.
+
+**Why a $ZZ$ is always caught.** A branch acts once, at the rotation, so
+its symptom lies in a single round. A flipped ancilla measurement shows
+up in the detectors of two consecutive rounds. So the ancilla half of a
+$ZZ$ alone is always detected: a planted $Z$ on the ancilla half of every
+injection-window CZ is caught (84 of 84 at $d = 3$, 280 of 280 at
+$d = 5$). And no $ZZ$ has a data half that cancels it: the enumeration
+finds all 70 $ZZ$ mechanisms detected at $d = 3$, and all 252 at
+$d = 5$.
 
 So the $X$/$Y$ parameter reaches the injection twice: through data
 qubits in the Hadamard frame, and through ancillas. The $Z$ parameter
@@ -329,12 +348,20 @@ for a in r1["arms"]:
 ```
 :::
 
-**What it tells a hardware team.** For this injection, a CZ whose error
-is mostly correlated $ZZ$ beats one with the same total spread over
-single-atom terms. The calculator gives the same zero with every Hadamard
-kept, at every distance from 3 to 15. But the claim is limited: it holds
-in the post-selected injection window, to first order. In the memory
-rounds that follow, a $ZZ$ is an ordinary error for the decoder.
+**What it tells a hardware team, and what it does not.** In these
+circuits, whose rotation is a single-qubit $R_Z$, a syndrome-extraction
+CZ whose error is mostly correlated $ZZ$ beats one with the same total
+spread over single-atom terms. The calculator gives the same zero with
+every Hadamard kept, at every distance from 3 to 15. The claim is
+limited three ways:
+- It holds in the post-selected injection window, to first order. In
+  the memory rounds that follow, a $ZZ$ is an ordinary error for the
+  decoder.
+- It does not carry over to STAR protocols that rotate with a two-qubit
+  $R_{ZZ}(\theta)$. There, a $ZZ$ error at the rotation gate is a $Z$ on
+  both rotated atoms, and it is the critical undetected fault
+  [@veroni2026endtoend].
+- It concerns the CZ's error, not the rotation's.
 
 ## What halving buys
 

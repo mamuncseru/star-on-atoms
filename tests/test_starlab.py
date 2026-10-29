@@ -190,6 +190,26 @@ def test_enumeration_classifies_planted_faults():
     assert [(f.m, set(f.subset)) for f in found] == [(3, {0, 3, 6})]
 
 
+def test_proxy_reads_the_rotation_as_the_identity():
+    # The exact count works in the theta = 0 proxy, so the proxy's error
+    # model must be the circuit's with the R_Z lines deleted. tsim issue
+    # #226: stim sees R_Z as the identity, but R_ZZ / R_PAULI as S at any
+    # angle, so a circuit rotating with those would fail this test.
+    from starlab import renoise as rn
+    from starlab.enumerate import _proxy
+    for d in (3, 5, 7):
+        for model in (rn.uniform(1e-3), rn.table_ii(1e-3)):
+            text = rn.renoise(starlab.star_text(d, math.pi / 16), d, model,
+                              window="injection")
+            assert re.search(r"^R_Z\(", text, re.M)
+            no_rz = "\n".join(line for line in text.splitlines()
+                              if not line.startswith("R_Z("))
+            dem = [_proxy(t).detector_error_model(
+                decompose_errors=False, approximate_disjoint_errors=True)
+                for t in (text, no_rz)]
+            assert dem[0] == dem[1]
+
+
 def test_cz_faults_hide_only_as_the_frame_predicts():
     # Chapter 12's account of P04-R1, planted fault by fault at d = 3. On
     # the ancilla half of any injection-window CZ, a Z or Y is always

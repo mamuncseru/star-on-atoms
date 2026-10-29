@@ -31,6 +31,10 @@
   "checked": "2026-10-27",
   "title": "Sparse Blossom: correcting a million errors per core second with minimum-weight matching"
  },
+ "arxiv:2303.17380": {
+  "checked": "2026-10-29",
+  "title": "Fault Tolerant Non-Clifford State Preparation for Arbitrary Rotations"
+ },
  "arxiv:2304.05420": {
   "checked": "2026-10-27",
   "title": "High-fidelity parallel entangling gates on a neutral atom quantum computer"
@@ -71,9 +75,21 @@
   "checked": "2026-10-27",
   "title": "Tsim: Fast Universal Simulator for Quantum Error Correction"
  },
+ "arxiv:2604.05126": {
+  "checked": "2026-10-29",
+  "title": "In-Situ Simultaneous Magic State Injection on Arbitrary CSS qLDPC Codes"
+ },
  "arxiv:2606.25011": {
   "checked": "2026-10-27",
   "title": "Fast and Parallel High-Rate STAR Architecture for Megaquop Quantum Simulation"
+ },
+ "arxiv:2609.12698": {
+  "checked": "2026-10-29",
+  "title": "Extremely Low-Cost Magic State Preparation toward Fault-Tolerant Quantum Computing"
+ },
+ "arxiv:2610.26471": {
+  "checked": "2026-10-29",
+  "title": "End-to-End Optimization of Partial Fault Tolerance in Neutral-Atom Arrays"
  },
  "arxiv:quant-ph/0004038": {
   "checked": "2026-10-27",
@@ -82,6 +98,10 @@
  "arxiv:quant-ph/0403025": {
   "checked": "2026-10-27",
   "title": "Universal Quantum Computation with ideal Clifford gates and noisy ancillas"
+ },
+ "arxiv:quant-ph/0504218": {
+  "checked": "2026-10-29",
+  "title": "Quantum accuracy threshold for concatenated distance-3 codes"
  },
  "arxiv:quant-ph/0605138": {
   "checked": "2026-10-27",

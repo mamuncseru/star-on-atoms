@@ -1,9 +1,7 @@
 ---
 title: "An Error Budget for STAR Injection on Neutral Atoms"
 subtitle: "Counted exactly at first order, and tested blind"
-author: "Md. Abdullah Al Mamun · Temple University"
-date: 2026-10-29
-date-format: "D MMMM YYYY"
+author: "Md. Abdullah Al Mamun · Temple University · 29 October 2026"
 bibliography: ../book/bib/references.bib
 jupyter: star-book
 execute:
@@ -13,8 +11,8 @@ format:
   typst:
     papersize: us-letter
     margin:
-      x: 1.9cm
-      y: 1.5cm
+      x: 1.75cm
+      y: 1.4cm
     fontsize: 10pt
     section-numbering: "1."
     fig-format: svg
@@ -69,38 +67,41 @@ model at $p_{\text{ph}} = 10^{-3}$.
    but the rotation gate itself carries only 12–16%.** The rest is the
    Hadamards that the CNOT-to-CZ compilation leaves on data qubits.
    Spectators and the CZ carry about a quarter each. Initialization,
-   measurement and atom loss carry nothing at first order.
+   measurement and atom loss (modelled, as in Table II, by a $Y$ error)
+   carry nothing at first order.
 2. **Halving single-qubit-gate error buys ×1.32 in simulation volume at
    $d = 5$** (sampled: ×1.36, 95% interval 1.21–1.52). Halving the
    rotation gate's error alone buys ×1.08.
-3. **The CZ's correlated $ZZ$ error, its largest term, costs this
-   injection nothing.** Every ancilla is prepared and measured in $X$, so
-   the ancilla half of a $ZZ$ is always detected.
+3. **In syndrome extraction, the CZ's correlated $ZZ$ error, its largest
+   term, costs this injection nothing.** Every ancilla is prepared and
+   measured in $X$, so the ancilla half of a $ZZ$ is always detected. This
+   is specific to a single-qubit rotation gate (§4).
 4. **The budget is an exact first-order count**, committed before the
    sampling that tested it. It predicted nine sampled quantities to within
    0.95–1.10, including $d = 7$, which had not been sampled.
 
 # Setup
 
-- **Circuits.** QuEra's STAR circuits for the ETH QHack 2026 challenge, at
-  $d = 3$, 5 and 7: $k = d$ rotated qubits, one round before the rotation.
-  They are teaching circuits, not the paper's $k = 3$ protocol (§6), and
-  are fetched at a pinned commit, never redistributed.
+- **Circuits.** QuEra's STAR teaching circuits for the ETH QHack 2026
+  challenge, $d = 3$, 5, 7: $k = d$ rotated qubits, one round before the
+  rotation; not the paper's $k = 3$ protocol. Fetched, never
+  redistributed.
 - **Noise.** Table II's channels are placed by role on the native gate set
   $\{R, R_X, H, \mathrm{CZ}, R_Z, M, M_X\}$ and scaled so that Eq. D1
   gives $p_{\text{ph}} = 10^{-3}$ (the table sums to $7.46 \times 10^{-3}$).
   Each CNOT becomes $H \cdot \mathrm{CZ} \cdot H$. Paired Hadamards
-  cancel, and the rest fold into resets and measurements, as the paper's
-  Fig. 12 draws them. With every channel set equal, the rebuilt circuits
+  cancel, and the rest fold into resets and measurements (Fig. 12). With
+  every channel set equal, the rebuilt circuits
   reproduce the published detector error model exactly at $d = 3$, 5, 7.
-- **Metric: the injection error alone.** Noise acts only in the injection
-  window, every detector is post-selected, later rounds are noiseless, and
-  there is no decoder. Two findings forced this. With noisy memory rounds
-  and a perfect unrotation, 69–84% of the published curve's
-  angle-dependent error is memory $X$ errors, read out in proportion to
-  $\sin^2\theta$. And the published curve is reproduced only when matching
-  on tsim's undecomposed error model, from which PyMatching drops every
-  fault that flips more than two detectors.
+- **Metric: an idealized injection error.** Noise acts only in the
+  injection window, every detector is post-selected, later rounds are
+  noiseless, and there is no decoder. A real protocol decodes some faults
+  this metric rejects. Two findings forced the choice. With noisy memory
+  rounds and a perfect unrotation, 69–84% of the challenge's reference
+  curve's angle-dependent error is memory $X$ errors, read out in
+  proportion to $\sin^2\theta$. And that curve is reproduced only when
+  matching on tsim's undecomposed error model, from which PyMatching drops
+  every fault that flips more than two detectors.
 
 # Method: count instead of sample
 
@@ -130,18 +131,25 @@ preparation is not new:
 - Toshio *et al.* count the rotation gate's own errors and take every
   other single error to be detected [@toshio2024practical,
   arXiv:2408.14848].
-- The misrotation term is the paper's Eq. 2.
+- Liu *et al.* count error-model mechanisms that flip a logical
+  observable without firing any detector, for Clifford injection
+  [@liu2026insitu, App. F].
+- Veroni *et al.* describe the window around the rotation in which a
+  phase flip goes unseen [@veroni2026endtoend]. The misrotation term is
+  the paper's Eq. 2.
 
-What this note adds is narrow. The count runs mechanically over every
-fault in the published circuits' own error model, channel by channel, in
-about 100 lines (`starlab/enumerate.py`), and it was tested blind.
+What this note adds is narrow. It extends the error-model count from
+Clifford injection to an arbitrary angle, by matching each fault against
+the $2^k$ branch symptoms. It runs over every fault in the published
+circuits, channel by channel, in about 100 lines
+(`starlab/enumerate.py`), and it was tested blind.
 
 # Validation
 
 ```{python}
 #| label: fig-budget
 #| fig-cap: "**(a)** Each Table II row's share of the first-order injection error at d = 5, θ = π/16 (computed); the hatched part is the rotation gate's own error. Right of each bar: what halving the row buys in simulation volume. **(b)** Protocol P04 and its CZ diagnostic: each sampled injection error (95% Wilson interval) against the prediction committed before sampling. Rows predicted to be exactly zero are drawn as 95% upper limits at the left edge."
-fig, (ax, bx) = plt.subplots(1, 2, figsize=(7.0, 2.6),
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(7.0, 2.4),
                              gridspec_kw={"width_ratios": [1.15, 1]})
 ch = palette.style("phase")
 b5 = exact[5]
@@ -276,33 +284,37 @@ print(": Computed at $\\theta = \\pi/16$, Table II scaled to "
 
 - **Why the rotation gate is a minority.** A $Z$ on a rotated qubit
   anywhere between the rotation and the qubit's first $X$-check looks
-  exactly like a branch, and so does a $Z$ that a stabilizer maps onto
-  one. The Hadamards, CZs and spectators of the first syndrome round all
-  put such $Z$s there.
+  exactly like a branch (Choi *et al.*'s flip-projection error), and so
+  does a $Z$ that a stabilizer maps onto one. The Hadamards, CZs and
+  spectators of the first syndrome round all put such $Z$s there. The
+  mechanism is known; its size in these circuits is the result.
 - **Initialization, measurement and loss are free at first order.** Each
-  trips a detector that no branch trips. They lower acceptance, which
+  trips a detector that no branch trips. Loss is Table II's $Y$ error;
+  real atom loss is not Pauli and is not priced here. They lower acceptance, which
   sets the time per accepted rotation, not its error.
 - **Table II gives 0.55 of the uniform model's error at every distance.**
-- **$\alpha$ grows beyond $d = 5$.** Each rotated qubit brings its own
-  surviving class, so $A$ grows by about $0.64\,p$ per qubit while Eq. 4's
-  factor saturates: one quantitative reason to keep $k$ small and fixed,
-  as the paper's protocol does ($k = 3$).
 
 **Inside the CZ.** Table II's CZ channel has three parameters: single $X$
 or $Y$ ($5 \times 10^{-4}$ per term), single $Z$ ($6.3 \times 10^{-4}$),
 and correlated $ZZ$ ($1.3 \times 10^{-3}$).
 
-- **$ZZ$ costs nothing.** A $Z$ on an ancilla, which is prepared and
-  measured in $X$, flips its measurement whatever the data half does.
-  Sampled separately and registered: 2 errors in $1.1 \times 10^7$
-  accepted shots at $d = 3$, none at $d = 5$.
+- **$ZZ$ costs nothing here.** A $Z$ on an ancilla, which is prepared
+  and measured in $X$, flips its measurement. That shows up in two
+  consecutive rounds, while a branch's symptom lies in one. Planted at
+  every window CZ, the ancilla half alone is always caught, and no $ZZ$
+  has a data half that cancels it. Sampled separately and registered: 2
+  errors in $1.1 \times 10^7$ accepted shots at $d = 3$, none at
+  $d = 5$.
 - **$X$ and $Z$ trade places.** On a data qubit inside the Hadamard frame
   of an $X$-check, $X$ is the term that hides; outside it, $Z$ is; a $Y$
   never hides. An $X$ on an ancilla also hides, by spreading through its
   later CZs into data $Z$s.
-- **For hardware:** a CZ whose error is mostly $ZZ$ beats one with the
-  same total in single-atom terms, for this injection, to first order. In
-  later memory rounds a $ZZ$ is an ordinary error.
+- **For hardware, with limits:** a syndrome-extraction CZ whose error is
+  mostly $ZZ$ beats one with the same total in single-atom terms, for
+  this injection, to first order. This does not hold for a rotation built
+  from two-qubit $R_{ZZ}(\theta)$ gates, where a $ZZ$ at the rotation is
+  the critical undetected fault [@veroni2026endtoend]. In later memory
+  rounds a $ZZ$ is an ordinary error.
 
 | Choice | This note | Source | Alternative: effect |
 |:------------------|:-------------------|:--------------------|:----------------------|
@@ -310,29 +322,37 @@ and correlated $ZZ$ ($1.3 \times 10^{-3}$).
 | 1q-gate channel | depolarizing | Table II (the prose says "biased", no numbers) | not priced |
 | CNOT compilation | Hadamards cancelled and folded | Fig. 12 | all kept: +20–25% |
 | Pre-rotation feed-forward | noiseless frame update | not specified | a physical gate: +15% |
-| Which atom moves | the ancilla | not specified | the data atom: within noise |
 | CZ loss | every atom in the zone | Table II | pair only: within noise |
 | Idle noise | none | none listed | not swept |
+| Atom loss | a $Y$ error | Table II | real loss is not Pauli: not priced |
 
 : The readings the paper leaves open, all registered before any result (protocol P02). Effects are sampled, on the injection error at $\theta = \pi/16$, $d = 3$ and 5. {#tbl-assumptions}
 
 # Limits
 
-- **Readings.** Table II gives rates, not a circuit. @tbl-assumptions
-  lists every choice this note makes where the paper is silent, and what
-  each alternative is worth.
+- **Readings.** Every choice made where the paper is silent: @tbl-assumptions.
 - **Scope.** QuEra's teaching circuits ($k = d$, one round before the
   rotation), not the paper's protocol. Distances 3–7 are sampled; 9–15
   are computed by the validated method.
-- **First order.** About 1% low at the operating point and 10% at full
-  Table II strength. One residual is unexplained: the $d = 3$ spectator
-  row sampled 10% above its prediction, inside the registered tolerance.
+- **$\alpha$ is not the paper's.** Ours is 8.6–9.1 (Table II), against
+  the paper's $\approx 1.5$ at $d = 7$ for its own protocol. The protocols
+  differ in $k$, in the rounds before the rotation and in the rotation
+  gate. Which accounts for the gap is not yet tested. Idle dephasing,
+  which Table II omits, would add directly by the mechanism above.
+- **First order** (§3). One residual is unexplained: the $d = 3$
+  spectator row sampled 10% above its prediction, inside tolerance.
 - **Process.** Every experiment was a protocol committed before it ran,
-  and a guard fails the build otherwise. An AI agent (Claude) wrote most
-  of the code. Each chapter of the companion book logs what the agent did
-  and what the author verified by hand.
+  enforced by a guard. An AI agent (Claude) wrote most of the code; the
+  companion book logs, per chapter, what the author verified by hand.
 
-**Reproduce.** `github.com/mamuncseru/star-on-atoms` holds the book, the
-`starlab` library, the protocols and the ledger of verdicts:
-`make fetch && make check`, then `python tools/exact_budget.py` and
-`python tools/measure_p04.py`.
+**Reproduce.** `github.com/mamuncseru/star-on-atoms` (book, `starlab`,
+protocols, ledger): `make fetch && make check`, then
+`python tools/exact_budget.py` and `python tools/measure_p04.py`.
+
+```{=typst}
+#set text(size: 8.5pt)
+#set par(spacing: 0.7em)
+```
+
+::: {#refs}
+:::
