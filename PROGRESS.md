@@ -8,19 +8,19 @@ edit.
 
 ## Now
 
-**Ready to freeze.** The three-page note is written
-([`note/`](note/star-on-atoms-note.qmd)), and the README leads with the
-answer. The prior-art reading is done. It narrowed one claim and sharpened
-another: in these circuits the rotation gate itself carries only 12–16% of
-the injection error.
+**Results frozen** (tag [`results-freeze-2026-10-30`](https://github.com/mamuncseru/star-on-atoms/tree/results-freeze-2026-10-30)). Every protocol is reported
+and every verdict is in the [ledger](LEDGER.md). The
+[three-page note](docs/downloads/star-on-atoms-note.pdf) is on this site.
+The book stays private until after the application. Its sources are in the
+repository, and the rendered edition follows once the author has verified
+each chapter by hand.
 
 **Upstream:** [tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232)
 is posted, and the fix a maintainer asked for is open as
 [pull request #234](https://github.com/QuEraComputing/tsim/pull/234).
 
-**Next:** the first mock interview, then the **freeze on Fri 2026-10-30**:
-`make release`, the book and note PDFs on the site, and each chapter's
-Agent Log ticked by the author or the chapter left out.
+**Next:** mock interviews, the cover letter, and the **application on
+Mon 2026-11-02**.
 
 ## Milestones
 
@@ -35,9 +35,23 @@ Agent Log ticked by the author or the chapter left out.
 | 2026-10-28 | Error-budget chapter and its headline figure; threats to validity | ✅ |
 | 2026-10-29 | A short note (3 pages) and the README headline; prior art read | ✅ |
 | 2026-10-29 | Mock interview #1 | ⬜ |
-| 2026-10-30 | Freeze: results final, book PDF released | ⬜ |
+| 2026-10-30 | Freeze: results final; the note on the site (the book after the application) | ✅ |
+| 2026-11-02 | Application submitted | ⬜ |
 
 ## Log
+
+### 2026-10-30 (afternoon) · Results frozen
+
+-   **The freeze.** `make release` passes: every guard, every citation
+    resolved, and a full render of the book (135 pages). The repository is
+    tagged [`results-freeze-2026-10-30`](https://github.com/mamuncseru/star-on-atoms/tree/results-freeze-2026-10-30). From here, any change to a result is a
+    dated deviation.
+-   **What is public:** the [three-page note](docs/downloads/star-on-atoms-note.pdf),
+    the protocols, the ledger, the code and the book's sources.
+-   **What is not, yet:** the rendered book. Each chapter's Agent Log asks
+    the author to verify it by hand, and none is ticked yet. So the
+    rendered edition waits until after the application, as the author
+    decided.
 
 ### 2026-10-30 · An upstream pull request
 

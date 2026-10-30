@@ -119,6 +119,14 @@ def _relink(markdown: str, page, files) -> str:
         resolved = posixpath.normpath(posixpath.join(here, path))
         if files.get_file_from_path(resolved) is not None:
             return match.group(0)
+        # A root file (README, PROGRESS) linking into docs/ means a file the
+        # site itself serves, such as the note's PDF.
+        if (resolved.startswith("docs/")
+                and files.get_file_from_path(resolved[5:]) is not None):
+            rel = posixpath.relpath(resolved[5:],
+                                    posixpath.dirname(page.file.src_uri)
+                                    or ".")
+            return f"[{text}]({rel}{'#' + anchor if anchor else ''})"
         if resolved not in _published():
             return match.group(0)        # let MkDocs report it
         kind = "tree" if (ROOT / resolved).is_dir() else "blob"

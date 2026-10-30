@@ -20,8 +20,11 @@ measures this on QuEra's own published circuits, under QuEra's own
 published hardware noise model, with every experiment registered before it
 runs.
 
-<p class="soa-meta" markdown="span">Started 2026-10-26 · results freeze
-2026-10-30 · last update <!-- progress:updated --> ·
+**[Read the three-page summary (PDF)](downloads/star-on-atoms-note.pdf)**:
+the question, the answer, the blind test and the limits.
+
+<p class="soa-meta" markdown="span">Started 2026-10-26 · results frozen
+2026-10-30 ([tag](https://github.com/mamuncseru/star-on-atoms/tree/results-freeze-2026-10-30)) · last update <!-- progress:updated --> ·
 [source on GitHub](https://github.com/mamuncseru/star-on-atoms) ·
 text CC BY 4.0, code MIT</p>
 

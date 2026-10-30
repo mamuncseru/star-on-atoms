@@ -35,13 +35,15 @@ published STAR circuits at d = 3, 5 and 7:
   shots, including d = 7 ([P04](protocols/P04-sampled-budget-blind-test.md),
   CONFIRMED).
 
-The three-page summary is [`note/star-on-atoms-note.qmd`](note/star-on-atoms-note.qmd)
-(`make note` renders the PDF). Every verdict, with what would overturn
+The three-page summary is the [note (PDF)](docs/downloads/star-on-atoms-note.pdf)
+([source](note/star-on-atoms-note.qmd); `make note` renders it). Every verdict, with what would overturn
 it, is in [LEDGER.md](LEDGER.md).
 
-> **Status (2026-10-29):** results freeze Fri 2026-10-30. Chapters 1–13
-> are drafted; the author's hand-verification of each chapter's Agent Log
-> is in progress. Dated progress is on the
+> **Status (2026-10-30):** results frozen at tag
+> [`results-freeze-2026-10-30`](https://github.com/mamuncseru/star-on-atoms/tree/results-freeze-2026-10-30): every protocol is reported and every verdict is in
+> the ledger. The book's sources (Chapters 1–13) are in this repository.
+> Its rendered edition will be published after the application, once the
+> author has verified each chapter's Agent Log by hand. Dated progress is on the
 > [project site](https://mamuncseru.github.io/star-on-atoms/) and in
 > [PROGRESS.md](PROGRESS.md); [OUTLINE.md](OUTLINE.md) is the plan.
 
