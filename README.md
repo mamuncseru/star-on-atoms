@@ -142,6 +142,9 @@ and arXiv ID and compares the returned title with the one cited.
 **Upstream.** A decoding pitfall found along the way (matching on tsim's
 default error model silently drops faults that flip more than two
 detectors) is reported as [tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232).
+At a maintainer's request, [pull request #234](https://github.com/QuEraComputing/tsim/pull/234) adds the warning to
+the docstring and lets `detector_error_model(decompose_errors=True)` pass
+through to stim.
 
 The STAR circuits and the reference plot are QuEra Computing's, published
 for the ETH QHack 2026 challenge

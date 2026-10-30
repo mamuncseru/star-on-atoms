@@ -15,7 +15,8 @@ another: in these circuits the rotation gate itself carries only 12–16% of
 the injection error.
 
 **Upstream:** [tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232)
-is posted.
+is posted, and the fix a maintainer asked for is open as
+[pull request #234](https://github.com/QuEraComputing/tsim/pull/234).
 
 **Next:** the first mock interview, then the **freeze on Fri 2026-10-30**:
 `make release`, the book and note PDFs on the site, and each chapter's
@@ -37,6 +38,15 @@ Agent Log ticked by the author or the chapter left out.
 | 2026-10-30 | Freeze: results final, book PDF released | ⬜ |
 
 ## Log
+
+### 2026-10-30 · An upstream pull request
+
+-   **[tsim #234](https://github.com/QuEraComputing/tsim/pull/234)** is open. A tsim maintainer replied to issue #232
+    and asked for two things: a docstring warning, and support for
+    `decompose_errors=True`. The pull request does both, with two tests,
+    and states one measured caveat. The pass-through decomposition differs
+    slightly from stim's own, but both recombine exactly into the
+    undecomposed model.
 
 ### 2026-10-29 (evening) · A paper? Not yet; five claims scoped
 
