@@ -23,6 +23,11 @@ runs.
 **[Read the three-page summary (PDF)](downloads/star-on-atoms-note.pdf)**:
 the question, the answer, the blind test and the limits.
 
+**[New to error correction? Start with STAR from Zero](primer/index.html)**:
+an illustrated crash course, from what a qubit error is to this project's
+answer, in 14 short sessions with figures to play with and questions to
+check yourself.
+
 <p class="soa-meta" markdown="span">Started 2026-10-26 · results frozen
 2026-10-30 ([tag](https://github.com/mamuncseru/star-on-atoms/tree/results-freeze-2026-10-30)) · last update <!-- progress:updated --> ·
 [source on GitHub](https://github.com/mamuncseru/star-on-atoms) ·

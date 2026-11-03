@@ -40,6 +40,17 @@ Mon 2026-11-02**.
 
 ## Log
 
+### 2026-11-03 · A crash course, and the pull request moves
+
+-   **[STAR from Zero](https://mamuncseru.github.io/star-on-atoms/primer/)**
+    is on this site: an illustrated crash course for readers new to error
+    correction. Its 14 short sessions run from what a qubit error is to
+    this project's answer, with interactive figures and 61 questions to
+    check yourself. Its STAR figures use the same formulas as `starlab`.
+-   **[tsim #234](https://github.com/QuEraComputing/tsim/pull/234):** a
+    maintainer pushed a type-check fix for the new tests to the branch,
+    which has since been brought up to date with tsim's main.
+
 ### 2026-10-30 (afternoon) · Results frozen
 
 -   **The freeze.** `make release` passes: every guard, every citation

@@ -81,6 +81,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - "STAR from Zero": primer/index.html
   - Progress: PROGRESS.md
   - Plan: OUTLINE.md
   - Ledger: LEDGER.md

@@ -1,0 +1,1499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="An illustrated crash course, from what a qubit error is to which hardware error limits STAR on neutral atoms, with interactive figures and questions to check yourself.">
+<title>STAR from Zero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=Newsreader:opsz,wght@6..72,500;6..72,650&display=swap">
+<style>
+/* Layout: a course notebook. A sticky session index on wide screens, one
+   reading column, and every figure on a framed "bench" you can play with.
+   Colour is meaning, shared with the book: blue = X errors and X-type
+   things, amber = Z errors and Z-type things, teal = a check that fired,
+   red = a logical failure, slate = reference lines. */
+:root {
+  --paper: #fbfbf9;
+  --ink: #1b1c1a;
+  --muted: #5d5c56;
+  --rule: #e2e1da;
+  --panel: #f1f2ee;
+  --edge: #c4c3b9;
+  --x: #2a78d6;
+  --z: #e09a00;
+  --det: #1baf7a;
+  --fail: #e34948;
+  --slate: #6b6a64;
+  --link: #1f63b8;
+  --xsoft: rgba(42, 120, 214, 0.16);
+  --zsoft: rgba(224, 154, 0, 0.18);
+  --detsoft: rgba(27, 175, 122, 0.42);
+  --f-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121413; --ink: #e9e9e4; --muted: #a9a8a1; --rule: #2b2f2c;
+    --panel: #1a1d1b; --edge: #3d423e; --x: #4a93ea; --z: #d49300;
+    --det: #2fbf8b; --fail: #ec6a68; --slate: #a8a69f; --link: #7fb2f0;
+    --xsoft: rgba(74, 147, 234, 0.22); --zsoft: rgba(212, 147, 0, 0.24);
+    --detsoft: rgba(47, 191, 139, 0.45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121413; --ink: #e9e9e4; --muted: #a9a8a1; --rule: #2b2f2c;
+  --panel: #1a1d1b; --edge: #3d423e; --x: #4a93ea; --z: #d49300;
+  --det: #2fbf8b; --fail: #ec6a68; --slate: #a8a69f; --link: #7fb2f0;
+  --xsoft: rgba(74, 147, 234, 0.22); --zsoft: rgba(212, 147, 0, 0.24);
+  --detsoft: rgba(47, 191, 139, 0.45);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 17px;
+  line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+a { color: var(--link); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible {
+  outline: 2px solid var(--x); outline-offset: 2px; border-radius: 4px;
+}
+h1, h2, h3 { font-family: var(--f-display); font-weight: 650; text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2.3rem, 6vw, 3.6rem); letter-spacing: -0.01em; }
+h2 { font-size: clamp(1.6rem, 3.4vw, 2.1rem); }
+h3 { font-size: 1.22rem; margin-top: 1.6em; }
+p { margin: 0.8em 0; }
+.mono, code { font-family: var(--f-mono); font-size: 0.88em; }
+.label {
+  font-family: var(--f-mono); font-size: 0.74rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted);
+}
+.f { font-family: var(--f-display); font-style: italic; font-size: 1.06em; white-space: nowrap; }
+sub, sup { line-height: 0; }
+
+.wrap { max-width: 1180px; margin: 0 auto; }
+header.hero { padding-block: 56px 28px; border-bottom: 1px solid var(--rule); }
+.hero .lead { font-size: 1.2rem; max-width: 62ch; color: var(--ink); margin-top: 14px; }
+.hero .how { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-top: 22px; max-width: 900px; }
+.how div { border-top: 2px solid var(--ink); padding-top: 8px; font-size: 0.95rem; }
+.how b { display: block; font-family: var(--f-mono); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.progress { display: flex; align-items: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+.bar { width: 220px; max-width: 100%; height: 8px; background: var(--rule); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--det); transition: width 0.3s; }
+
+.layout { display: grid; gap: 40px; grid-template-columns: 1fr; margin-top: 8px; }
+@media (min-width: 1060px) { .layout { grid-template-columns: 240px minmax(0, 1fr); } }
+nav.index { font-size: 0.93rem; }
+@media (min-width: 1060px) {
+  nav.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); align-self: start; max-height: calc(100vh - 32px); overflow-y: auto; padding-top: 28px; }
+}
+nav.index details { border-bottom: 1px solid var(--rule); padding-block: 12px; }
+nav.index summary { cursor: pointer; font-weight: 700; }
+nav.index ol { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 2px; }
+nav.index li a { display: grid; grid-template-columns: 2.1em 1fr auto; gap: 4px; padding: 5px 8px; border-radius: 6px; color: var(--ink); text-decoration: none; }
+nav.index li a:hover { background: var(--panel); }
+nav.index .n { font-family: var(--f-mono); color: var(--muted); font-size: 0.82rem; padding-top: 2px; }
+nav.index .tick { color: var(--det); font-weight: 700; visibility: hidden; }
+nav.index li.is-done .tick { visibility: visible; }
+
+main { min-width: 0; }
+.session { padding-block: 44px 20px; border-bottom: 1px solid var(--rule); }
+.session > * { max-width: 72ch; }
+.session > .bench, .session > .wide { max-width: 860px; }
+.session header { display: grid; gap: 6px; margin-bottom: 10px; }
+.session header .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+button.btn, .seg button {
+  font: inherit; font-size: 0.9rem; cursor: pointer; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--edge); border-radius: 999px;
+  padding: 5px 13px; line-height: 1.4;
+}
+button.btn:hover, .seg button:hover { border-color: var(--ink); }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.done-btn[aria-pressed="true"] { background: var(--det); border-color: var(--det); color: #06130d; }
+
+.bench {
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 12px;
+  padding: 16px; margin: 22px 0; display: grid; gap: 12px;
+}
+.bench .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.bench .fig { overflow-x: auto; }
+.bench svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.bench .status { font-size: 0.98rem; min-height: 1.6em; }
+.bench .cap { font-size: 0.88rem; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.85rem; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
+
+.breath { margin: 22px 0; padding: 14px 0 14px 18px; border-left: 3px solid var(--det); }
+.breath .label { display: block; margin-bottom: 2px; }
+.breath p { margin: 0; font-family: var(--f-display); font-size: 1.22rem; line-height: 1.45; }
+
+dl.words { display: grid; grid-template-columns: minmax(8em, max-content) 1fr; gap: 6px 16px; margin: 14px 0; font-size: 0.95rem; }
+dl.words dt { font-weight: 700; }
+dl.words dd { margin: 0; }
+@media (max-width: 520px) { dl.words { grid-template-columns: 1fr; } dl.words dd { margin-bottom: 8px; } }
+
+.practice { margin-top: 26px; }
+.practice h3 { margin-top: 0; }
+details.qa { border-top: 1px solid var(--rule); padding-block: 10px; }
+details.qa:last-of-type { border-bottom: 1px solid var(--rule); }
+details.qa summary { cursor: pointer; font-weight: 700; list-style: none; display: grid; grid-template-columns: 1.6em 1fr; }
+details.qa summary::-webkit-details-marker { display: none; }
+details.qa summary::before { content: "+"; font-family: var(--f-mono); color: var(--muted); }
+details.qa[open] summary::before { content: "−"; }
+details.qa .ans { padding: 6px 0 2px 1.6em; }
+details.qa .ans p:first-child { margin-top: 0; }
+
+table.t { border-collapse: collapse; font-size: 0.93rem; width: 100%; font-variant-numeric: tabular-nums; }
+table.t th, table.t td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.t th { font-weight: 700; }
+.scroll { overflow-x: auto; }
+
+ol.map { list-style: none; padding: 0; margin: 18px 0; display: grid; gap: 0; counter-reset: m; }
+ol.map li { counter-increment: m; display: grid; grid-template-columns: 2.4em 1fr; gap: 10px; padding: 10px 0; position: relative; }
+ol.map li::before { content: counter(m); font-family: var(--f-mono); font-size: 0.85rem; width: 2em; height: 2em; border-radius: 50%; border: 1.5px solid var(--ink); display: grid; place-items: center; background: var(--paper); z-index: 1; }
+ol.map li:not(:last-child)::after { content: ""; position: absolute; left: calc(1em - 0.75px); top: 2.4em; bottom: -10px; width: 1.5px; background: var(--edge); }
+ol.map li b { font-family: var(--f-display); font-size: 1.12rem; }
+ol.map .where { font-size: 0.85rem; color: var(--muted); }
+
+/* SVG styling through tokens, so both themes work. */
+svg text { font-family: var(--f-body); fill: var(--ink); }
+svg .t-mono { font-family: var(--f-mono); }
+svg .t-muted { fill: var(--muted); }
+svg .ax { stroke: var(--edge); stroke-width: 1; fill: none; }
+svg .grid { stroke: var(--rule); stroke-width: 1; fill: none; }
+svg .qubit { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+svg .qubit.hot { cursor: pointer; }
+svg .qubit.hot:hover { stroke-width: 2.5; }
+svg .ex { fill: var(--x); stroke: var(--x); }
+svg .ez { fill: var(--z); stroke: var(--z); }
+svg .ey { fill: var(--fail); stroke: var(--fail); }
+svg .xcheck { fill: var(--xsoft); stroke: var(--x); stroke-width: 1; }
+svg .zcheck { fill: var(--zsoft); stroke: var(--z); stroke-width: 1; }
+svg .lit { fill: var(--detsoft); stroke: var(--det); stroke-width: 3; }
+svg .check-off { fill: var(--paper); stroke: var(--edge); stroke-width: 1.5; }
+svg .check-on { fill: var(--det); stroke: var(--det); stroke-width: 1.5; }
+svg .line-x { stroke: var(--x); fill: none; }
+svg .line-z { stroke: var(--z); fill: none; }
+svg .line-det { stroke: var(--det); fill: none; }
+svg .line-fail { stroke: var(--fail); fill: none; }
+svg .line-ink { stroke: var(--ink); fill: none; }
+svg .line-slate { stroke: var(--slate); fill: none; }
+svg .fill-det { fill: var(--det); }
+svg .fill-fail { fill: var(--fail); }
+svg .fill-x { fill: var(--x); }
+svg .fill-z { fill: var(--z); }
+svg .fill-panel { fill: var(--panel); }
+svg .fill-paper { fill: var(--paper); }
+svg .fill-rule { fill: var(--rule); }
+svg .fill-edge { fill: var(--edge); }
+svg .fill-ink { fill: var(--ink); }
+svg .fill-none { fill: none; }
+
+input[type="range"] { width: 220px; max-width: 100%; accent-color: var(--x); }
+.readout { font-family: var(--f-mono); font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+
+.cards { display: grid; gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 22px; min-height: 220px; display: grid; gap: 12px; align-content: start; }
+.card .q { font-family: var(--f-display); font-size: 1.35rem; line-height: 1.35; }
+.card .a { border-top: 1px solid var(--rule); padding-top: 12px; }
+.tally { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.92rem; color: var(--muted); }
+
+.t-muted { color: var(--muted); }
+footer { padding-block: 40px 0; color: var(--muted); font-size: 0.9rem; max-width: 72ch; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <div class="label">Crash course · a companion to <a href="../">STAR on Atoms</a></div>
+  <h1>STAR from Zero</h1>
+  <p class="lead">From “what is an error?” to “which hardware error limits STAR on neutral atoms?”, in 14 short sessions. Each one has a picture you can play with, the few words you need, and questions with model answers to check yourself.</p>
+  <div class="how">
+    <div><b>Read</b>One session takes 10–20 minutes. Go in order; each builds on the last.</div>
+    <div><b>Play</b>Click the figures. Errors, checks and angles change in front of you.</div>
+    <div><b>Speak</b>Answer each question out loud before you open the model answer.</div>
+    <div><b>Drill</b>At the end, the flashcards mix every question from every session.</div>
+  </div>
+  <div class="progress"><div class="bar" aria-hidden="true"><span id="pbar"></span></div><span id="ptext" class="readout">0 of 14 sessions done</span></div>
+</header>
+
+<div class="layout">
+<nav class="index" aria-label="Sessions">
+  <details id="index-details" open>
+    <summary>Sessions</summary>
+    <ol>
+      <li data-s="s0"><a href="#s0"><span class="n">0</span><span>The whole story</span><span class="tick">✓</span></a></li>
+      <li data-s="s1"><a href="#s1"><span class="n">1</span><span>Errors are Paulis</span><span class="tick">✓</span></a></li>
+      <li data-s="s2"><a href="#s2"><span class="n">2</span><span>The repetition code</span><span class="tick">✓</span></a></li>
+      <li data-s="s3"><a href="#s3"><span class="n">3</span><span>Checks, rounds, detectors</span><span class="tick">✓</span></a></li>
+      <li data-s="s4"><a href="#s4"><span class="n">4</span><span>The surface code</span><span class="tick">✓</span></a></li>
+      <li data-s="s5"><a href="#s5"><span class="n">5</span><span>Decoding and threshold</span><span class="tick">✓</span></a></li>
+      <li data-s="s6"><a href="#s6"><span class="n">6</span><span>Transversal gates, color codes</span><span class="tick">✓</span></a></li>
+      <li data-s="s7"><a href="#s7"><span class="n">7</span><span>The hard gate: T and magic</span><span class="tick">✓</span></a></li>
+      <li data-s="s8"><a href="#s8"><span class="n">8</span><span>STAR: a rotation by post-selection</span><span class="tick">✓</span></a></li>
+      <li data-s="s9"><a href="#s9"><span class="n">9</span><span>STAR's error and α</span><span class="tick">✓</span></a></li>
+      <li data-s="s10"><a href="#s10"><span class="n">10</span><span>Neutral atoms</span><span class="tick">✓</span></a></li>
+      <li data-s="s11"><a href="#s11"><span class="n">11</span><span>Why: simulating physics</span><span class="tick">✓</span></a></li>
+      <li data-s="s12"><a href="#s12"><span class="n">12</span><span>The tools: stim, tsim, DEMs</span><span class="tick">✓</span></a></li>
+      <li data-s="s13"><a href="#s13"><span class="n">13</span><span>The project, in plain words</span><span class="tick">✓</span></a></li>
+      <li><a href="#drill"><span class="n">★</span><span>Flashcard drill</span><span class="tick"></span></a></li>
+    </ol>
+  </details>
+</nav>
+
+<main>
+
+<!-- ============================ SESSION 0 ============================ -->
+<section class="session" id="s0" data-title="The whole story">
+  <header>
+    <div class="row"><span class="label">Session 0 · 8 min</span><button class="btn done-btn" aria-pressed="false" data-done="s0">Mark done</button></div>
+    <h2>The whole story on one page</h2>
+  </header>
+  <p>Everything in this course hangs on one chain of ideas. Read it once now. You won't understand every step yet, and that's fine: by Session 13 every step will be familiar, and you'll be able to explain this chain in your own words.</p>
+  <ol class="map">
+    <li><div><b>Qubits make mistakes.</b> Today's best hardware gets roughly 1 operation in 1,000 wrong. A useful algorithm needs billions of operations.<div class="where">Session 1</div></div></li>
+    <li><div><b>Error correction spreads one “logical” qubit over many physical qubits</b>, checks them constantly, and fixes mistakes before they pile up. The surface code is the standard way to do it.<div class="where">Sessions 2–5</div></div></li>
+    <li><div><b>Some gates are easy to do on protected qubits.</b> These are the Clifford gates (H, S, CNOT). On neutral atoms they're especially cheap, because you can do them “transversally”.<div class="where">Session 6</div></div></li>
+    <li><div><b>But Clifford gates alone can't beat a classical computer.</b> You also need a non-Clifford gate, such as T or a small rotation. The standard way to make one (“magic states”) is very expensive.<div class="where">Session 7</div></div></li>
+    <li><div><b>STAR is a shortcut for small rotations.</b> It makes a small rotation directly, by trying and keeping only the good attempts. Its error grows with the angle, so tiny angles are cheap.<div class="where">Sessions 8–9</div></div></li>
+    <li><div><b>QuEra builds machines from neutral atoms.</b> Every hardware operation (moving an atom, a two-atom gate, a measurement) has its own error rate. QuEra's paper lists them in its “Table II”.<div class="where">Session 10</div></div></li>
+    <li><div><b>Why care: simulating molecules and materials needs millions of small rotations.</b> STAR's error coefficient α decides how big a simulation fits on a machine.<div class="where">Session 11</div></div></li>
+    <li><div><b>This project asks one question:</b> which hardware error controls STAR's error, and how much would halving it buy? It answers with an exact count, tested blind.<div class="where">Sessions 12–13</div></div></li>
+  </ol>
+  <div class="breath"><span class="label">In one breath</span><p>Error correction makes qubits reliable; STAR is a cheap way to add the one kind of gate error correction can't make easily; this project measures which piece of the hardware limits that shortcut.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>In two sentences, what is this project about?</summary><div class="ans"><p>QuEra's STAR architecture makes small-angle rotations by post-selection, and its reach is set by one coefficient, α. The project measures which physical noise channel on a neutral-atom machine sets that coefficient, and what halving each channel would buy, using QuEra's own circuits and noise model and an exact calculation tested blind against sampling.</p></div></details>
+    <details class="qa"><summary>Why do we need error correction at all?</summary><div class="ans"><p>Physical qubits fail about once per thousand operations, and useful algorithms need billions of operations. Error correction encodes one logical qubit in many physical ones and keeps fixing errors, so the logical error rate can be pushed far below the physical one.</p></div></details>
+    <details class="qa"><summary>What is STAR, in one sentence?</summary><div class="ans"><p>STAR prepares a small logical rotation directly, by rotating a few physical qubits and keeping the attempt only if no error check fires. That skips the expensive T-gate machinery for small angles, at the price of an error that grows with the angle.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 1 ============================ -->
+<section class="session" id="s1" data-title="Errors are Paulis">
+  <header>
+    <div class="row"><span class="label">Session 1 · 12 min</span><button class="btn done-btn" aria-pressed="false" data-done="s1">Mark done</button></div>
+    <h2>Errors are Paulis</h2>
+  </header>
+  <p>You already know qubits and gates. The new idea here is how error-correction people <em>describe</em> mistakes. A real qubit can drift in endless ways: its state can tilt a little, or leak energy. Error correction needs only three kinds of mistakes, the Pauli errors.</p>
+  <ul>
+    <li><b>X: a bit flip.</b> It swaps |0⟩ and |1⟩, like flipping a classical bit.</li>
+    <li><b>Z: a phase flip.</b> It leaves |0⟩ alone and turns |1⟩ into −|1⟩. In the other basis it swaps |+⟩ and |−⟩. Classical bits have no such error.</li>
+    <li><b>Y: both at once.</b> Y = iXZ, so a Y error is an X error and a Z error together.</li>
+  </ul>
+  <div class="bench">
+    <div class="fig"><svg id="fig-pauli" viewBox="0 0 640 230" role="img" aria-label="Two circles. In the first, X swaps the north pole |0⟩ with the south pole |1⟩. In the second, Z swaps |+⟩ and |−⟩ on the equator."></svg></div>
+    <div class="cap">An X error moves the state between the poles. A Z error moves it across the equator. Every other small error is a mix of these, and the checks in later sessions “snap” the mix into one of them.</div>
+  </div>
+  <p><b>Why three are enough.</b> Any small error on one qubit can be written as a combination of I (no error), X, Y and Z. When error correction measures its checks, the measurement forces the qubit to “pick” one of them, just as measuring a qubit forces it to pick |0⟩ or |1⟩. So if you can fix X and Z, you can fix everything. People call this the <i>digitization</i> of errors.</p>
+  <p><b>How we model noise.</b> In simulations, every operation is followed by a random Pauli error with a small probability <span class="f">p</span>. The most common model is <i>depolarizing noise</i>: with probability <span class="f">p</span> something goes wrong, and it is X, Y or Z with equal chance (<span class="f">p</span>/3 each). A typical number is <span class="f">p</span> = 10<sup>−3</sup>, one mistake per thousand operations. Real hardware isn't equal-chance: neutral atoms make many more Z errors than X errors. We call that a <i>Z-biased</i> noise, and it matters later.</p>
+  <dl class="words">
+    <dt>Pauli error</dt><dd>One of X (bit flip), Z (phase flip) or Y (both) hitting a qubit.</dd>
+    <dt>Physical error rate p</dt><dd>The chance that one physical operation goes wrong. Around 10<sup>−3</sup> today.</dd>
+    <dt>Depolarizing noise</dt><dd>With probability p, apply X, Y or Z, each equally likely.</dd>
+    <dt>Biased noise</dt><dd>Some Paulis are much more likely than others. Atoms: mostly Z.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>Every error that matters is X, Z or both; fix those and you've fixed everything, and we model noise as random Paulis with probability p.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>What's the difference between an X error and a Z error?</summary><div class="ans"><p>X flips the bit value, |0⟩↔|1⟩. Z flips the phase, |+⟩↔|−⟩, and has no classical counterpart. A quantum code has to catch both, which is why quantum codes need two kinds of checks.</p></div></details>
+    <details class="qa"><summary>Why is it enough to correct Pauli errors when real errors are continuous?</summary><div class="ans"><p>Any single-qubit error is a linear combination of I, X, Y, Z. Measuring the code's checks projects the error onto one Pauli pattern, so the decoder only ever sees discrete Paulis. Correcting those corrects the continuous error too.</p></div></details>
+    <details class="qa"><summary>What does “depolarizing noise at p = 10⁻³” mean?</summary><div class="ans"><p>After each operation, with probability 10⁻³ a random Pauli error happens, and X, Y and Z are equally likely, each with 10⁻³/3.</p></div></details>
+    <details class="qa"><summary>What is biased noise, and which way are neutral atoms biased?</summary><div class="ans"><p>Biased noise means one Pauli is much more likely than the others. On neutral atoms, Z errors dominate, mainly because of how the Rydberg gate works. QuEra's noise model (Table II) reflects that, with bigger Z and ZZ terms than X terms.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 2 ============================ -->
+<section class="session" id="s2" data-title="The repetition code">
+  <header>
+    <div class="row"><span class="label">Session 2 · 15 min</span><button class="btn done-btn" aria-pressed="false" data-done="s2">Mark done</button></div>
+    <h2>The repetition code: your first code</h2>
+  </header>
+  <p>The simplest error-correcting code is one you already use in daily life: say it three times. To store one bit, store copies: 0 becomes 00000 and 1 becomes 11111. If one copy flips, the majority still tells you the truth.</p>
+  <p>Quantum mechanics adds one twist: <b>you may not look at the qubits directly.</b> Measuring a qubit destroys its superposition. So instead of reading the copies, we measure <b>parity checks</b> between neighbours: “are qubits 1 and 2 the same?” A parity check answers that question without revealing whether they are both 0 or both 1. The list of check answers is called the <b>syndrome</b>.</p>
+  <div class="bench" id="rep">
+    <div class="controls">
+      <span class="seg" role="group" aria-label="Number of qubits"><span class="label">Qubits</span>
+        <button data-d="3" aria-pressed="false">3</button><button data-d="5" aria-pressed="true">5</button><button data-d="7" aria-pressed="false">7</button></span>
+      <button class="btn" data-act="random">Random errors (p = 0.2)</button>
+      <button class="btn" data-act="clear">Clear</button>
+    </div>
+    <div class="fig"><svg viewBox="0 0 640 170" role="img" aria-label="A row of qubits with parity checks between neighbours. Click a qubit to flip it."></svg></div>
+    <div class="status" aria-live="polite"></div>
+    <div class="cap">Click a qubit (circle) to flip it. Each check (small square) lights up when its two neighbours disagree. The decoder sees only the lit checks and flips the fewest qubits that explain them.</div>
+  </div>
+  <p>Try this: flip one qubit, then two, then three in a 5-qubit code. With one or two flips the decoder repairs everything. With three neighbouring flips the checks look exactly like two flips on the <em>other</em> side. The decoder “repairs” the wrong way and the stored bit flips. That is a <b>logical error</b>.</p>
+  <p>The number of copies is the <b>distance</b> <span class="f">d</span>: the smallest number of flips that turns one codeword into the other without any check noticing. A distance-<span class="f">d</span> code corrects up to (<span class="f">d</span>−1)/2 errors. If each qubit fails with small probability <span class="f">p</span>, a logical error needs about <span class="f">d</span>/2 failures at once, so the logical error rate falls roughly like <span class="f">p</span><sup>(d+1)/2</sup>. Adding qubits makes the memory exponentially better, as long as <span class="f">p</span> is small.</p>
+  <p><b>Why this is not enough for qubits.</b> The repetition code only catches X errors. A Z error on any copy flips the phase of the whole logical state, and no parity check notices. A real quantum code must catch X and Z at the same time. That needs a 2D code, which is Session 4.</p>
+  <dl class="words">
+    <dt>Logical qubit</dt><dd>The protected qubit, stored across many physical qubits.</dd>
+    <dt>Parity check</dt><dd>A measurement that asks “are these qubits the same?” without reading them.</dd>
+    <dt>Syndrome</dt><dd>The list of check results. It shows where errors are, not what the data is.</dd>
+    <dt>Decoder</dt><dd>The classical algorithm that turns a syndrome into a guess of which qubits to fix.</dd>
+    <dt>Distance d</dt><dd>The fewest errors that cause an undetected logical error.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>Store copies, compare neighbours instead of reading them, and let a decoder fix the fewest flips that explain the comparisons; it fails only when about half the copies fail at once.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>What is a syndrome?</summary><div class="ans"><p>The pattern of parity-check outcomes. It tells you where errors probably are without telling you anything about the encoded information, so measuring it doesn't disturb the logical state.</p></div></details>
+    <details class="qa"><summary>Why can't we just measure each qubit to check it?</summary><div class="ans"><p>Measuring a qubit collapses its superposition and destroys the information we're protecting. Parity checks measure only “same or different”, which reveals errors but not the data.</p></div></details>
+    <details class="qa"><summary>What is the code distance, and how many errors can a distance-5 code correct?</summary><div class="ans"><p>The smallest number of physical errors that changes the logical state without being detected. A distance-d code corrects up to (d−1)/2 errors, so distance 5 corrects 2.</p></div></details>
+    <details class="qa"><summary>Why does the repetition code fail as a quantum memory?</summary><div class="ans"><p>It only detects bit flips. A single phase flip on any copy flips the logical phase, and none of its checks notice. You need a code with two kinds of checks, like the surface code.</p></div></details>
+    <details class="qa"><summary>How does the logical error rate scale with distance?</summary><div class="ans"><p>Roughly as p to the power (d+1)/2, because a logical error needs about half the qubits to fail together. So for small p, each step up in distance multiplies the protection.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 3 ============================ -->
+<section class="session" id="s3" data-title="Checks, rounds, detectors">
+  <header>
+    <div class="row"><span class="label">Session 3 · 15 min</span><button class="btn done-btn" aria-pressed="false" data-done="s3">Mark done</button></div>
+    <h2>Measuring a check, and why we repeat it</h2>
+  </header>
+  <p><b>How do you measure a parity without looking?</b> With a helper qubit, the <b>ancilla</b>. Start the ancilla in |0⟩. Do a CNOT from each data qubit in the check onto the ancilla. Each CNOT adds that data qubit's value to the ancilla, so the ancilla ends up holding the sum (mod 2) of the data values: the parity. Measure only the ancilla. The data qubits are never measured.</p>
+  <div class="bench">
+    <div class="fig"><svg id="fig-ancilla" viewBox="0 0 640 210" role="img" aria-label="Circuit: two data qubits each send a CNOT onto an ancilla prepared in zero, which is then measured to give their parity."></svg></div>
+    <div class="cap">A Z-type check (does the pair agree in the 0/1 basis?) uses CNOTs from data to ancilla. An X-type check is the same circuit turned around: ancilla in |+⟩, CNOTs from ancilla to data, measure in the X basis. Neutral atoms do each CNOT as a CZ between two Hadamards.</div>
+  </div>
+  <p><b>Measurements fail too.</b> The ancilla measurement itself can give the wrong answer. So we never trust a single round. We measure every check again and again: one pass over all the checks is a <b>round</b>. A surface code of distance <span class="f">d</span> usually runs about <span class="f">d</span> rounds per logical step.</p>
+  <p><b>Detectors.</b> The useful signal is a <em>change</em>: “did this check's answer change since the last round?” Each such comparison is a <b>detector</b>. If nothing went wrong, every detector reads 0. The picture below is the most useful one in error correction. Time runs upward, checks run across, and each dot is a detector.</p>
+  <div class="bench">
+    <div class="fig"><svg id="fig-spacetime" viewBox="0 0 640 260" role="img" aria-label="Two grids of detectors. Left: a data-qubit error lights two neighbouring detectors in the same round. Right: a measurement error lights the same check in two consecutive rounds."></svg></div>
+    <div class="cap">Left: an error on a data qubit flips the two checks beside it from that round on, so two neighbouring detectors light up in the same round (a space-like pair). Right: a wrong measurement flips one check for one round only, so the same check lights up in two consecutive rounds (a time-like pair).</div>
+  </div>
+  <p>This is why decoders work in <b>space-time</b>: they see dots in a 3D picture (two space directions plus time) and must explain them as pairs. It's also why one fault usually lights exactly two detectors. Remember that “two”: it matters in Session 5, and it is the heart of the bug this project reported to tsim.</p>
+  <p><b>Post-selection.</b> Sometimes we don't try to fix anything. If any detector lights, we throw the whole attempt away and start again. That's <b>post-selection</b>. It's only sensible for short, repeatable tasks like preparing a special state, and it costs time: the fraction of attempts you keep is the <b>acceptance rate</b>. STAR (Session 8) relies on it.</p>
+  <dl class="words">
+    <dt>Ancilla</dt><dd>A helper qubit that collects a parity and is then measured.</dd>
+    <dt>Round</dt><dd>One pass measuring every check once.</dd>
+    <dt>Detector</dt><dd>A comparison of a check with its previous value. 0 when all is well.</dd>
+    <dt>Post-selection</dt><dd>Discarding an attempt whenever any detector fires.</dd>
+    <dt>Acceptance rate</dt><dd>The fraction of attempts that pass post-selection.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>An ancilla collects a parity through CNOTs; we repeat the checks every round because measurements fail too, and a detector fires when a check changes, so one fault usually lights two detectors.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>What's an ancilla used for?</summary><div class="ans"><p>To measure a stabilizer without measuring the data. CNOTs copy the parity of the data qubits onto the ancilla, and only the ancilla is measured.</p></div></details>
+    <details class="qa"><summary>What is a detector, and why compare rounds?</summary><div class="ans"><p>A detector is the XOR of a check's outcome with its previous outcome (or with a known starting value). It's deterministic without errors, so any 1 signals a fault. Comparing rounds separates data errors from measurement errors.</p></div></details>
+    <details class="qa"><summary>How do a data error and a measurement error look different?</summary><div class="ans"><p>A data error lights two neighbouring detectors in the same round, a space-like pair. A measurement error lights the same check in two consecutive rounds, a time-like pair.</p></div></details>
+    <details class="qa"><summary>What is post-selection, and what does it cost?</summary><div class="ans"><p>Throwing away an attempt whenever any detector fires, instead of correcting. It gives very clean outputs, but it costs repetitions: if the acceptance rate is 20%, you need five attempts on average.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 4 ============================ -->
+<section class="session" id="s4" data-title="The surface code">
+  <header>
+    <div class="row"><span class="label">Session 4 · 20 min</span><button class="btn done-btn" aria-pressed="false" data-done="s4">Mark done</button></div>
+    <h2>The surface code</h2>
+  </header>
+  <p>The surface code is the repetition code grown into two dimensions, so it can catch X and Z errors at the same time. It's the code QuEra's STAR circuits use, so this session is the most important one to get comfortable with.</p>
+  <ul>
+    <li><b>Data qubits</b> sit on a <span class="f">d</span> × <span class="f">d</span> grid (the circles below).</li>
+    <li><b>Checks</b> sit on the squares between them, in two colours like a chessboard. A blue square is an <b>X-check</b>: it measures the product of X on its corner qubits. An amber square is a <b>Z-check</b>: the product of Z on its corners.</li>
+    <li>On the edges there are half-checks that touch only two qubits.</li>
+  </ul>
+  <p>The one rule to remember: <b>a check catches the errors it doesn't commute with.</b> X and Z anticommute. So an X-check catches Z errors, and a Z-check catches X errors. A check fires when it sees an <em>odd</em> number of the errors it catches.</p>
+  <div class="bench" id="surf">
+    <div class="controls">
+      <span class="seg" role="group" aria-label="Distance"><span class="label">Distance</span>
+        <button data-d="3" aria-pressed="true">3</button><button data-d="5" aria-pressed="false">5</button><button data-d="7" aria-pressed="false">7</button></span>
+      <span class="seg" role="group" aria-label="Error to place"><span class="label">Click adds</span>
+        <button data-e="Z" aria-pressed="true">Z</button><button data-e="X" aria-pressed="false">X</button><button data-e="Y" aria-pressed="false">Y</button></span>
+    </div>
+    <div class="controls">
+      <span class="label">Try</span>
+      <button class="btn" data-preset="one">One Z error</button>
+      <button class="btn" data-preset="chain">A Z chain</button>
+      <button class="btn" data-preset="logical">A full Z column</button>
+      <button class="btn" data-preset="y">One Y error</button>
+      <button class="btn" data-preset="clear">Clear</button>
+      <button class="btn" data-show="ZL" aria-pressed="false">Show logical Z</button>
+      <button class="btn" data-show="XL" aria-pressed="false">Show logical X</button>
+    </div>
+    <div class="fig"><svg viewBox="0 0 440 440" role="img" aria-label="A rotated surface code. Click data qubits to place errors; checks that fire are outlined in teal."></svg></div>
+    <div class="status" aria-live="polite"></div>
+    <div class="legend"><span><i style="background:var(--xsoft);outline:1px solid var(--x)"></i>X-check (catches Z)</span><span><i style="background:var(--zsoft);outline:1px solid var(--z)"></i>Z-check (catches X)</span><span><i style="background:var(--detsoft);outline:2px solid var(--det)"></i>check fired</span></div>
+  </div>
+  <p>Play with it, and notice three things.</p>
+  <ol>
+    <li><b>One error lights its neighbours.</b> A Z error in the middle fires the two blue X-checks beside it.</li>
+    <li><b>A chain lights only its two ends.</b> Put Z errors on a line of neighbours: the checks in the middle see two errors (even), so they stay quiet. Only the ends fire. The decoder sees two dots and must guess the path between them.</li>
+    <li><b>A chain from one edge to the other lights nothing.</b> A full column of Z errors fires no check at all, yet it changes the stored state. That column <em>is</em> the logical Z operator, <span class="f">Z<sub>L</sub></span>. Likewise a full row of X is <span class="f">X<sub>L</sub></span>.</li>
+  </ol>
+  <p>The shortest such invisible chain has <span class="f">d</span> qubits, so the code distance is <span class="f">d</span>. A distance-<span class="f">d</span> patch uses <span class="f">d</span><sup>2</sup> data qubits plus <span class="f">d</span><sup>2</sup>−1 ancillas, one per check: 17 qubits at <span class="f">d</span> = 3, 49 at <span class="f">d</span> = 5, 97 at <span class="f">d</span> = 7.</p>
+  <p><b>Why everybody uses it.</b> Every check touches at most four neighbouring qubits, it works on a flat 2D chip, it tolerates relatively high error rates (about 1%, Session 5), and fast decoders exist. Its weakness is that only a few gates are easy on it (Session 6).</p>
+  <dl class="words">
+    <dt>Stabilizer</dt><dd>Another name for a check operator. The code's states are the ones every stabilizer leaves unchanged.</dd>
+    <dt>X-check / Z-check</dt><dd>Products of X (or Z) on a plaquette's corners. X-checks catch Z errors; Z-checks catch X errors.</dd>
+    <dt>Logical operator</dt><dd>A chain from one boundary to the opposite one. It fires no check but changes the logical state.</dd>
+    <dt>Boundary</dt><dd>The edges of the patch. A Z chain can end on the top or bottom edge without firing anything; an X chain can end on the left or right edge.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>Qubits on a grid, X-checks and Z-checks on the squares between them; an error chain fires only its ends, and a chain that crosses the whole patch fires nothing and is a logical error, so the distance is the width d.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>What do X-type and Z-type stabilizers detect?</summary><div class="ans"><p>X-type stabilizers anticommute with Z errors, so they detect Z (phase) errors. Z-type stabilizers detect X (bit) errors. A Y error is both, so it can fire both kinds.</p></div></details>
+    <details class="qa"><summary>How many physical qubits does a distance-5 surface code patch use?</summary><div class="ans"><p>25 data qubits plus 24 ancillas, one per check: 49 in total. In general d² + (d² − 1) = 2d² − 1.</p></div></details>
+    <details class="qa"><summary>What is a logical operator in the surface code?</summary><div class="ans"><p>A string of Paulis running from one boundary to the opposite one. It commutes with every check, so it fires nothing, but it acts on the encoded qubit. The logical Z is a column of Z's; the logical X is a row of X's. Its length, d, is the code distance.</p></div></details>
+    <details class="qa"><summary>Why does a chain of errors only light its endpoints?</summary><div class="ans"><p>Each check in the middle of the chain overlaps two errors. Two anticommuting errors commute overall, so the check doesn't fire. Only the checks at the ends see a single error.</p></div></details>
+    <details class="qa"><summary>Why is the surface code the default choice?</summary><div class="ans"><p>It needs only nearest-neighbour checks of weight four in 2D, it has a high threshold of about 1%, and fast matching decoders exist. Its downside is that only some logical gates are cheap on it.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 5 ============================ -->
+<section class="session" id="s5" data-title="Decoding and threshold">
+  <header>
+    <div class="row"><span class="label">Session 5 · 15 min</span><button class="btn done-btn" aria-pressed="false" data-done="s5">Mark done</button></div>
+    <h2>Decoding, the threshold, and hyperedges</h2>
+  </header>
+  <p><b>The decoder's job.</b> After some rounds you have a set of lit detectors in space-time. Since most faults light exactly two detectors, the decoder pairs the lit detectors up (or pairs one with the boundary), choosing the pairing with the shortest total length. Shortest means “fewest faults”, the most likely explanation. This is <b>minimum-weight perfect matching</b> (MWPM), and <b>PyMatching</b> is the standard fast implementation. If the chosen paths plus the real errors happen to form a chain across the patch, the result is a logical error.</p>
+  <p><b>The threshold.</b> Here is the most important curve in error correction. Below a certain physical error rate, the <b>threshold</b> (about 1% for the surface code), making the code bigger makes the logical error rate drop fast. Above it, a bigger code is <em>worse</em>, because there are more places for errors. A rule of thumb:</p>
+  <p style="text-align:center"><span class="f">p<sub>L</sub> ≈ 0.1 × (p / p<sub>th</sub>)<sup>(d+1)/2</sup></span></p>
+  <div class="bench" id="thr">
+    <div class="controls"><label class="label" for="thr-p">Physical error rate p</label><input id="thr-p" type="range" min="-4" max="-1.6" step="0.01" value="-3"><span class="readout" id="thr-pv"></span></div>
+    <div class="fig"><svg viewBox="0 0 640 380" role="img" aria-label="Logical error rate against physical error rate for distances 3, 5, 7 and 9. The curves cross at the threshold, one percent."></svg></div>
+    <div class="status readout" aria-live="polite"></div>
+    <div class="cap">Drag the slider. Left of the threshold (dashed line), each step up in distance multiplies the protection by about p<sub>th</sub>/p. Right of it, bigger codes lose. This is the rule-of-thumb formula above, not a simulation.</div>
+  </div>
+  <p>At <span class="f">p</span> = 10<sup>−3</sup> (ten times below threshold), each step from <span class="f">d</span> to <span class="f">d</span>+2 makes the logical error rate about 10 times smaller. That's why hardware groups fight so hard for every factor in <span class="f">p</span>.</p>
+  <h3>Hyperedges, and a decoder trap</h3>
+  <p>Not every fault lights exactly two detectors. A Y error in the bulk lights two X-checks <em>and</em> two Z-checks: four detectors at once. Some two-qubit gate faults do the same. A fault that lights more than two detectors is called a <b>hyperedge</b>. Matching only understands pairs, so such a fault must be <b>decomposed</b> into pairs first, for example Y = X + Z, each part lighting its own pair.</p>
+  <p>Here is what this project found (Session 12 has the tool names). QuEra's challenge repository shows a reference curve for its STAR circuits. That curve is reproduced only if you hand PyMatching tsim's default error model, which is <em>not</em> decomposed. PyMatching then silently ignores every hyperedge: 421 of 706 fault types at <span class="f">d</span> = 3, about 19% of the fault probability. Decoded with a decomposed model, the logical error rate is about 9 times lower. It was reported as <a href="https://github.com/QuEraComputing/tsim/issues/232">tsim issue #232</a>, and at the maintainers' request <a href="https://github.com/QuEraComputing/tsim/pull/234">pull request #234</a> adds a warning and makes <code>decompose_errors=True</code> work.</p>
+  <dl class="words">
+    <dt>MWPM</dt><dd>Minimum-weight perfect matching: pair up lit detectors using the shortest total path.</dd>
+    <dt>PyMatching</dt><dd>The standard fast MWPM decoder in Python.</dd>
+    <dt>Threshold p<sub>th</sub></dt><dd>The physical error rate below which bigger codes help. About 1% for the surface code.</dd>
+    <dt>Hyperedge</dt><dd>A fault that lights more than two detectors. Matching needs it split into pairs.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>The decoder pairs up lit detectors along the shortest paths; below a threshold of about 1% bigger codes win exponentially; and faults that light more than two detectors must be split into pairs or a matching decoder quietly ignores them.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>What is the threshold, and why does it matter?</summary><div class="ans"><p>The physical error rate below which increasing the code distance lowers the logical error rate. Below it, logical errors fall exponentially with distance; above it, bigger codes are worse. For the surface code it's about 1% with circuit-level noise.</p></div></details>
+    <details class="qa"><summary>At p = 10⁻³, how much does going from d = 3 to d = 5 help?</summary><div class="ans"><p>With p/p_th ≈ 0.1, the rule of thumb p_L ∝ (p/p_th)^((d+1)/2) gives 0.1² at d = 3 and 0.1³ at d = 5, so about ten times fewer logical errors.</p></div></details>
+    <details class="qa"><summary>How does a matching decoder work?</summary><div class="ans"><p>It treats each fault as an edge between the two detectors it lights, weighted by how unlikely it is. Given the lit detectors, it finds the pairing with minimum total weight, the most likely set of faults, and applies the corresponding correction.</p></div></details>
+    <details class="qa"><summary>What's a hyperedge, and what goes wrong if you ignore it?</summary><div class="ans"><p>A fault that flips more than two detectors, such as a Y error. Matching handles only pairs, so hyperedges must be decomposed. PyMatching silently drops undecomposed hyperedges, so the decoder doesn't know about those faults and fails more often.</p></div></details>
+    <details class="qa"><summary>What did the project find in tsim's error model?</summary><div class="ans"><p>Reproducing QuEra's ETH QHack STAR curve, the project found it matches only when PyMatching is given tsim's default, undecomposed error model, which silently drops faults flipping more than two detectors, about 19% of the fault probability at d = 3. With a decomposed model the logical error rate is about nine times lower. It was reported to tsim with a reproducer (issue #232), and at the maintainer's request a pull request (#234) adds a docstring warning and support for decompose_errors=True.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 6 ============================ -->
+<section class="session" id="s6" data-title="Transversal gates, color codes">
+  <header>
+    <div class="row"><span class="label">Session 6 · 15 min</span><button class="btn done-btn" aria-pressed="false" data-done="s6">Mark done</button></div>
+    <h2>Gates on protected qubits: transversal gates and color codes</h2>
+  </header>
+  <p>A memory isn't a computer. We need gates on logical qubits, and we can't decode, apply the gate, and re-encode: the unprotected moment would ruin everything. The cleanest trick is a <b>transversal gate</b>: do the same physical gate on every qubit of the block, or pairwise between two blocks (qubit 1 with qubit 1, qubit 2 with qubit 2, and so on).</p>
+  <div class="bench">
+    <div class="fig"><svg id="fig-transversal" viewBox="0 0 640 250" role="img" aria-label="Two 3 by 3 code blocks. Lines join each qubit in the first block to the matching qubit in the second: a transversal CNOT."></svg></div>
+    <div class="cap">A transversal CNOT between two surface-code patches: nine physical CNOTs, each joining matching qubits. No physical gate touches two qubits of the same block, so one fault can damage at most one qubit per block, which the code can fix.</div>
+  </div>
+  <p><b>Why transversal means safe.</b> Errors spread through two-qubit gates. A transversal gate never connects two qubits inside the same block, so a single fault stays a single error per block, and the code corrects it. You get fault tolerance for free.</p>
+  <p><b>Which gates can be transversal?</b></p>
+  <ul>
+    <li><b>Surface code:</b> CNOT between two patches is transversal. H and S are not directly (they need extra tricks).</li>
+    <li><b>Color code:</b> a 2D code drawn on faces coloured red, green and blue, where every face is both an X-check and a Z-check. Because the X-checks and Z-checks have the same shape, H (which swaps X and Z) is transversal, and so is S. So the whole Clifford group (H, S, CNOT) is transversal. The smallest color code is the 7-qubit Steane code, drawn below.</li>
+  </ul>
+  <div class="bench">
+    <div class="fig"><svg id="fig-color" viewBox="0 0 640 280" role="img" aria-label="The 7-qubit color code: a triangle split into three coloured faces of four qubits each."></svg></div>
+    <div class="cap">The 7-qubit color code. Each coloured face has four qubits and is both an X-check and a Z-check. Same shape for both kinds of check is what makes H transversal.</div>
+  </div>
+  <p><b>The catch: Eastin–Knill.</b> A theorem says no code can make a <em>universal</em> set of gates transversal. Some gate always has to come from somewhere else. For the surface and color codes, that missing gate is a non-Clifford one, such as T. Session 7 is about it.</p>
+  <p><b>Why atoms love transversal gates.</b> On a neutral-atom machine you can pick up a whole patch of atoms, move it next to another patch, and fire one laser pulse that does a CZ on every pair at once. A transversal CNOT is one move and one pulse. QuEra's architecture is built around this, together with “correlated decoding”, which decodes several blocks together and needs about one round of checks per logical gate instead of <span class="f">d</span>.</p>
+  <dl class="words">
+    <dt>Transversal gate</dt><dd>The same physical gate on every qubit, or pairwise between two blocks. Automatically fault-tolerant.</dd>
+    <dt>Clifford gates</dt><dd>H, S, CNOT and their products. Map Paulis to Paulis.</dd>
+    <dt>Color code</dt><dd>A 2D code on three-coloured faces. Every Clifford gate is transversal on it.</dd>
+    <dt>Eastin–Knill</dt><dd>No code has a universal set of transversal gates.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>Doing the same gate qubit by qubit keeps one fault from becoming two, so it's fault-tolerant for free; atoms make that a single move and pulse, but no code makes every gate transversal, so the non-Clifford gate needs another route.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>What is a transversal gate, and why is it fault-tolerant?</summary><div class="ans"><p>It applies the same physical gate to each qubit of a block, or pairwise between blocks. No physical gate couples two qubits of the same block, so a single fault produces at most one error per block, which the code corrects.</p></div></details>
+    <details class="qa"><summary>What's special about the color code?</summary><div class="ans"><p>Its X-checks and Z-checks live on the same faces with the same shape. So H, which swaps X and Z, is transversal, and so is S. The whole Clifford group is transversal, unlike on the surface code.</p></div></details>
+    <details class="qa"><summary>What does the Eastin–Knill theorem say?</summary><div class="ans"><p>No quantum error-correcting code has a universal set of transversal logical gates. At least one gate, usually the non-Clifford one, has to be done another way, for example with magic states or STAR.</p></div></details>
+    <details class="qa"><summary>Why are transversal gates especially attractive on neutral atoms?</summary><div class="ans"><p>Atoms can be moved, so you can bring a whole code block next to another and apply one global Rydberg pulse that performs a CZ on every pair in parallel. A transversal two-qubit logical gate becomes a single move plus a single pulse.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 7 ============================ -->
+<section class="session" id="s7" data-title="The hard gate: T and magic">
+  <header>
+    <div class="row"><span class="label">Session 7 · 15 min</span><button class="btn done-btn" aria-pressed="false" data-done="s7">Mark done</button></div>
+    <h2>The hard gate: T, magic states, and small rotations</h2>
+  </header>
+  <p><b>Why Clifford gates aren't enough.</b> A circuit made only of Clifford gates (H, S, CNOT) and Pauli measurements can be simulated efficiently on a classical computer. That's the <b>Gottesman–Knill theorem</b>, and it's exactly why the simulator stim can run billions of shots. A quantum computer that can only do Cliffords gives no speed-up. We need at least one <b>non-Clifford</b> gate. The usual choice is <b>T</b> = diag(1, e<sup>iπ/4</sup>), which is a Z-rotation by π/4.</p>
+  <p><b>Gate teleportation.</b> T isn't transversal on the surface code. Instead, prepare a special state, the <b>magic state</b> |T⟩ = T|+⟩, in a separate logical qubit. Then a CNOT, a measurement, and (depending on the outcome) an S correction apply T to your data. Each T gate uses up one magic state. The correction has to wait for the measurement and the decoder, a delay called the <b>reaction time</b>.</p>
+  <div class="bench">
+    <div class="fig"><svg id="fig-teleport" viewBox="0 0 640 200" role="img" aria-label="Gate teleportation: a magic state and the data qubit meet in a CNOT; the magic qubit is measured and, if the result is 1, an S correction is applied to the data."></svg></div>
+    <div class="cap">Teleporting a T gate. The same circuit with a different input state teleports any Z-rotation. That's how STAR's states are used too (Session 8).</div>
+  </div>
+  <p><b>Making magic states clean.</b> A freshly prepared magic state has an error about as large as <span class="f">p</span>, far too big. Two ways to clean it:</p>
+  <ul>
+    <li><b>Distillation:</b> take 15 noisy magic states, run a small code's checks, post-select, and get 1 much better state: error 35<span class="f">p</span><sup>3</sup>. At <span class="f">p</span> = 10<sup>−3</sup> that's 3.5 × 10<sup>−8</sup>. It works, but the “factories” that do it take many qubits and much time.</li>
+    <li><b>Cultivation</b> (2024): grow one magic state inside a small color code, checking it again and again and post-selecting. It reaches very low error at a cost close to a single CNOT.</li>
+  </ul>
+  <p><b>The real problem: small rotations.</b> Simulating physics needs Z-rotations by <em>arbitrary</em> small angles, <span class="f">R<sub>Z</sub>(θ)</span>, millions of them. With only Cliffords and T, each rotation must be approximated by a long sequence, about 3 log<sub>2</sub>(1/ε) T gates for accuracy ε. At ε = 10<sup>−10</sup> that's about 100 T gates, each needing its own magic state, <em>for one small rotation</em>.</p>
+  <div class="bench">
+    <div class="fig"><svg id="fig-cost" viewBox="0 0 640 170" role="img" aria-label="Rough cost of one small rotation: about one hundred T gates by synthesis, against about two injection attempts with STAR."></svg></div>
+    <div class="cap">Rough order of magnitude for one small rotation. STAR's attempts are cheap, but its result isn't perfect: its error grows with the angle, which is the subject of Session 9.</div>
+  </div>
+  <dl class="words">
+    <dt>Gottesman–Knill</dt><dd>Clifford circuits can be simulated efficiently classically.</dd>
+    <dt>T gate</dt><dd>Z-rotation by π/4. The standard non-Clifford gate.</dd>
+    <dt>Magic state</dt><dd>A resource state such as T|+⟩ that is used up to apply a non-Clifford gate.</dd>
+    <dt>Distillation</dt><dd>15 noisy magic states in, 1 better one out (error 35p³).</dd>
+    <dt>Cultivation</dt><dd>A cheaper 2024 method that grows a clean magic state with repeated checks.</dd>
+    <dt>Synthesis</dt><dd>Approximating R<sub>Z</sub>(θ) by about 3 log₂(1/ε) T gates.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>Cliffords alone are classically simulable, so we need T, which on protected qubits costs a cleaned-up magic state per use; a single small rotation needs about a hundred of them, and that's the cost STAR attacks.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>Why do we need non-Clifford gates?</summary><div class="ans"><p>By Gottesman–Knill, circuits of Clifford gates and Pauli measurements are efficiently classically simulable. Universality, and any quantum advantage, needs at least one non-Clifford gate, such as T.</p></div></details>
+    <details class="qa"><summary>What is a magic state and how is it used?</summary><div class="ans"><p>A state like T|+⟩. You consume it by gate teleportation: a CNOT with the data, a measurement, and a Clifford correction depending on the outcome. The net effect applies T to the data.</p></div></details>
+    <details class="qa"><summary>What does 15-to-1 distillation do?</summary><div class="ans"><p>It takes 15 noisy magic states with error p, measures the checks of a small code, post-selects, and outputs one state with error about 35p³. It's reliable but expensive in qubits and time.</p></div></details>
+    <details class="qa"><summary>Why are small-angle rotations expensive in standard fault tolerance?</summary><div class="ans"><p>An arbitrary rotation must be synthesized from Cliffords and T gates, about 3 log₂(1/ε) T gates for accuracy ε, so roughly 100 T gates, each needing a magic state, for one rotation. Simulations need millions of rotations.</p></div></details>
+    <details class="qa"><summary>What is the reaction time?</summary><div class="ans"><p>The delay between measuring during a teleported gate and applying the correction, because the decoder must finish first. On neutral atoms, measurement and decoding take on the order of a millisecond, so it sets the clock speed of non-Clifford gates.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 8 ============================ -->
+<section class="session" id="s8" data-title="STAR: a rotation by post-selection">
+  <header>
+    <div class="row"><span class="label">Session 8 · 20 min</span><button class="btn done-btn" aria-pressed="false" data-done="s8">Mark done</button></div>
+    <h2>STAR: a small rotation by post-selection</h2>
+  </header>
+  <p>STAR (space-time efficient analog rotation) makes a small logical rotation <em>directly</em>, without a hundred T gates. You now have every piece you need to understand it.</p>
+  <ol>
+    <li><b>Start</b> with a surface-code patch holding logical |+⟩.</li>
+    <li><b>Pick the qubits of one logical Z string</b>: a column of <span class="f">k</span> qubits (in QuEra's teaching circuits, <span class="f">k</span> = <span class="f">d</span>, the whole column).</li>
+    <li><b>Rotate each of them</b> by the same physical angle <span class="f">θ*</span> about Z. Each rotation is <span class="f">R<sub>Z</sub>(θ*) = c·I − i s·Z</span>, with <span class="f">c</span> = cos(θ*/2) and <span class="f">s</span> = sin(θ*/2).</li>
+    <li><b>Measure the checks.</b> Keep the attempt only if nothing fires.</li>
+  </ol>
+  <p><b>Why that works.</b> Multiply out the <span class="f">k</span> rotations. You get a sum over every way of putting Z on some of the column's qubits: no Z's, Z on one qubit, on two, and so on, up to Z on all of them. Call each term a <b>branch</b>. Now recall Session 4: a partial Z string is a broken chain, so its ends fire X-checks. Every branch with Z on <em>some but not all</em> of the column gets caught. Exactly two branches fire nothing:</p>
+  <ul>
+    <li>“no Z at all”, the identity, with amplitude <span class="f">c<sup>k</sup></span>;</li>
+    <li>“Z on the whole column”, which is <span class="f">Z<sub>L</sub></span>, with amplitude <span class="f">(−is)<sup>k</sup></span>.</li>
+  </ul>
+  <p>If we keep only attempts where nothing fired, the patch is left in <span class="f">c<sup>k</sup>·I + (−is)<sup>k</sup>·Z<sub>L</sub></span> applied to |+⟩. That is a <b>logical Z-rotation</b>, by an angle θ with <span class="f">tan(θ/2) = tan<sup>k</sup>(θ*/2)</span>. Raising a small number to the power <span class="f">k</span> makes it much smaller, so a modest physical angle gives a tiny logical one.</p>
+  <div class="bench" id="star">
+    <div class="controls">
+      <span class="seg" role="group" aria-label="Logical angle"><span class="label">Logical angle θ</span>
+        <button data-n="2" aria-pressed="false">π/4</button><button data-n="3" aria-pressed="false">π/8</button><button data-n="4" aria-pressed="true">π/16</button><button data-n="5" aria-pressed="false">π/32</button><button data-n="6" aria-pressed="false">π/64</button><button data-n="7" aria-pressed="false">π/128</button></span>
+    </div>
+    <div class="controls">
+      <span class="seg" role="group" aria-label="Rotated qubits k"><span class="label">Rotated qubits k</span>
+        <button data-k="3" aria-pressed="true">3</button><button data-k="5" aria-pressed="false">5</button><button data-k="7" aria-pressed="false">7</button></span>
+    </div>
+    <div class="fig"><svg viewBox="0 0 640 300" role="img" aria-label="Bar chart of the probability of each branch, by how many qubits carry a Z. Only the first and last bars survive post-selection."></svg></div>
+    <div class="status readout" aria-live="polite"></div>
+    <div class="legend"><span><i style="background:var(--det)"></i>survives (no check fires)</span><span><i style="background:var(--edge)"></i>caught: attempt discarded</span></div>
+    <div class="cap">Each bar is the chance of a branch with that many Z's on the column, before the checks are measured. The acceptance rate is the two teal bars added together.</div>
+  </div>
+  <p>Two things to notice. The first surprises most people.</p>
+  <ul>
+    <li><b>Smaller angles are accepted more often.</b> A smaller θ needs a smaller θ*, so the “no Z” branch dominates. At <span class="f">k</span> = 3, about 31% of attempts succeed at π/4, and 86% at π/128.</li>
+    <li><b>Bigger <span class="f">k</span> is accepted less often.</b> With more rotated qubits there are more ways to break the chain. At π/16: 57% for <span class="f">k</span> = 3, 19% for <span class="f">k</span> = 5, 5.5% for <span class="f">k</span> = 7. That's one reason QuEra's own protocol rotates only <span class="f">k</span> = 3 qubits even in large patches.</li>
+  </ul>
+  <h3>Using the state: repeat until success</h3>
+  <p>The prepared state is used by gate teleportation (Session 7's circuit). The measurement outcome is random: half the time the data gets <span class="f">R<sub>Z</sub>(θ)</span> as wanted, and half the time <span class="f">R<sub>Z</sub>(−θ)</span>, the wrong direction. The fix is to rotate by 2θ next; that again succeeds or overshoots with probability one half, and so on, doubling each time. With θ = π/2<sup>n</sup>, the chain must end by π/2, which is the Clifford S gate and can be done exactly. On average it takes two attempts.</p>
+  <div class="bench">
+    <div class="fig"><svg id="fig-rus" viewBox="0 0 640 190" role="img" aria-label="Repeat-until-success: inject θ; half the time done, half the time inject 2θ; then 4θ; ending at π/2, a free S gate."></svg></div>
+    <div class="cap">The repeat-until-success chain for θ = π/16. Each attempt has a one-half chance of finishing. The large angles near the end of the chain are reached less often, but they are where most of the error comes from (Session 9).</div>
+  </div>
+  <dl class="words">
+    <dt>STAR</dt><dd>Space-time efficient analog rotation: preparing a small logical rotation by rotating a few physical qubits and post-selecting.</dd>
+    <dt>Physical angle θ*</dt><dd>The angle each rotated qubit gets. Much bigger than the logical angle.</dd>
+    <dt>Branch</dt><dd>One term of the multiplied-out rotations: Z on some subset of the rotated qubits.</dd>
+    <dt>Injection</dt><dd>Preparing the rotated logical state.</dd>
+    <dt>Repeat-until-success</dt><dd>Teleporting θ, then 2θ, 4θ… after each wrong-direction outcome, until done or at π/2.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>Rotate the k qubits of a logical Z string by θ*, and post-selection throws away every partial string, leaving only “nothing” and “the whole string”, which together are a logical rotation with tan(θ/2) = tan<sup>k</sup>(θ*/2).</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>Explain STAR in thirty seconds.</summary><div class="ans"><p>Take a surface-code patch in logical plus. Rotate each qubit of one logical-Z string by a physical angle θ*. Expanded, that's a sum over Z on every subset of the string. Any partial string fires X-checks, so post-selecting on a quiet syndrome keeps only the identity and the full string, Z_L. Their combination is a logical Z rotation with tan(θ/2) = tan^k(θ*/2). Then you teleport it in, with a repeat-until-success chain for the sign.</p></div></details>
+    <details class="qa"><summary>Why are partial Z strings rejected?</summary><div class="ans"><p>A partial string is a chain with ends inside the patch. The X-checks at those ends see one Z error each, anticommute, and fire. Only the empty string and the full string, which runs boundary to boundary, fire nothing.</p></div></details>
+    <details class="qa"><summary>How does the acceptance rate depend on the angle and on k?</summary><div class="ans"><p>It's cos^2k(θ*/2) + sin^2k(θ*/2). Smaller logical angles need smaller physical angles, so acceptance rises: about 31% at π/4 and 86% at π/128 for k = 3. Larger k lowers it sharply: at π/16, 57% for k = 3 against 5.5% for k = 7.</p></div></details>
+    <details class="qa"><summary>What is the repeat-until-success chain?</summary><div class="ans"><p>Teleporting the rotation gives +θ or −θ with equal probability. After −θ, you apply 2θ to fix it, which again succeeds or overshoots, and so on, doubling. With θ = π/2^n the chain ends at π/2, an exact Clifford S gate. On average it takes two attempts.</p></div></details>
+    <details class="qa"><summary>Why is STAR called “partially” fault-tolerant?</summary><div class="ans"><p>Its error isn't suppressed exponentially with distance like a fully fault-tolerant gate. Some single faults survive post-selection and leave a wrong angle, so the error is proportional to p times something that shrinks with the angle. That's fine for small angles in the early fault-tolerant regime.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 9 ============================ -->
+<section class="session" id="s9" data-title="STAR's error and α">
+  <header>
+    <div class="row"><span class="label">Session 9 · 20 min</span><button class="btn done-btn" aria-pressed="false" data-done="s9">Mark done</button></div>
+    <h2>Where STAR's error comes from, and what α means</h2>
+  </header>
+  <p>Now add noise. Most faults near the rotation are harmless, because they fire some check, and the attempt is thrown away. The dangerous fault is a <b>Z error on one of the rotated qubits, right after the rotation, before any check has looked at that qubit.</b></p>
+  <p>Why it's dangerous: the checks can't tell this fault apart from the rotation itself. They see the fault and the branch together. So with a Z fault on qubit <span class="f">j</span>, the checks stay quiet in two new cases: when the rotation produced “Z on <span class="f">j</span> alone” (the fault cancels it, leaving nothing), and when it produced “Z on everything except <span class="f">j</span>” (the fault completes the full string). Those two branches survive post-selection instead of the intended ones. They also make a rotation, but by the <b>wrong angle</b>, and nothing in the syndrome reveals it.</p>
+  <div class="bench">
+    <div class="fig"><svg id="fig-flip" viewBox="0 0 640 230" role="img" aria-label="Without a fault, the branches nothing and all survive and give the intended angle. With a Z fault on qubit j, the branches j and all-but-j survive and give a wrong angle."></svg></div>
+    <div class="cap">The “branch flip”. Left: no fault, the intended rotation, tan(θ/2) = t<sup>k</sup>. Right: one hidden Z on qubit j, and the surviving pair gives tan = t<sup>k−2</sup> instead, in the opposite direction (t = tan(θ*/2)).</div>
+  </div>
+  <p><b>How big is that error?</b> It's the chance of such a Z fault (proportional to <span class="f">p</span>) times a function of the angle, <span class="f">f<sub>k</sub>(θ)</span>, which combines “how likely the flipped branches survive” and “how wrong their angle is”. For small angles, <span class="f">f<sub>k</sub></span> shrinks like <span class="f">θ<sup>2−2/k</sup></span>. This is the paper's misrotation term. This project's first big result was that, for these circuits, the whole injection error is one constant times this shape, over a 150–400× range of error rates.</p>
+  <div class="bench" id="fk">
+    <div class="fig"><svg viewBox="0 0 640 360" role="img" aria-label="Log-log plot of the misrotation shape f_k against the logical angle for k = 3, 5 and 7. All fall as the angle shrinks."></svg></div>
+    <div class="status readout" aria-live="polite"></div>
+    <div class="cap">The angle shape of the injection error, computed exactly (the same formula as <code>starlab</code>'s <code>branch_flip_shape</code>). The real error is p times a constant times this. Hover or tap a point to read it.</div>
+  </div>
+  <h3>From injection error to α</h3>
+  <p>The paper summarises everything in one headline law: a teleported rotation by θ fails with probability about</p>
+  <p style="text-align:center"><span class="f">p<sub>L</sub> ≈ α · p · θ</span></p>
+  <p>α is a single number that says how sensitive STAR is to noise. It comes from averaging the injection error over the repeat-until-success chain (Session 8). The big angles near the end of the chain (π/4, π/8, π/16) carry most of it.</p>
+  <p><b>Why α matters so much.</b> If each rotation by θ costs error αpθ, a computation can afford a total rotation of about <span class="f">1/(αp)</span> before errors pile up. For a physics simulation, that total angle grows with (number of sites) × (simulated time), the <b>simulation volume</b>. So halve α, and you can simulate twice as much on the same machine.</p>
+  <p><b>Connecting to hardware.</b> If one hardware channel (say, single-qubit gate errors) causes a fraction <span class="f">f</span> of STAR's error, then halving that channel's error multiplies α by (1 − <span class="f">f</span>/2). Simulation volume grows by 1/(1 − <span class="f">f</span>/2). At <span class="f">d</span> = 5, single-qubit gates cause 48.5% of the error, so halving them buys ×1.32. That's the project's headline number (Session 13).</p>
+  <dl class="words">
+    <dt>Misrotation</dt><dd>Ending up with a rotation by the wrong angle, invisible to the checks.</dd>
+    <dt>f<sub>k</sub>(θ)</dt><dd>The angle shape of the injection error. Shrinks like θ<sup>2−2/k</sup>.</dd>
+    <dt>α</dt><dd>The coefficient in p<sub>L</sub> ≈ αpθ. Smaller is better.</dd>
+    <dt>Simulation volume</dt><dd>Sites × simulated time. Scales as 1/(αp) for STAR.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>A hidden Z just after the rotation swaps which branches survive and leaves a wrong angle; that error is p times a known angle shape, it averages into α, and the total rotation a machine can afford is about 1/(αp).</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>Which faults survive post-selection in STAR, and what do they do?</summary><div class="ans"><p>A Z error on a rotated qubit between the rotation and its first X-check. It looks exactly like part of a branch, so the checks stay quiet, but the surviving branches are now “Z on that qubit” and “all but that qubit”, which give a rotation with the wrong angle.</p></div></details>
+    <details class="qa"><summary>Why does STAR's injection error shrink with the angle?</summary><div class="ans"><p>The flipped branches carry weight only when the physical rotation is large enough to populate them, and the misrotation they cause is smaller for small angles. Together the error goes like p · θ^(2 − 2/k) for small θ.</p></div></details>
+    <details class="qa"><summary>What is α, and why does it matter?</summary><div class="ans"><p>The coefficient in the teleported rotation error p_L ≈ αpθ. A computation can afford a total rotation of about 1/(αp), so the simulation volume, sites times simulated time, scales as 1/(αp). Halving α doubles what you can simulate.</p></div></details>
+    <details class="qa"><summary>What does “halving the single-qubit-gate error buys ×1.32” mean?</summary><div class="ans"><p>Single-qubit gates cause about 48.5% of the injection error at d = 5. Halving that channel removes about a quarter of the error, so α falls by a factor (1 − 0.485/2), and simulation volume grows by 1/(1 − 0.243) ≈ 1.32. Sampled directly, it is 1.36, with a 95% interval of 1.21–1.52.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 10 ============================ -->
+<section class="session" id="s10" data-title="Neutral atoms">
+  <header>
+    <div class="row"><span class="label">Session 10 · 15 min</span><button class="btn done-btn" aria-pressed="false" data-done="s10">Mark done</button></div>
+    <h2>Neutral atoms: QuEra's hardware</h2>
+  </header>
+  <p>QuEra's qubits are single atoms (rubidium) held in place by tightly focused laser beams called <b>optical tweezers</b>. Hundreds or thousands of them sit in a 2D array. Each atom's qubit is two of its energy levels, |0⟩ and |1⟩.</p>
+  <div class="bench">
+    <div class="fig"><svg id="fig-atoms" viewBox="0 0 640 330" role="img" aria-label="An atom array: a storage zone, an entangling zone where paired atoms sit inside blockade circles, a lone spectator atom, and a row of atoms being moved."></svg></div>
+    <div class="cap">A neutral-atom processor, simplified. Atoms are moved between a storage zone and an entangling zone. One global laser pulse gives every close pair a CZ. An atom in the zone with no partner is a spectator: it gets no gate, but it still picks up some error.</div>
+  </div>
+  <ul>
+    <li><b>Single-qubit gates</b> are laser pulses on the atoms.</li>
+    <li><b>The two-qubit gate (CZ) uses the Rydberg blockade.</b> A laser lifts |1⟩ to a Rydberg state, a hugely swollen atom. Two Rydberg atoms closer than a few microns (5–10 μm) can't both be excited: one blocks the other. A carefully shaped pulse turns that blockade into a CZ gate, with fidelity around 99.5%. One global pulse does this for every close pair at once.</li>
+    <li><b>Moving atoms.</b> Extra tweezers grab whole rows and columns and drag them (rows can't cross). A move takes a few hundred microseconds. Moving lets any qubit meet any other, and moving a whole patch onto another gives a transversal gate (Session 6).</li>
+    <li><b>Measurement</b> is a photograph of the atoms' fluorescence, taking about a millisecond. That's slow, which is why waiting on measurements (reaction time) matters.</li>
+    <li><b>Atom loss.</b> An atom can escape its trap. QuEra's noise model treats a lost atom as a Y error.</li>
+    <li><b>Z-biased noise.</b> The Rydberg step mostly causes phase (Z) errors, so Z and ZZ errors dominate the CZ's error.</li>
+  </ul>
+  <h3>Table II: the noise model this project uses</h3>
+  <p>QuEra's PRX Quantum paper lists the error of each hardware operation in its Table II. This project places each of these on the right gate of the STAR circuits, then asks which one matters. The rates below are the paper's; the project scales them all down together (×0.134) so their combined size matches a physical error rate of 10<sup>−3</sup>.</p>
+  <div class="scroll"><table class="t">
+    <thead><tr><th>Channel</th><th>What goes wrong</th><th>Rate (Table II)</th></tr></thead>
+    <tbody>
+      <tr><td>Initialization</td><td>An atom starts in the wrong state</td><td>0.3%</td></tr>
+      <tr><td>Single-qubit gate</td><td>Random X, Y or Z after each gate</td><td>0.3%</td></tr>
+      <tr><td>CZ gate</td><td>X or Y on either atom (0.05% each), Z (0.063% each), correlated ZZ (0.13%)</td><td>0.46% in all</td></tr>
+      <tr><td>CZ spectator</td><td>An unpaired atom in the zone: X 0.05%, Y 0.05%, Z 0.13%</td><td>0.23%</td></tr>
+      <tr><td>CZ loss</td><td>An atom is lost during the gate (modelled as Y)</td><td>0.13%</td></tr>
+      <tr><td>Atom move</td><td>Small errors while moving (mostly Z), and rare loss</td><td>≈0.03%</td></tr>
+      <tr><td>Measurement</td><td>The readout reports the wrong value</td><td>0.4%</td></tr>
+    </tbody>
+  </table></div>
+  <dl class="words">
+    <dt>Optical tweezer</dt><dd>A focused laser beam that traps one atom.</dd>
+    <dt>Rydberg blockade</dt><dd>Two nearby atoms can't both be in the Rydberg state. The basis of the CZ gate.</dd>
+    <dt>Entangling zone</dt><dd>Where the global CZ pulse acts on paired atoms.</dd>
+    <dt>Spectator</dt><dd>An atom in the entangling zone without a partner. Gets errors but no gate.</dd>
+    <dt>Atom loss</dt><dd>An atom leaves its trap. Modelled in Table II as a Y error.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>Atoms in laser tweezers, a CZ from the Rydberg blockade in parallel with one global pulse, atoms moved to meet each other, slow camera readout, mostly-Z errors, and a Table II that gives each of these operations its own error rate.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>How does a neutral-atom machine do a two-qubit gate?</summary><div class="ans"><p>With the Rydberg blockade. A laser couples |1⟩ to a Rydberg state; two atoms within a few microns can't both be excited, so the pair acts like a single two-level system. A pulse sequence that gives the doubly-excited path a phase of −1 implements a CZ. One global pulse does it for every close pair in parallel, at about 99.5% fidelity.</p></div></details>
+    <details class="qa"><summary>What is a spectator error?</summary><div class="ans"><p>Error on an atom that sits in the entangling zone during a CZ pulse but has no partner. It doesn't receive a gate, but it still sees the laser and picks up some error, mostly Z. In the project's budget, spectators cause about a quarter of STAR's injection error.</p></div></details>
+    <details class="qa"><summary>Why does atom movement matter?</summary><div class="ans"><p>Moving atoms gives flexible connectivity and makes transversal gates a single move plus a pulse. But moves take hundreds of microseconds and add small errors and occasional loss. In the project's budget, moves contribute only about 0.5% of the injection error.</p></div></details>
+    <details class="qa"><summary>Why are neutral-atom errors biased towards Z?</summary><div class="ans"><p>The dominant errors come from the Rydberg excitation: decay and dephasing during the gate mostly scramble the phase, not the bit value. So Z and correlated ZZ errors are the largest terms in the CZ's error.</p></div></details>
+    <details class="qa"><summary>What are typical timescales?</summary><div class="ans"><p>A CZ pulse is well under a microsecond, a move takes a few hundred microseconds, and imaging readout about a millisecond. So an error-correction cycle is about a millisecond, and anything that waits for a measurement pays that.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 11 ============================ -->
+<section class="session" id="s11" data-title="Why: simulating physics">
+  <header>
+    <div class="row"><span class="label">Session 11 · 12 min</span><button class="btn done-btn" aria-pressed="false" data-done="s11">Mark done</button></div>
+    <h2>Why all this: simulating physics</h2>
+  </header>
+  <p>The first useful job for an early fault-tolerant machine is likely to be simulating quantum physics: how electrons move in a material, or how a molecule reacts. The workhorse example is the <b>Fermi–Hubbard model</b>: electrons hop between neighbouring sites of a lattice (strength <span class="f">t</span>) and repel each other when two share a site (strength <span class="f">U</span>). It's simple to write and very hard to solve classically. QuEra's own STAR papers aim at it.</p>
+  <p><b>Trotterization.</b> We want to apply <span class="f">e<sup>−iHt</sup></span>. The Hamiltonian is a sum of simple pieces, <span class="f">H = A + B</span>, but they don't commute, so we can't apply them separately in one go. Instead we chop time into <span class="f">r</span> small steps and alternate: <span class="f">(e<sup>−iAΔt</sup> e<sup>−iBΔt</sup>)<sup>r</sup></span>. The error comes from the pieces not commuting and shrinks as the steps get smaller.</p>
+  <div class="bench">
+    <div class="fig"><svg id="fig-trotter" viewBox="0 0 640 230" role="img" aria-label="A Trotter circuit: layers of small rotations on a chain of qubits, repeated r times. Each rotation is a Pauli rotation, which becomes a single small Z rotation between CNOT ladders."></svg></div>
+    <div class="cap">One Trotter step is a layer of small Pauli rotations (one per term of H), repeated r times. Each Pauli rotation reduces to one small R<sub>Z</sub>(θ) on one qubit, sandwiched between Clifford gates. Those R<sub>Z</sub>(θ)s are what STAR supplies.</div>
+  </div>
+  <p><b>From electrons to qubits.</b> Electrons are fermions, not qubits. The <b>Jordan–Wigner</b> mapping turns “is there an electron on site j?” into qubit j, and turns each hopping term into Pauli strings such as (XX + YY)/2, with Z's in between to track fermion signs. Every term of <span class="f">H</span> becomes a Pauli string <span class="f">P</span>, and every step <span class="f">e<sup>−iΔt·P</sup></span> becomes a small rotation.</p>
+  <p><b>The link to α.</b> Count the rotations: (number of terms) × (number of Trotter steps), each by a small angle. The total angle grows with the number of sites times the simulated time, the simulation volume. Since STAR can afford a total angle of about <span class="f">1/(αp)</span>, α directly decides how large a material and how long a time you can simulate.</p>
+  <dl class="words">
+    <dt>Fermi–Hubbard model</dt><dd>Electrons hopping on a lattice and repelling on the same site. The standard hard benchmark.</dd>
+    <dt>Trotterization</dt><dd>Approximating e<sup>−iHt</sup> by many short steps of each piece of H in turn.</dd>
+    <dt>Jordan–Wigner</dt><dd>A mapping from fermions to qubits that turns hopping into Pauli strings with Z-tails.</dd>
+    <dt>Pauli rotation</dt><dd>e<sup>−iθP/2</sup> for a Pauli string P. Equals one R<sub>Z</sub>(θ) between Clifford gates.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>Simulating electrons means many short Trotter steps; Jordan–Wigner turns every step into small Pauli rotations, each a single small R<sub>Z</sub> that STAR can supply, so α sets how big a simulation fits.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>What is Trotterization, and where does its error come from?</summary><div class="ans"><p>Approximating e^(−iHt) for H = A + B by alternating short steps of e^(−iAΔt) and e^(−iBΔt), r times. The error comes from A and B not commuting. First-order Trotter error falls like t²/r; the symmetric second-order version falls faster.</p></div></details>
+    <details class="qa"><summary>Why do small rotations show up in physics simulation?</summary><div class="ans"><p>After Jordan–Wigner, every term of the Hamiltonian is a Pauli string, and each Trotter step applies e^(−iΔt·P), a rotation by an angle of order Δt. A Pauli rotation reduces to a single R_Z between Clifford gates, so the whole simulation is Cliffords plus millions of small R_Z rotations.</p></div></details>
+    <details class="qa"><summary>How does α limit a simulation?</summary><div class="ans"><p>Each rotation by θ costs error αpθ, so the total rotation the computation can afford is about 1/(αp). The total rotation grows with sites times simulated time, so the simulation volume scales as 1/(αp).</p></div></details>
+    <details class="qa"><summary>What does Jordan–Wigner do to a hopping term?</summary><div class="ans"><p>It maps c†_i c_j + h.c. to qubit operators. For neighbouring sites in 1D that's (XX + YY)/2 on the two qubits. For non-neighbours, Z's on the qubits in between keep track of fermion signs, which makes the strings long in 2D.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 12 ============================ -->
+<section class="session" id="s12" data-title="The tools: stim, tsim, DEMs">
+  <header>
+    <div class="row"><span class="label">Session 12 · 15 min</span><button class="btn done-btn" aria-pressed="false" data-done="s12">Mark done</button></div>
+    <h2>The tools: stim, tsim, error models, and an exact count</h2>
+  </header>
+  <ul>
+    <li><b>stim</b> simulates Clifford circuits with Pauli noise, extremely fast: billions of shots. It can't simulate a general rotation like STAR's R<sub>Z</sub>(θ*), because that isn't Clifford (Gottesman–Knill again).</li>
+    <li><b>tsim</b> is QuEra's sampler for circuits that are <em>almost</em> Clifford: a few non-Clifford gates, like STAR's rotations. It samples every number in the project's protocols.</li>
+    <li><b>PyMatching</b> is the matching decoder from Session 5. It needs an error model whose faults are split into pairs.</li>
+  </ul>
+  <p><b>The detector error model (DEM)</b> is the most useful object in this whole field. It is a list: for every possible fault, its probability, which detectors it lights, and whether it flips the logical result (written L0). stim builds it automatically from a noisy circuit.</p>
+  <div class="bench">
+<pre class="mono" style="margin:0;overflow-x:auto;line-height:1.7"><span class="t-muted"># probability   detectors it lights     flips the result?</span>
+error(0.00040)  D2 D5
+error(0.00013)  D5 L0                    <span class="t-muted"># lights D5 and flips the logical result</span>
+error(0.00013)  D1 D2 D4 D7              <span class="t-muted"># a hyperedge: four detectors</span>
+error(0.00013)  D1 D4 ^ D2 D7            <span class="t-muted"># the same fault, decomposed into two pairs</span></pre>
+    <div class="cap">A few lines of a detector error model. Decoders read this list instead of the circuit.</div>
+  </div>
+  <p><b>The Clifford proxy.</b> Set the STAR rotation angle to zero, so every R<sub>Z</sub> becomes the identity. The circuit is now Clifford, and stim can build its error model. The exact count lives there.</p>
+  <p><b>The exact count, in plain words</b> (<code>starlab/enumerate.py</code>, about 100 lines):</p>
+  <ol>
+    <li>Work out which detectors each STAR branch lights in the proxy. A branch is Z on some subset of the rotated qubits.</li>
+    <li>Go through every fault in the proxy's error model. A fault survives post-selection only if it lights <em>exactly</em> the same detectors as some branch, because then the two cancel and the checks see nothing.</li>
+    <li>For each surviving fault, its error is its probability times a closed-form weight for that branch pair, the <span class="f">f<sub>k</sub>(θ)</span> of Session 9.</li>
+    <li>Add them up. That is the injection error, exactly, to first order in p, with no sampling and no fitted parameter.</li>
+  </ol>
+  <p><b>Pre-registration.</b> Every experiment in this project was written down, with its predictions and pass/fail rule, and committed to git <em>before</em> it ran. A guard script fails the build if a result is older than its protocol. That's how you can say the blind test was really blind.</p>
+  <dl class="words">
+    <dt>stim</dt><dd>Fast simulator for Clifford circuits with Pauli noise. Builds error models.</dd>
+    <dt>tsim</dt><dd>QuEra's sampler for nearly-Clifford circuits, such as STAR.</dd>
+    <dt>DEM</dt><dd>Detector error model: every fault, its probability, the detectors it lights, and whether it flips the result.</dd>
+    <dt>Clifford proxy</dt><dd>The STAR circuit with the rotation set to zero, so stim can analyse it.</dd>
+    <dt>Pre-registration</dt><dd>Writing the prediction and the pass rule down before the experiment runs.</dd>
+  </dl>
+  <div class="breath"><span class="label">In one breath</span><p>stim does Clifford circuits and error models, tsim samples nearly-Clifford ones like STAR, and the project's exact count matches every fault in the θ = 0 proxy's error model against the branch symptoms and adds up the survivors.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>What is a detector error model?</summary><div class="ans"><p>A list of independent fault mechanisms, each with a probability, the set of detectors it flips, and the logical observables it flips. stim builds it from a noisy circuit, and decoders such as PyMatching are built from it.</p></div></details>
+    <details class="qa"><summary>Why can't stim simulate STAR directly?</summary><div class="ans"><p>stim simulates only Clifford circuits. STAR's physical rotations by θ* are non-Clifford, so you need a sampler like tsim, or, for the error model, the θ = 0 Clifford proxy.</p></div></details>
+    <details class="qa"><summary>How does the exact first-order count work?</summary><div class="ans"><p>In the θ = 0 proxy, each branch of the rotation, Z on a subset of the rotated qubits, has a symptom: the detectors it lights. A single fault survives post-selection if and only if its symptom equals a branch symptom. The count enumerates every fault in the proxy's error model, keeps the ones that match, weights each by the closed-form failure weight of its branch pair, and sums. It reproduced 665 million sampled shots with no fitted parameter, and then predicted a blind test.</p></div></details>
+    <details class="qa"><summary>What is pre-registration, and why use it?</summary><div class="ans"><p>Writing the hypothesis, the predictions and the pass/fail criteria into a protocol and committing it before running. It stops the analysis from being adjusted to fit the data. A guard checks the git dates, so a result can't silently predate its protocol.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ SESSION 13 ============================ -->
+<section class="session" id="s13" data-title="The project, in plain words">
+  <header>
+    <div class="row"><span class="label">Session 13 · 20 min</span><button class="btn done-btn" aria-pressed="false" data-done="s13">Mark done</button></div>
+    <h2>The project, in plain words</h2>
+  </header>
+  <p><b>The question.</b> QuEra's papers describe noise with one knob, <span class="f">p</span>, and turn every channel up or down together. A hardware team has to choose <em>which</em> error to improve next. So: which hardware error controls STAR's injection error, and what would halving each one buy?</p>
+  <h3>What it did, in four steps</h3>
+  <ol>
+    <li><b>Reproduced QuEra's reference curve (P01).</b> It only matched with a decoder that drops hyperedges (Session 5), and its large-angle part was mostly memory errors read out after the rotation, not injection. So the project measures the injection error alone: noise only around the rotation, every detector post-selected, no decoder.</li>
+    <li><b>Rebuilt the circuits with Table II noise (P02).</b> Each hardware error placed on the right gate. Checked first: with equal noise everywhere, the rebuild reproduces QuEra's own error model exactly. Then 665 million sampled shots showed the injection error is one constant times the misrotation shape <span class="f">f<sub>k</sub>(θ)</span> from π/4 to π/128.</li>
+    <li><b>Counted it exactly (P03).</b> The first-order count of Session 12 reproduced all of that sampling with no fitted parameter.</li>
+    <li><b>Tested it blind (P04).</b> Predictions for each hardware channel alone, a halved channel, a new angle, and distance 7 were committed before sampling. All nine fell within 0.95–1.10 of the prediction, including d = 7 (2.60 × 10<sup>−4</sup> sampled against 2.53 × 10<sup>−4</sup> predicted).</li>
+  </ol>
+  <h3>The answer</h3>
+  <div class="bench">
+    <div class="fig"><svg id="fig-budget" viewBox="0 0 640 270" role="img" aria-label="Share of STAR's injection error by hardware channel at distance 5: single-qubit gates 49 percent (rotation gate 14, Hadamards 34), spectators 26, CZ 25, moves 0.5, initialization, measurement and loss 0."></svg></div>
+    <div class="cap">Who pays for STAR's injection error at d = 5, θ = π/16, Table II scaled to p = 10<sup>−3</sup> (computed, and confirmed by the blind test). Right of each bar: what halving that channel buys in simulation volume.</div>
+  </div>
+  <ul>
+    <li><b>Single-qubit gates are the biggest share, about half. But the rotation gate itself is only 12–16%.</b> The rest is the Hadamards that turning each CNOT into a CZ leaves on the data qubits. Any Z that lands on a rotated qubit before its first check hides, whichever gate caused it.</li>
+    <li><b>Spectators and the CZ</b> carry about a quarter each.</li>
+    <li><b>Initialization, measurement and loss cost nothing at first order.</b> Each lights a detector no branch lights, so post-selection removes it. They cost acceptance (more retries), not accuracy.</li>
+    <li><b>The CZ's correlated ZZ error, its largest term, is free here</b>, because the ancilla half always flips that ancilla's measurement.</li>
+    <li><b>Halving single-qubit-gate error buys ×1.32</b> in simulation volume (sampled: ×1.36).</li>
+  </ul>
+  <h3>What is new, and what isn't</h3>
+  <p>Counting undetected single faults at first order is not new: the original STAR paper (Toshio et al.) and Choi et al. did it, Liu et al. counted error-model faults for Clifford injection, and Veroni et al. describe the window in which faults near the rotation hide. What is new here is narrower: extending the error-model count to any angle, running it channel by channel over QuEra's real circuits, and testing it blind.</p>
+  <h3>What it does not show</h3>
+  <ul>
+    <li><b>These are not QuEra's own protocol.</b> They are the challenge's teaching circuits, which rotate the whole column (k = d) after one round. The paper's protocol uses k = 3 with extra rounds. The method carries over; applying it to that protocol is the next step.</li>
+    <li><b>The α here is about six times the paper's.</b> It is 8.6–9.1 here, against about 1.5 for the paper's own protocol. The two differ in k, in the rounds before the rotation, and in the rotation gate, and which of these accounts for the gap has not been tested. So the two numbers are not compared directly.</li>
+    <li><b>“ZZ is free” is narrow.</b> It holds for the syndrome CZs around a single-qubit rotation. If the rotation itself is a two-qubit R<sub>ZZ</sub>, a ZZ there is exactly a branch flip, the critical fault (Veroni et al.).</li>
+    <li><b>It is an idealized injection error:</b> every detector post-selected, later rounds noiseless, no decoder. A real protocol decodes some faults that this metric rejects.</li>
+    <li><b>Loss is modelled the way Table II models it,</b> as a Y error. Real atom loss isn't a Pauli error, and is not priced here.</li>
+    <li><b>First order is an approximation:</b> about 1% low at p = 10⁻³, and 10% low at full Table II strength, where it was measured.</li>
+  </ul>
+  <div class="breath"><span class="label">In one breath</span><p>For QuEra's STAR circuits under Table II noise, single-qubit gates cause about half the injection error, mostly through the Hadamards that CZ compilation leaves on the data; spectators and the CZ share the rest; initialization, measurement and loss cost only retries; and an exact first-order count, tested blind, predicts all of it.</p></div>
+  <div class="practice">
+    <h3>Check yourself</h3>
+    <details class="qa"><summary>Which hardware error limits STAR in this study, and how sure is the result?</summary><div class="ans"><p>Single-qubit gates, about half the injection error at d = 5, mostly from the Hadamards that CX-to-CZ compilation leaves on data qubits. For these circuits it is well tested: the exact count reproduced 665 million sampled shots with no fitted parameter and then passed a blind test, nine out of nine within 0.95–1.10, including a distance that had not been sampled when the prediction was made.</p></div></details>
+    <details class="qa"><summary>Why do initialization, measurement and loss cost nothing?</summary><div class="ans"><p>At first order, each of those faults lights a detector that no rotation branch lights, so post-selection always discards it. They lower the acceptance rate, meaning more retries, but they don't change the error of the states you keep. Sampling found a handful of two-fault events, all below 0.7% of the total.</p></div></details>
+    <details class="qa"><summary>Why is the rotation gate only a small part of the single-qubit error?</summary><div class="ans"><p>Any Z on a rotated qubit between the rotation and that qubit's first X-check looks exactly like a branch. The Hadamards from compiling CNOTs into CZs sit in that window too, and there are more of them, so they contribute about 34% against the rotation gate's 14% at d = 5.</p></div></details>
+    <details class="qa"><summary>What was the biggest surprise in the project?</summary><div class="ans"><p>The very first experiment failed: the pipeline didn't reproduce QuEra's reference curve. Rather than tuning it to fit, the project registered diagnostics, which found two causes: the reference used a decoder setup that drops hyperedges, and its large-angle regime was memory error read out after the rotation. That's why the project measures the injection error alone, and it led to the tsim issue and pull request.</p></div></details>
+  </div>
+</section>
+
+<!-- ============================ DRILL ============================ -->
+<section class="session" id="drill">
+  <header>
+    <span class="label">Practice</span>
+    <h2>Flashcard drill</h2>
+  </header>
+  <p>Every question from every session, one at a time. Say your answer out loud first, then reveal the model answer and be honest with yourself. Your tally is saved in this browser only.</p>
+  <div class="cards">
+    <div class="controls" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+      <label class="label" for="drill-filter">From</label>
+      <select id="drill-filter" style="font:inherit;padding:4px 8px;border-radius:8px;border:1px solid var(--edge);background:var(--paper);color:var(--ink)"></select>
+      <button class="btn" id="drill-shuffle">Shuffle</button>
+    </div>
+    <div class="card" id="drill-card">
+      <div class="label" id="drill-meta"></div>
+      <div class="q" id="drill-q"></div>
+      <div class="a" id="drill-a" hidden></div>
+      <div class="controls" style="display:flex;flex-wrap:wrap;gap:10px">
+        <button class="btn" id="drill-show">Show answer</button>
+        <button class="btn" id="drill-got">I had it</button>
+        <button class="btn" id="drill-again">Not yet</button>
+        <button class="btn" id="drill-next">Skip</button>
+      </div>
+    </div>
+    <div class="tally" id="drill-tally"></div>
+  </div>
+</section>
+
+<footer>
+  <p>Sources: Akahoshi et al., PRX Quantum 5, 010337 (2024), STAR; Toshio et al., arXiv:2408.14848; Ismail et al., PRX Quantum 7, 020343 (2026), the transversal STAR architecture and Table II; Ismail et al., arXiv:2606.25011. This project: the <a href="https://github.com/mamuncseru/star-on-atoms">STAR on Atoms repository</a>, its protocols P01–P04 and the three-page note. Formulas in the figures are the same as in <code>starlab</code>.</p>
+</footer>
+
+</main>
+</div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+function E(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in (attrs || {})) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function T(parent, x, y, s, attrs) {
+  const t = E("text", Object.assign({ x, y }, attrs || {}), parent);
+  t.textContent = s;
+  return t;
+}
+function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+function arrow(svg, id, cls) {
+  const d = E("defs", {}, svg);
+  const m = E("marker", { id, viewBox: "0 0 10 10", refX: "8.5", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" }, d);
+  E("path", { d: "M0,0 L10,5 L0,10 z", class: cls }, m);
+  return `url(#${id})`;
+}
+function store(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
+}
+function save(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
+const fmtPct = (x) => (x >= 0.1 ? (100 * x).toFixed(0) : x >= 0.001 ? (100 * x).toFixed(1) : (100 * x).toFixed(2)) + "%";
+function sup(n) { const m = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" }; return String(n).split("").map((c) => m[c] || c).join(""); }
+function sci(x) { if (x === 0) return "0"; const e = Math.floor(Math.log10(x)); const m = x / Math.pow(10, e); return `${m.toFixed(1)}×10${sup(e)}`; }
+
+/* ---------- progress ---------- */
+const done = new Set(store("sfz-done", []));
+function paintProgress() {
+  $$(".done-btn").forEach((b) => b.setAttribute("aria-pressed", done.has(b.dataset.done) ? "true" : "false"));
+  $$(".done-btn").forEach((b) => (b.textContent = done.has(b.dataset.done) ? "Done ✓" : "Mark done"));
+  $$("nav.index li[data-s]").forEach((li) => li.classList.toggle("is-done", done.has(li.dataset.s)));
+  const n = done.size;
+  $("#pbar").style.width = `${(100 * n) / 14}%`;
+  $("#ptext").textContent = `${n} of 14 sessions done`;
+}
+$$(".done-btn").forEach((b) => b.addEventListener("click", () => {
+  const s = b.dataset.done;
+  if (done.has(s)) done.delete(s); else done.add(s);
+  save("sfz-done", [...done]);
+  paintProgress();
+}));
+paintProgress();
+if (window.matchMedia("(max-width: 1059px)").matches) $("#index-details").open = false;
+
+/* ---------- Session 1: Pauli picture ---------- */
+(function pauli() {
+  const svg = $("#fig-pauli");
+  const ax = arrow(svg, "ar-pauli", "fill-ink");
+  [[160, "X", "bit flip"], [480, "Z", "phase flip"]].forEach(([cx, name, what], i) => {
+    const cy = 112, r = 78;
+    E("circle", { cx, cy, r, class: "ax" }, svg);
+    E("ellipse", { cx, cy, rx: r, ry: 20, class: "grid" }, svg);
+    E("line", { x1: cx, y1: cy - r, x2: cx, y2: cy + r, class: "grid" }, svg);
+    if (i === 0) {
+      E("circle", { cx, cy: cy - r, r: 7, class: "fill-x" }, svg);
+      E("circle", { cx, cy: cy + r, r: 7, class: "fill-x" }, svg);
+      T(svg, cx + 14, cy - r - 6, "|0⟩", { "font-size": 16 });
+      T(svg, cx + 14, cy + r + 18, "|1⟩", { "font-size": 16 });
+      E("path", { d: `M ${cx + 22} ${cy - r + 10} Q ${cx + r + 46} ${cy} ${cx + 22} ${cy + r - 10}`, class: "line-x", "stroke-width": 2.5, "marker-end": ax, "marker-start": ax }, svg);
+    } else {
+      E("circle", { cx: cx + r, cy, r: 7, class: "fill-z" }, svg);
+      E("circle", { cx: cx - r, cy, r: 7, class: "fill-z" }, svg);
+      T(svg, cx + r + 12, cy + 5, "|+⟩", { "font-size": 16 });
+      T(svg, cx - r - 40, cy + 5, "|−⟩", { "font-size": 16 });
+      E("path", { d: `M ${cx + r - 12} ${cy - 16} Q ${cx} ${cy - 70} ${cx - r + 12} ${cy - 16}`, class: "line-z", "stroke-width": 2.5, "marker-end": ax, "marker-start": ax }, svg);
+    }
+    T(svg, cx, 222, `${name}: ${what}`, { "text-anchor": "middle", "font-size": 15, "font-weight": 700 });
+  });
+})();
+
+/* ---------- Session 2: repetition code ---------- */
+(function rep() {
+  const root = $("#rep"), svg = $("svg", root), out = $(".status", root);
+  let d = 5, f = Array(5).fill(false);
+  function decode() {
+    const syn = [];
+    for (let i = 0; i < d - 1; i++) syn.push(f[i] !== f[i + 1]);
+    const a = [false];
+    for (let i = 0; i < d - 1; i++) a.push(a[i] !== syn[i]);
+    const b = a.map((v) => !v);
+    const cnt = (v) => v.filter(Boolean).length;
+    const corr = cnt(a) <= cnt(b) ? a : b;
+    const fin = f.map((v, i) => v !== corr[i]);
+    return { syn, corr, fail: fin.some(Boolean) };
+  }
+  function draw() {
+    clear(svg);
+    const sp = Math.min(96, 560 / (d - 1)), x0 = 320 - (sp * (d - 1)) / 2, y = 68;
+    const { syn, corr, fail } = decode();
+    E("line", { x1: x0, y1: y, x2: x0 + sp * (d - 1), y2: y, class: "grid", "stroke-width": 2 }, svg);
+    for (let i = 0; i < d - 1; i++) {
+      const cx = x0 + sp * (i + 0.5);
+      E("rect", { x: cx - 9, y: y - 9, width: 18, height: 18, rx: 3, class: syn[i] ? "check-on" : "check-off" }, svg);
+      T(svg, cx, y - 18, syn[i] ? "differ" : "same", { "text-anchor": "middle", "font-size": 11, class: "t-muted" });
+    }
+    for (let i = 0; i < d; i++) {
+      const cx = x0 + sp * i;
+      if (corr[i]) E("circle", { cx, cy: y, r: 25, class: "line-det", "stroke-width": 2, "stroke-dasharray": "4 3" }, svg);
+      const c = E("circle", { cx, cy: y, r: 17, class: "qubit hot" + (f[i] ? " ex" : ""), tabindex: 0, role: "button", "aria-label": `qubit ${i + 1}${f[i] ? ", flipped" : ""}` }, svg);
+      if (f[i]) T(svg, cx, y + 5, "X", { "text-anchor": "middle", "font-size": 14, "font-weight": 700, class: "fill-paper", "pointer-events": "none" });
+      T(svg, cx, y + 44, `q${i + 1}`, { "text-anchor": "middle", "font-size": 12, class: "t-muted t-mono" });
+      const flip = () => { f[i] = !f[i]; draw(); };
+      c.addEventListener("click", flip);
+      c.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); } });
+    }
+    T(svg, 320, 148, "syndrome: " + syn.map((v) => (v ? 1 : 0)).join(" "), { "text-anchor": "middle", "font-size": 14, class: "t-mono" });
+    const nf = f.filter(Boolean).length, nc = corr.filter(Boolean).length;
+    const which = corr.map((v, i) => (v ? `q${i + 1}` : null)).filter(Boolean).join(", ");
+    if (nf === 0) out.textContent = "No flips, so every check reads “same”. Click a qubit to flip it.";
+    else if (!fail) out.textContent = `${nf} flip${nf > 1 ? "s" : ""}. The decoder flips ${which} back (dashed rings): the stored bit is safe.`;
+    else out.innerHTML = `<b style="color:var(--fail)">Logical error.</b> ${nf} flips look like ${nc} flips on the other side, so the decoder flips ${which}. Now every copy is wrong.`;
+  }
+  $$("[data-d]", root).forEach((b) => b.addEventListener("click", () => {
+    d = +b.dataset.d; f = Array(d).fill(false);
+    $$("[data-d]", root).forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    draw();
+  }));
+  $("[data-act=random]", root).addEventListener("click", () => { f = f.map(() => Math.random() < 0.2); draw(); });
+  $("[data-act=clear]", root).addEventListener("click", () => { f = Array(d).fill(false); draw(); });
+  f[1] = true;
+  draw();
+})();
+
+/* ---------- Session 3: ancilla circuit and space-time ---------- */
+(function ancilla() {
+  const svg = $("#fig-ancilla");
+  const rows = [[50, "data q1"], [100, "data q2"], [165, "ancilla |0⟩"]];
+  rows.forEach(([y, s]) => { T(svg, 20, y + 5, s, { "font-size": 14 }); E("line", { x1: 120, y1: y, x2: 520, y2: y, class: "line-ink", "stroke-width": 1.5 }, svg); });
+  [[230, 50], [330, 100]].forEach(([x, yc]) => {
+    E("line", { x1: x, y1: yc, x2: x, y2: 165 + 13, class: "line-ink", "stroke-width": 1.5 }, svg);
+    E("circle", { cx: x, cy: yc, r: 6, class: "fill-ink" }, svg);
+    E("circle", { cx: x, cy: 165, r: 13, class: "fill-paper line-ink", "stroke-width": 1.5 }, svg);
+    E("line", { x1: x - 13, y1: 165, x2: x + 13, y2: 165, class: "line-ink", "stroke-width": 1.5 }, svg);
+  });
+  T(svg, 280, 25, "two CNOTs collect the parity", { "text-anchor": "middle", "font-size": 13, class: "t-muted" });
+  E("rect", { x: 430, y: 147, width: 40, height: 36, rx: 4, class: "fill-paper line-ink", "stroke-width": 1.5 }, svg);
+  E("path", { d: "M 437 175 Q 450 158 463 175", class: "line-ink", "stroke-width": 1.5 }, svg);
+  E("line", { x1: 450, y1: 176, x2: 462, y2: 160, class: "line-ink", "stroke-width": 1.5 }, svg);
+  T(svg, 530, 160, "result:", { "font-size": 13, class: "t-muted" });
+  T(svg, 530, 180, "q1 ⊕ q2", { "font-size": 15, "font-weight": 700, class: "t-mono" });
+  T(svg, 530, 55, "never measured", { "font-size": 13, class: "t-muted" });
+})();
+
+(function spacetime() {
+  const svg = $("#fig-spacetime");
+  const panel = (ox, title, lit, link) => {
+    const sp = 46, cols = 5, rws = 4, x0 = ox + 40, y0 = 210;
+    T(svg, ox + 140, 22, title, { "text-anchor": "middle", "font-size": 14, "font-weight": 700 });
+    for (let r = 0; r < rws; r++) for (let c = 0; c < cols; c++) {
+      const on = lit.some(([a, b]) => a === c && b === r);
+      E("circle", { cx: x0 + c * sp, cy: y0 - r * sp, r: on ? 9 : 5, class: on ? "fill-det" : "fill-edge" }, svg);
+    }
+    if (link) {
+      const [[c1, r1], [c2, r2]] = link;
+      E("line", { x1: x0 + c1 * sp, y1: y0 - r1 * sp, x2: x0 + c2 * sp, y2: y0 - r2 * sp, class: "line-det", "stroke-width": 3 }, svg);
+    }
+    T(svg, x0 + 2 * sp, y0 + 30, "checks →", { "text-anchor": "middle", "font-size": 12, class: "t-muted" });
+    T(svg, ox + 14, y0 - 1.5 * sp, "time ↑", { "text-anchor": "middle", "font-size": 12, class: "t-muted", transform: `rotate(-90 ${ox + 14} ${y0 - 1.5 * sp})` });
+  };
+  panel(10, "a data-qubit error: a space-like pair", [[1, 2], [2, 2]], [[1, 2], [2, 2]]);
+  panel(330, "a measurement error: a time-like pair", [[3, 1], [3, 2]], [[3, 1], [3, 2]]);
+})();
+
+/* ---------- Session 4: surface code ---------- */
+(function surface() {
+  const root = $("#surf"), svg = $("svg", root), out = $(".status", root);
+  let d = 3, mode = "Z", err = new Map(), show = { ZL: false, XL: false };
+  function checks() {
+    const list = [];
+    for (let cx = -1; cx < d; cx++) for (let cy = -1; cy < d; cy++) {
+      const qs = [];
+      for (const x of [cx, cx + 1]) for (const y of [cy, cy + 1]) if (x >= 0 && x < d && y >= 0 && y < d) qs.push([x, y]);
+      const kind = ((cx + cy) % 2 + 2) % 2 === 0 ? "X" : "Z";
+      if (qs.length === 4) list.push({ kind, qs, cx, cy });
+      else if (qs.length === 2) {
+        const lr = cx === -1 || cx === d - 1;
+        if ((lr && kind === "X") || (!lr && kind === "Z")) list.push({ kind, qs, cx, cy });
+      }
+    }
+    return list;
+  }
+  const key = (x, y) => `${x},${y}`;
+  const get = (x, y) => err.get(key(x, y)) || { X: false, Z: false };
+  function draw() {
+    clear(svg);
+    const sp = Math.min(120, 300 / (d - 1)), o = 220 - (sp * (d - 1)) / 2;
+    const P = (x, y) => [o + x * sp, o + y * sp];
+    const all = checks();
+    let litX = 0, litZ = 0;
+    for (const ch of all) {
+      const hits = ch.qs.filter(([x, y]) => (ch.kind === "X" ? get(x, y).Z : get(x, y).X)).length;
+      ch.lit = hits % 2 === 1;
+      if (ch.lit) { if (ch.kind === "X") litX++; else litZ++; }
+    }
+    for (const ch of all) {
+      const cls = ch.kind === "X" ? "xcheck" : "zcheck";
+      if (ch.qs.length === 4) {
+        const [a, b] = P(ch.cx, ch.cy), [c, e] = P(ch.cx + 1, ch.cy + 1);
+        E("rect", { x: a, y: b, width: c - a, height: e - b, class: cls }, svg);
+        if (ch.lit) E("rect", { x: a + 3, y: b + 3, width: c - a - 6, height: e - b - 6, class: "lit" }, svg);
+      } else {
+        const [[x1, y1], [x2, y2]] = ch.qs;
+        const [ax, ay] = P(x1, y1), [bx, by] = P(x2, y2);
+        const r = sp / 2;
+        // Bulge outward: y grows downward, and sweep 1 turns clockwise on screen.
+        const sweep = (ch.cx === -1 || ch.cy === d - 1) ? 0 : 1;
+        const dd = `M ${ax} ${ay} A ${r} ${r} 0 0 ${sweep} ${bx} ${by} Z`;
+        E("path", { d: dd, class: cls }, svg);
+        if (ch.lit) E("path", { d: dd, class: "lit" }, svg);
+      }
+    }
+    const mid = Math.floor(d / 2);
+    if (show.ZL) { const [a, b] = P(mid, 0), [c, e] = P(mid, d - 1); E("line", { x1: a, y1: b - 26, x2: c, y2: e + 26, class: "line-z", "stroke-width": 4, "stroke-dasharray": "8 6" }, svg); T(svg, a + 10, b - 30, "logical Z (a column)", { "font-size": 12, "font-weight": 700 }); }
+    if (show.XL) { const [a, b] = P(0, mid), [c, e] = P(d - 1, mid); E("line", { x1: a - 26, y1: b, x2: c + 26, y2: e, class: "line-x", "stroke-width": 4, "stroke-dasharray": "8 6" }, svg); T(svg, c + 4, e + 36, "logical X (a row)", { "font-size": 12, "font-weight": 700, "text-anchor": "end" }); }
+    for (let x = 0; x < d; x++) for (let y = 0; y < d; y++) {
+      const [px, py] = P(x, y), g = get(x, y);
+      const cls = g.X && g.Z ? " fill-ink" : g.X ? " ex" : g.Z ? " ez" : "";
+      const c = E("circle", { cx: px, cy: py, r: 13, class: "qubit hot" + cls, tabindex: 0, role: "button", "aria-label": `data qubit ${x},${y}` }, svg);
+      const lab = g.X && g.Z ? "Y" : g.X ? "X" : g.Z ? "Z" : "";
+      if (lab) T(svg, px, py + 5, lab, { "text-anchor": "middle", "font-size": 13, "font-weight": 700, class: "fill-paper", "pointer-events": "none" });
+      const act = () => {
+        const cur = Object.assign({}, get(x, y));
+        if (mode === "X" || mode === "Y") cur.X = !cur.X;
+        if (mode === "Z" || mode === "Y") cur.Z = !cur.Z;
+        err.set(key(x, y), cur); draw();
+      };
+      c.addEventListener("click", act);
+      c.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); } });
+    }
+    let nz = 0, nx = 0, zRow = 0, xCol = 0;
+    err.forEach((g, k) => { const [x, y] = k.split(",").map(Number); if (g.Z) { nz++; if (y === mid) zRow++; } if (g.X) { nx++; if (x === mid) xCol++; } });
+    const lit = litX + litZ;
+    const zLog = litX === 0 && nz > 0 && zRow % 2 === 1, xLog = litZ === 0 && nx > 0 && xCol % 2 === 1;
+    if (nz + nx === 0) out.textContent = "No errors: every check is quiet. Click a qubit to add an error.";
+    else if (zLog || xLog) out.innerHTML = `<b style="color:var(--fail)">No check fires, but the stored qubit is wrong.</b> The ${zLog ? "Z" : "X"} chain runs from one edge to the opposite edge: a logical ${zLog ? "Z" : "X"} error. The decoder can't see it.`;
+    else if (lit === 0) out.textContent = "No check fires, and no harm done: this pattern is a product of checks, which leaves the stored state unchanged.";
+    else out.innerHTML = `${lit} check${lit > 1 ? "s" : ""} fired (${litX} X-check${litX === 1 ? "" : "s"}, ${litZ} Z-check${litZ === 1 ? "" : "s"}). A chain fires only at its ends. A Z chain's end on the top or bottom edge fires nothing, and so does an X chain's end on the left or right edge: that boundary absorbs it.${lit > 2 && nz + nx === 1 ? " One fault lighting more than two detectors is a hyperedge (Session 5)." : ""}`;
+  }
+  function preset(p) {
+    err = new Map();
+    const mid = Math.floor(d / 2);
+    const set = (x, y, X, Z) => err.set(key(x, y), { X, Z });
+    if (p === "one") set(mid, mid, false, true);
+    if (p === "chain") { const lo = d >= 5 ? 1 : 0, hi = d >= 5 ? d - 2 : 1; for (let y = lo; y <= hi; y++) set(mid, y, false, true); }
+    if (p === "logical") for (let y = 0; y < d; y++) set(mid, y, false, true);
+    if (p === "y") set(mid, mid, true, true);
+    draw();
+  }
+  $$("[data-d]", root).forEach((b) => b.addEventListener("click", () => {
+    d = +b.dataset.d; err = new Map();
+    $$("[data-d]", root).forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    draw();
+  }));
+  $$("[data-e]", root).forEach((b) => b.addEventListener("click", () => {
+    mode = b.dataset.e;
+    $$("[data-e]", root).forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  }));
+  $$("[data-preset]", root).forEach((b) => b.addEventListener("click", () => preset(b.dataset.preset)));
+  $$("[data-show]", root).forEach((b) => b.addEventListener("click", () => {
+    const k = b.dataset.show; show[k] = !show[k];
+    b.setAttribute("aria-pressed", show[k] ? "true" : "false");
+    draw();
+  }));
+  preset("one");
+})();
+
+/* ---------- Session 5: threshold ---------- */
+(function threshold() {
+  const root = $("#thr"), svg = $("svg", root), out = $(".status", root), inp = $("#thr-p"), pv = $("#thr-pv");
+  const W = 640, H = 380, L = 70, R = 70, Tp = 20, B = 50;
+  const xmin = -4, xmax = -1.6, ymin = -12, ymax = 0;
+  const X = (lp) => L + ((lp - xmin) / (xmax - xmin)) * (W - L - R);
+  const Y = (ly) => Tp + ((ymax - ly) / (ymax - ymin)) * (H - Tp - B);
+  const pL = (p, d) => Math.min(0.5, 0.1 * Math.pow(p / 0.01, (d + 1) / 2));
+  const ds = [3, 5, 7, 9], op = [0.4, 0.6, 0.8, 1];
+  function draw() {
+    clear(svg);
+    const lp = +inp.value, p = Math.pow(10, lp);
+    for (let ly = ymin; ly <= ymax; ly += 2) { E("line", { x1: L, y1: Y(ly), x2: W - R, y2: Y(ly), class: "grid" }, svg); T(svg, L - 8, Y(ly) + 4, `10${sup(ly)}`, { "text-anchor": "end", "font-size": 11, class: "t-muted" }); }
+    for (const lx of [-4, -3, -2]) { E("line", { x1: X(lx), y1: Tp, x2: X(lx), y2: H - B, class: "grid" }, svg); T(svg, X(lx), H - B + 18, `10${sup(lx)}`, { "text-anchor": "middle", "font-size": 11, class: "t-muted" }); }
+    E("line", { x1: X(-2), y1: Tp, x2: X(-2), y2: H - B, class: "line-slate", "stroke-width": 1.5, "stroke-dasharray": "6 4" }, svg);
+    T(svg, X(-2) + 6, Tp + 14, "threshold ≈ 1%", { "font-size": 12, class: "t-muted" });
+    T(svg, (L + W - R) / 2, H - 10, "physical error rate p", { "text-anchor": "middle", "font-size": 12, class: "t-muted" });
+    T(svg, 16, (Tp + H - B) / 2, "logical error rate", { "text-anchor": "middle", "font-size": 12, class: "t-muted", transform: `rotate(-90 16 ${(Tp + H - B) / 2})` });
+    ds.forEach((d, i) => {
+      let path = "";
+      for (let k = 0; k <= 120; k++) {
+        const lx = xmin + ((xmax - xmin) * k) / 120, v = Math.log10(pL(Math.pow(10, lx), d));
+        if (v < ymin) continue;
+        path += (path ? " L " : "M ") + X(lx).toFixed(1) + " " + Y(v).toFixed(1);
+      }
+      E("path", { d: path, class: "line-x", "stroke-width": 2.2, "stroke-opacity": op[i] }, svg);
+      const ly = Math.log10(pL(Math.pow(10, xmax), d));
+      T(svg, W - R + 6, Y(ly) + 4 + (i - 1.5) * 12, `d = ${d}`, { "font-size": 12, "font-weight": 700 });
+    });
+    E("line", { x1: X(lp), y1: Tp, x2: X(lp), y2: H - B, class: "line-det", "stroke-width": 2 }, svg);
+    ds.forEach((d, i) => { const v = Math.log10(pL(p, d)); if (v >= ymin) E("circle", { cx: X(lp), cy: Y(v), r: 4.5, class: "fill-det" }, svg); });
+    pv.textContent = sci(p);
+    out.textContent = ds.map((d) => `d=${d}: ${sci(pL(p, d))}`).join("   ") + (p < 0.01 ? "   (below threshold: bigger is better)" : "   (above threshold: bigger is worse)");
+  }
+  inp.addEventListener("input", draw);
+  draw();
+})();
+
+/* ---------- Session 6: transversal and color code ---------- */
+(function transversal() {
+  const svg = $("#fig-transversal");
+  const x0 = 130, sp = 52, yA = 70, yB = 190;
+  T(svg, 20, yA + 5, "block A", { "font-size": 14, "font-weight": 700 });
+  T(svg, 20, yB + 5, "block B", { "font-size": 14, "font-weight": 700 });
+  for (let i = 0; i < 9; i++) {
+    const x = x0 + i * sp;
+    E("line", { x1: x, y1: yA, x2: x, y2: yB, class: "line-ink", "stroke-width": 1.3 }, svg);
+    E("circle", { cx: x, cy: yA, r: 6, class: "fill-ink" }, svg);
+    E("circle", { cx: x, cy: yB, r: 12, class: "fill-paper line-ink", "stroke-width": 1.3 }, svg);
+    E("line", { x1: x - 12, y1: yB, x2: x + 12, y2: yB, class: "line-ink", "stroke-width": 1.3 }, svg);
+    E("line", { x1: x, y1: yB - 12, x2: x, y2: yB + 12, class: "line-ink", "stroke-width": 1.3 }, svg);
+    T(svg, x, yA - 18, String(i + 1), { "text-anchor": "middle", "font-size": 12, class: "t-muted t-mono" });
+    T(svg, x, yB + 32, String(i + 1), { "text-anchor": "middle", "font-size": 12, class: "t-muted t-mono" });
+  }
+  T(svg, 320, 132, "qubit i of A controls qubit i of B: nine CNOTs, one laser pulse on atoms", { "text-anchor": "middle", "font-size": 12, class: "t-muted" });
+})();
+
+(function color() {
+  const svg = $("#fig-color");
+  const A = [320, 26], Bp = [140, 250], C = [500, 250];
+  const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+  const ab = mid(A, Bp), bc = mid(Bp, C), ca = mid(C, A), g = [(A[0] + Bp[0] + C[0]) / 3, (A[1] + Bp[1] + C[1]) / 3];
+  const faces = [[A, ab, g, ca, "rgba(214,94,140,0.30)", "red face"], [Bp, bc, g, ab, "rgba(78,166,96,0.30)", "green face"], [C, ca, g, bc, "rgba(98,104,214,0.30)", "blue face"]];
+  faces.forEach(([p, q, r, s, fill, name]) => {
+    E("path", { d: `M ${p} L ${q} L ${r} L ${s} Z`, fill, class: "line-ink", "stroke-width": 1.2 }, svg);
+    const cx = (p[0] + q[0] + r[0] + s[0]) / 4, cy = (p[1] + q[1] + r[1] + s[1]) / 4;
+    T(svg, cx, cy + 4, name, { "text-anchor": "middle", "font-size": 12, "font-weight": 700 });
+  });
+  [A, Bp, C, ab, bc, ca, g].forEach((p) => E("circle", { cx: p[0], cy: p[1], r: 9, class: "qubit" }, svg));
+  T(svg, 560, 120, "each face:", { "font-size": 12, class: "t-muted" });
+  T(svg, 560, 138, "an X-check", { "font-size": 12, class: "t-muted" });
+  T(svg, 560, 156, "and a Z-check", { "font-size": 12, class: "t-muted" });
+})();
+
+/* ---------- Session 7: teleportation and cost ---------- */
+(function teleport() {
+  const svg = $("#fig-teleport");
+  const yd = 60, ym = 140;
+  T(svg, 16, yd + 5, "data |ψ⟩", { "font-size": 14 });
+  T(svg, 16, ym + 5, "magic T|+⟩", { "font-size": 14 });
+  E("line", { x1: 120, y1: yd, x2: 600, y2: yd, class: "line-ink", "stroke-width": 1.5 }, svg);
+  E("line", { x1: 120, y1: ym, x2: 380, y2: ym, class: "line-ink", "stroke-width": 1.5 }, svg);
+  E("line", { x1: 220, y1: yd, x2: 220, y2: ym + 13, class: "line-ink", "stroke-width": 1.5 }, svg);
+  E("circle", { cx: 220, cy: yd, r: 6, class: "fill-ink" }, svg);
+  E("circle", { cx: 220, cy: ym, r: 13, class: "fill-paper line-ink", "stroke-width": 1.5 }, svg);
+  E("line", { x1: 207, y1: ym, x2: 233, y2: ym, class: "line-ink", "stroke-width": 1.5 }, svg);
+  E("rect", { x: 330, y: ym - 18, width: 40, height: 36, rx: 4, class: "fill-paper line-ink", "stroke-width": 1.5 }, svg);
+  T(svg, 350, ym + 5, "M", { "text-anchor": "middle", "font-size": 14, "font-weight": 700 });
+  E("line", { x1: 370, y1: ym - 3, x2: 452, y2: ym - 3, class: "line-ink", "stroke-width": 1.2 }, svg);
+  E("line", { x1: 370, y1: ym + 3, x2: 458, y2: ym + 3, class: "line-ink", "stroke-width": 1.2 }, svg);
+  E("line", { x1: 452, y1: ym - 3, x2: 452, y2: yd + 18, class: "line-ink", "stroke-width": 1.2 }, svg);
+  E("line", { x1: 458, y1: ym + 3, x2: 458, y2: yd + 18, class: "line-ink", "stroke-width": 1.2 }, svg);
+  E("rect", { x: 435, y: yd - 18, width: 40, height: 36, rx: 4, class: "fill-paper line-ink", "stroke-width": 1.5 }, svg);
+  T(svg, 455, yd + 5, "S", { "text-anchor": "middle", "font-size": 15, "font-weight": 700 });
+  T(svg, 470, ym - 12, "if the result is 1", { "font-size": 12, class: "t-muted" });
+  T(svg, 520, yd - 12, "T|ψ⟩", { "font-size": 15, "font-weight": 700 });
+})();
+
+(function cost() {
+  const svg = $("#fig-cost");
+  const rows = [["one small rotation by T gates", 100, "≈ 100 T gates, each from a magic-state factory"], ["one small rotation by STAR", 2, "≈ 2 injection attempts on average"]];
+  rows.forEach(([name, v, note], i) => {
+    const y = 34 + i * 66, w = (v / 100) * 400;
+    T(svg, 20, y, name, { "font-size": 13, "font-weight": 700 });
+    E("rect", { x: 20, y: y + 10, width: Math.max(w, 6), height: 22, rx: 3, class: i ? "fill-det" : "fill-edge" }, svg);
+    T(svg, 30 + Math.max(w, 6), y + 26, note, { "font-size": 12, class: "t-muted" });
+  });
+})();
+
+/* ---------- Session 8: STAR branches and acceptance ---------- */
+function starNumbers(theta, k) {
+  const tHalf = Math.pow(Math.tan(theta / 2), 1 / k);
+  const phys = 2 * Math.atan(tHalf);
+  const c = Math.cos(phys / 2), s = Math.sin(phys / 2);
+  const binom = (n, r) => { let v = 1; for (let i = 1; i <= r; i++) v = (v * (n - r + i)) / i; return v; };
+  const P = [];
+  for (let m = 0; m <= k; m++) P.push(binom(k, m) * Math.pow(c, 2 * (k - m)) * Math.pow(s, 2 * m));
+  return { phys, c, s, P, acc: Math.pow(c, 2 * k) + Math.pow(s, 2 * k) };
+}
+function fk(theta, k) {
+  const { c, s } = starNumbers(theta, k);
+  const t = s / c;
+  const survive = s * s * Math.pow(c, 2 * k - 2) + c * c * Math.pow(s, 2 * k - 2);
+  const wrong = Math.pow(Math.sin(Math.atan(Math.pow(t, k - 2)) + Math.atan(Math.pow(t, k))), 2);
+  return (survive / (Math.pow(c, 2 * k) + Math.pow(s, 2 * k))) * wrong;
+}
+(function star() {
+  const root = $("#star"), svg = $("svg", root), out = $(".status", root);
+  const acc = E("svg", { viewBox: "0 0 640 230", role: "img", "aria-label": "Acceptance rate against logical angle for k = 3, 5 and 7." }, null);
+  $(".fig", root).appendChild(acc);
+  let n = 4, k = 3;
+  function bars() {
+    clear(svg);
+    const th = Math.PI / Math.pow(2, n), r = starNumbers(th, k);
+    const L = 60, Rr = 20, Tp = 34, B = 56, W = 640, H = 300;
+    const bw = (W - L - Rr) / (k + 1);
+    for (const v of [0, 0.25, 0.5, 0.75, 1]) { const y = Tp + (1 - v) * (H - Tp - B); E("line", { x1: L, y1: y, x2: W - Rr, y2: y, class: "grid" }, svg); T(svg, L - 8, y + 4, `${v * 100}%`, { "text-anchor": "end", "font-size": 11, class: "t-muted" }); }
+    r.P.forEach((p, m) => {
+      const x = L + m * bw + bw * 0.18, w = bw * 0.64, h = p * (H - Tp - B), y = H - B - h;
+      const keep = m === 0 || m === k;
+      E("rect", { x, y, width: w, height: Math.max(h, 1), rx: 3, class: keep ? "fill-det" : "fill-edge" }, svg);
+      T(svg, x + w / 2, y - 6, fmtPct(p), { "text-anchor": "middle", "font-size": 11, class: "t-mono" });
+      const lab = m === 0 ? "no Z" : m === k ? "all: Z_L" : `${m} Z${m > 1 ? "'s" : ""}`;
+      T(svg, x + w / 2, H - B + 18, lab, { "text-anchor": "middle", "font-size": 12, "font-weight": keep ? 700 : 400 });
+      if (!keep) T(svg, x + w / 2, H - B + 34, "caught", { "text-anchor": "middle", "font-size": 11, class: "t-muted" });
+    });
+    T(svg, L, 18, `Branches before the checks: k = ${k} qubits each rotated by θ* = ${(r.phys / Math.PI).toFixed(3)}π`, { "font-size": 13, "font-weight": 700 });
+    out.textContent = `θ = π/${Math.pow(2, n)} needs θ* = ${(r.phys / Math.PI).toFixed(3)}π on each qubit · acceptance ${fmtPct(r.acc)} · check: tan(θ*/2)^${k} = ${Math.pow(Math.tan(r.phys / 2), k).toFixed(5)} = tan(θ/2) = ${Math.tan(th / 2).toFixed(5)}`;
+  }
+  function accChart() {
+    clear(acc);
+    const L = 60, Rr = 70, Tp = 26, B = 40, W = 640, H = 230, xmin = -8, xmax = -2;
+    const X = (l2) => L + ((l2 - xmin) / (xmax - xmin)) * (W - L - Rr);
+    const Y = (v) => Tp + (1 - v) * (H - Tp - B);
+    T(acc, L, 16, "Acceptance rate against the logical angle", { "font-size": 13, "font-weight": 700 });
+    for (const v of [0, 0.5, 1]) { E("line", { x1: L, y1: Y(v), x2: W - Rr, y2: Y(v), class: "grid" }, acc); T(acc, L - 8, Y(v) + 4, `${v * 100}%`, { "text-anchor": "end", "font-size": 11, class: "t-muted" }); }
+    for (let e = 8; e >= 2; e--) T(acc, X(-e), H - B + 18, `π/${Math.pow(2, e)}`, { "text-anchor": "middle", "font-size": 11, class: "t-muted" });
+    [3, 5, 7].forEach((kk, i) => {
+      let d = "";
+      for (let j = 0; j <= 80; j++) { const l2 = xmin + ((xmax - xmin) * j) / 80, th = Math.PI * Math.pow(2, l2), v = starNumbers(th, kk).acc; d += (d ? " L " : "M ") + X(l2).toFixed(1) + " " + Y(v).toFixed(1); }
+      E("path", { d, class: "line-det", "stroke-width": kk === k ? 3 : 1.6, "stroke-opacity": [0.45, 0.7, 1][i] }, acc);
+      T(acc, W - Rr + 6, Y(starNumbers(Math.PI / 4, kk).acc) + 4, `k = ${kk}`, { "font-size": 12, "font-weight": kk === k ? 700 : 400 });
+    });
+    const th = Math.PI / Math.pow(2, n), v = starNumbers(th, k).acc;
+    E("circle", { cx: X(-n), cy: Y(v), r: 6, class: "fill-ink" }, acc);
+  }
+  function draw() { bars(); accChart(); }
+  $$("[data-n]", root).forEach((b) => b.addEventListener("click", () => { n = +b.dataset.n; $$("[data-n]", root).forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); draw(); }));
+  $$("[data-k]", root).forEach((b) => b.addEventListener("click", () => { k = +b.dataset.k; $$("[data-k]", root).forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); draw(); }));
+  draw();
+})();
+
+(function rus() {
+  const svg = $("#fig-rus");
+  const ax = arrow(svg, "ar-rus", "fill-ink");
+  const steps = ["inject π/16", "inject π/8", "inject π/4", "π/2 = S gate"];
+  const x0 = 20, w = 120, gap = 40, y = 110;
+  E("line", { x1: 20, y1: 34, x2: 620, y2: 34, class: "line-det", "stroke-width": 2 }, svg);
+  T(svg, 620, 24, "done ✓", { "text-anchor": "end", "font-size": 13, "font-weight": 700 });
+  steps.forEach((s, i) => {
+    const x = x0 + i * (w + gap);
+    E("rect", { x, y: y - 22, width: w, height: 44, rx: 6, class: i === 3 ? "fill-panel line-det" : "fill-paper line-ink", "stroke-width": 1.5 }, svg);
+    T(svg, x + w / 2, y + 5, s, { "text-anchor": "middle", "font-size": 13, "font-weight": 700 });
+    E("line", { x1: x + w / 2, y1: y - 22, x2: x + w / 2, y2: 40, class: "line-det", "stroke-width": 1.5, "marker-end": ax }, svg);
+    T(svg, x + w / 2 + 6, 70, i === 3 ? "exact" : "½: right sign", { "font-size": 11, class: "t-muted" });
+    if (i < 3) {
+      E("line", { x1: x + w, y1: y, x2: x + w + gap - 4, y2: y, class: "line-ink", "stroke-width": 1.5, "marker-end": ax }, svg);
+      T(svg, x + w + gap / 2, y + 40, "½: wrong sign,", { "text-anchor": "middle", "font-size": 11, class: "t-muted" });
+      T(svg, x + w + gap / 2, y + 54, "double it", { "text-anchor": "middle", "font-size": 11, class: "t-muted" });
+    }
+  });
+})();
+
+/* ---------- Session 9: branch flip and f_k ---------- */
+(function flip() {
+  const svg = $("#fig-flip");
+  const box = (x, title, rows, res, bad) => {
+    E("rect", { x, y: 10, width: 290, height: 210, rx: 8, class: "fill-paper line-ink", "stroke-width": 1 }, svg);
+    T(svg, x + 14, 34, title, { "font-size": 13, "font-weight": 700 });
+    rows.forEach(([s, keep], i) => {
+      const y = 62 + i * 24;
+      E("circle", { cx: x + 22, cy: y - 4, r: 6, class: keep ? "fill-det" : "fill-edge" }, svg);
+      T(svg, x + 36, y, s, { "font-size": 13, class: keep ? "" : "t-muted" });
+    });
+    T(svg, x + 14, 198, res, { "font-size": 13, "font-weight": 700, class: bad ? "fill-fail" : "" });
+  };
+  box(10, "no fault (k = 3 qubits: 1, 2, 3)", [["no Z", true], ["Z on 1, on 2, or on 3", false], ["Z on two of them", false], ["Z on all three = Z_L", true]], "kept pair → intended angle t³", false);
+  box(340, "hidden Z fault on qubit 2", [["Z on 2 (fault cancels it)", true], ["Z on 1 or 3, or no Z", false], ["Z on 1 and 3 (fault completes it)", true], ["other pairs, all three", false]], "kept pair → wrong angle t¹, flipped", true);
+})();
+
+(function fkPlot() {
+  const root = $("#fk"), svg = $("svg", root), out = $(".status", root);
+  const W = 640, H = 360, L = 70, R = 70, Tp = 20, B = 50, xmin = -8.2, xmax = -1.8, ymin = -4, ymax = 0;
+  const X = (l2) => L + ((l2 - xmin) / (xmax - xmin)) * (W - L - R);
+  const Y = (ly) => Tp + ((ymax - ly) / (ymax - ymin)) * (H - Tp - B);
+  for (let ly = ymin; ly <= ymax; ly++) { E("line", { x1: L, y1: Y(ly), x2: W - R, y2: Y(ly), class: "grid" }, svg); T(svg, L - 8, Y(ly) + 4, `10${sup(ly)}`, { "text-anchor": "end", "font-size": 11, class: "t-muted" }); }
+  for (let e = 8; e >= 2; e--) T(svg, X(-e), H - B + 18, `π/${Math.pow(2, e)}`, { "text-anchor": "middle", "font-size": 11, class: "t-muted" });
+  T(svg, (L + W - R) / 2, H - 10, "logical angle θ", { "text-anchor": "middle", "font-size": 12, class: "t-muted" });
+  T(svg, 16, (Tp + H - B) / 2, "misrotation shape f_k(θ)", { "text-anchor": "middle", "font-size": 12, class: "t-muted", transform: `rotate(-90 16 ${(Tp + H - B) / 2})` });
+  [3, 5, 7].forEach((k, i) => {
+    let d = "";
+    for (let j = 0; j <= 100; j++) { const l2 = -8 + (6 * j) / 100, v = Math.log10(fk(Math.PI * Math.pow(2, l2), k)); d += (d ? " L " : "M ") + X(l2).toFixed(1) + " " + Y(v).toFixed(1); }
+    E("path", { d, class: "line-x", "stroke-width": 2.2, "stroke-opacity": [0.45, 0.7, 1][i] }, svg);
+    T(svg, W - R + 6, Y(Math.log10(fk(Math.PI / 4, k))) + 4 + (i - 1) * 13, `k = ${k}`, { "font-size": 12, "font-weight": 700 });
+    for (let e = 8; e >= 2; e--) {
+      const th = Math.PI / Math.pow(2, e), v = fk(th, k);
+      const c = E("circle", { cx: X(-e), cy: Y(Math.log10(v)), r: 5, class: "fill-x", "fill-opacity": [0.45, 0.7, 1][i], tabindex: 0, style: "cursor:pointer" }, svg);
+      const A = { 3: 3.42e-3, 5: 4.69e-3, 7: 5.96e-3 }[k];
+      const say = () => { out.textContent = `k = d = ${k}, θ = π/${Math.pow(2, e)}: f = ${sci(v)}. Under Table II at p = 10⁻³ the injection error is ${sci(A)} × f ≈ ${sci(A * v)}.`; };
+      c.addEventListener("mouseenter", say); c.addEventListener("focus", say); c.addEventListener("click", say);
+    }
+  });
+  out.textContent = `Example: k = 3, θ = π/16: f = ${sci(fk(Math.PI / 16, 3))}. Small angles are much safer; the slope is 2 − 2/k.`;
+})();
+
+/* ---------- Session 10: atoms ---------- */
+(function atoms() {
+  const svg = $("#fig-atoms");
+  const ax = arrow(svg, "ar-atoms", "fill-ink");
+  E("rect", { x: 20, y: 30, width: 420, height: 100, rx: 8, class: "fill-panel" }, svg);
+  T(svg, 30, 50, "entangling zone: one global Rydberg pulse", { "font-size": 12, "font-weight": 700 });
+  T(svg, 30, 190, "storage zone", { "font-size": 12, "font-weight": 700 });
+  [[70, 90], [170, 90], [270, 90]].forEach(([x, y]) => {
+    E("circle", { cx: x + 10, cy: y, r: 30, class: "line-det fill-none", "stroke-width": 1.5, "stroke-dasharray": "4 3" }, svg);
+    E("circle", { cx: x, cy: y, r: 7, class: "fill-x" }, svg);
+    E("circle", { cx: x + 20, cy: y, r: 7, class: "fill-x" }, svg);
+  });
+  E("circle", { cx: 380, cy: 90, r: 7, class: "fill-z" }, svg);
+  T(svg, 380, 120, "spectator", { "text-anchor": "middle", "font-size": 11, "font-weight": 700 });
+  T(svg, 160, 140, "pairs inside the blockade radius get a CZ", { "text-anchor": "middle", "font-size": 11, class: "t-muted" });
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 8; c++) E("circle", { cx: 50 + c * 50, cy: 215 + r * 34, r: 6, class: "fill-edge" }, svg);
+  for (let c = 0; c < 8; c++) E("circle", { cx: 50 + c * 50, cy: 283, r: 6, class: "fill-x" }, svg);
+  E("path", { d: "M 440 283 Q 470 200 430 130", class: "line-ink", "stroke-width": 1.8, "marker-end": ax }, svg);
+  T(svg, 455, 225, "a whole row", { "font-size": 11, class: "t-muted" });
+  T(svg, 455, 240, "is moved", { "font-size": 11, class: "t-muted" });
+  const lx = 520;
+  [[300, "|0⟩"], [280, "|1⟩"], [80, "|r⟩ Rydberg"]].forEach(([y, s]) => { E("line", { x1: lx, y1: y, x2: lx + 50, y2: y, class: "line-ink", "stroke-width": 2 }, svg); T(svg, lx + 56, y + 4, s, { "font-size": 12 }); });
+  E("line", { x1: lx + 25, y1: 276, x2: lx + 25, y2: 86, class: "line-det", "stroke-width": 2, "marker-end": ax }, svg);
+  T(svg, lx - 6, 180, "laser", { "text-anchor": "end", "font-size": 11, class: "t-muted" });
+  T(svg, lx + 25, 330, "one atom's levels", { "text-anchor": "middle", "font-size": 11, class: "t-muted" });
+})();
+
+/* ---------- Session 11: Trotter ---------- */
+(function trotter() {
+  const svg = $("#fig-trotter");
+  const n = 4, y0 = 40, sp = 40, x0 = 70;
+  for (let q = 0; q < n; q++) { E("line", { x1: x0 - 20, y1: y0 + q * sp, x2: 420, y2: y0 + q * sp, class: "line-ink", "stroke-width": 1.2 }, svg); T(svg, 20, y0 + q * sp + 4, `q${q + 1}`, { "font-size": 12, class: "t-mono t-muted" }); }
+  const block = (x, q, lab) => { E("rect", { x, y: y0 + q * sp - 12, width: 44, height: sp + 24, rx: 5, class: "fill-paper line-x", "stroke-width": 1.5 }, svg); T(svg, x + 22, y0 + q * sp + sp / 2 + 4, lab, { "text-anchor": "middle", "font-size": 12, "font-weight": 700 }); };
+  block(x0 + 10, 0, "e^-iAΔt"); block(x0 + 10, 2, "e^-iAΔt"); block(x0 + 90, 1, "e^-iBΔt");
+  block(x0 + 180, 0, "e^-iAΔt"); block(x0 + 180, 2, "e^-iAΔt"); block(x0 + 260, 1, "e^-iBΔt");
+  T(svg, 245, 200, "one Trotter step, repeated r times", { "text-anchor": "middle", "font-size": 12, class: "t-muted" });
+  E("rect", { x: 450, y: 30, width: 180, height: 150, rx: 8, class: "fill-panel" }, svg);
+  T(svg, 540, 52, "inside each block", { "text-anchor": "middle", "font-size": 12, "font-weight": 700 });
+  T(svg, 540, 82, "Pauli rotation", { "text-anchor": "middle", "font-size": 12 });
+  T(svg, 540, 104, "=", { "text-anchor": "middle", "font-size": 14 });
+  T(svg, 540, 128, "Cliffords · R_Z(θ) · Cliffords", { "text-anchor": "middle", "font-size": 12, "font-weight": 700 });
+  T(svg, 540, 156, "the R_Z(θ) is what STAR makes", { "text-anchor": "middle", "font-size": 11, class: "t-muted" });
+})();
+
+/* ---------- Session 13: budget ---------- */
+(function budget() {
+  const svg = $("#fig-budget");
+  const defs = E("defs", {}, svg);
+  const pat = E("pattern", { id: "hatch-b", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
+  E("rect", { width: 6, height: 6, class: "fill-z" }, pat);
+  E("line", { x1: 0, y1: 0, x2: 0, y2: 6, style: "stroke: var(--paper)", "stroke-width": 2.5 }, pat);
+  const rows = [["single-qubit gates", 0.485, 0.143], ["CZ spectators", 0.260], ["CZ gate", 0.251], ["atom moves", 0.005], ["init., meas., loss", 0]];
+  const L = 160, W = 360, gain = (f) => 1 / (1 - f / 2);
+  rows.forEach(([name, f, rz], i) => {
+    const y = 26 + i * 46;
+    T(svg, L - 10, y + 17, name, { "text-anchor": "end", "font-size": 13 });
+    if (rz) {
+      E("rect", { x: L, y, width: rz * W, height: 24, fill: "url(#hatch-b)" }, svg);
+      E("rect", { x: L + rz * W, y, width: (f - rz) * W, height: 24, class: "fill-z" }, svg);
+      T(svg, L + (rz * W) / 2, y - 4, "rotation gate 14%", { "text-anchor": "middle", "font-size": 10, class: "t-muted" });
+      T(svg, L + rz * W + ((f - rz) * W) / 2, y - 4, "Hadamards 34%", { "text-anchor": "middle", "font-size": 10, class: "t-muted" });
+    } else if (f > 0) {
+      E("rect", { x: L, y, width: Math.max(f * W, 2), height: 24, class: "fill-z" }, svg);
+    }
+    const lab = f === 0 ? "0 · retries only" : `${f >= 0.01 ? Math.round(100 * f) : (100 * f).toFixed(1)}%   halving: ×${gain(f).toFixed(f >= 0.01 ? 2 : 3)}`;
+    T(svg, L + Math.max(f * W, 2) + 8, y + 17, lab, { "font-size": 12, "font-weight": 700 });
+  });
+})();
+
+/* ---------- Drill ---------- */
+(function drill() {
+  const qas = $$("section.session[data-title] details.qa").map((d, i) => ({
+    id: i, s: d.closest("section").dataset.title, n: d.closest("section").id,
+    q: $("summary", d).textContent, a: $(".ans", d).innerHTML,
+  }));
+  const sel = $("#drill-filter");
+  const opt = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; sel.appendChild(o); };
+  opt("all", `All sessions (${qas.length} questions)`);
+  [...new Set(qas.map((x) => x.n))].forEach((n) => { const s = qas.find((x) => x.n === n).s; opt(n, `${n.slice(1)} · ${s}`); });
+  let tally = store("sfz-drill", { got: 0, again: 0, known: [] });
+  let deck = [], pos = 0;
+  function build() {
+    const f = sel.value;
+    deck = qas.filter((x) => f === "all" || x.n === f);
+    for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+    deck.sort((a, b) => (tally.known.includes(a.id) ? 1 : 0) - (tally.known.includes(b.id) ? 1 : 0));
+    pos = 0; show();
+  }
+  function show() {
+    const c = deck[pos % deck.length];
+    $("#drill-meta").textContent = `Card ${(pos % deck.length) + 1} of ${deck.length} · Session ${c.n.slice(1)}: ${c.s}`;
+    $("#drill-q").textContent = c.q;
+    $("#drill-a").innerHTML = c.a; $("#drill-a").hidden = true;
+    const known = tally.known.length;
+    $("#drill-tally").textContent = `Answered well: ${tally.got} · Not yet: ${tally.again} · Cards you've had right at least once: ${known} of ${qas.length}`;
+  }
+  const next = () => { pos++; show(); };
+  $("#drill-show").addEventListener("click", () => { $("#drill-a").hidden = false; });
+  $("#drill-got").addEventListener("click", () => { const c = deck[pos % deck.length]; tally.got++; if (!tally.known.includes(c.id)) tally.known.push(c.id); save("sfz-drill", tally); next(); });
+  $("#drill-again").addEventListener("click", () => { tally.again++; save("sfz-drill", tally); next(); });
+  $("#drill-next").addEventListener("click", next);
+  $("#drill-shuffle").addEventListener("click", build);
+  sel.addEventListener("change", build);
+  build();
+})();
+})();
+</script>
+
+</body>
+</html>
