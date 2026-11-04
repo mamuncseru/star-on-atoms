@@ -215,7 +215,8 @@ there is least slack. The hypothesis came from outside: a public ETH QHack
 submission decoded the circuit exactly this way and printed a number close
 to the reference's. It was registered, with its reading rule, before a
 single R6 sample existed. The pitfall is reported upstream as
-[tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232) (posted by the author, 2026-10-29).
+[tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232) (posted by the author, 2026-10-29). The fix the
+maintainers asked for, [pull request #234](https://github.com/QuEraComputing/tsim/pull/234), was merged on 2026-11-03.
 
 There is also a check that needs no reference at all. Going from $d = 3$ to
 $d = 5$ at $\theta = 10^{-4}$, the reference's floor drops 79-fold; this

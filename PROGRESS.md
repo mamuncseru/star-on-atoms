@@ -15,9 +15,10 @@ The book stays private until after the application. Its sources are in the
 repository, and the rendered edition follows once the author has verified
 each chapter by hand.
 
-**Upstream:** [tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232)
-is posted, and the fix a maintainer asked for is open as
-[pull request #234](https://github.com/QuEraComputing/tsim/pull/234).
+**Upstream:** the fix a maintainer asked for,
+[pull request #234](https://github.com/QuEraComputing/tsim/pull/234), was
+merged on 2026-11-03, and [tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232)
+is closed as completed.
 
 **Next:** mock interviews, the cover letter, and the **application on
 Mon 2026-11-02**.
@@ -37,8 +38,19 @@ Mon 2026-11-02**.
 | 2026-10-29 | Mock interview #1 | ⬜ |
 | 2026-10-30 | Freeze: results final; the note on the site (the book after the application) | ✅ |
 | 2026-11-02 | Application submitted | ⬜ |
+| 2026-11-03 | Upstream fix merged into tsim ([#234](https://github.com/QuEraComputing/tsim/pull/234)) | ✅ |
 
 ## Log
+
+### 2026-11-03 (evening) · The pull request is merged
+
+-   **[tsim #234](https://github.com/QuEraComputing/tsim/pull/234)** was
+    merged into tsim's main branch by a maintainer, and
+    [issue #232](https://github.com/QuEraComputing/tsim/issues/232) is
+    closed as completed. `Circuit.detector_error_model` now accepts
+    `decompose_errors=True` and passes it through to stim, and its
+    docstring warns that a matching decoder needs a decomposed model. The
+    change ships in tsim's next release; the latest, 0.1.5, predates it.
 
 ### 2026-11-03 · A crash course, and the pull request moves
 

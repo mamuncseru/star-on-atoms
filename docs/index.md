@@ -60,7 +60,8 @@ result that would overturn it.
   the d = 3 floor is about 9× lower
   ([P01-R6](protocols/P01-reproduce-uniform-star.md)). Reported upstream
   as [tsim issue #232](https://github.com/QuEraComputing/tsim/issues/232);
-  the fix the maintainers asked for is [pull request #234](https://github.com/QuEraComputing/tsim/pull/234).
+  the fix the maintainers asked for, [pull request #234](https://github.com/QuEraComputing/tsim/pull/234),
+  was merged on 2026-11-03.
 - **The published circuits' large-angle error is mostly not injection.** It
   is memory-round errors read out through the perfect unrotation, ∝ sin²θ.
   That is why the larger code looks worse at large angles
