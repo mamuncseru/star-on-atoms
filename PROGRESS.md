@@ -37,7 +37,7 @@ by Tue 2026-11-10**.
 | 2026-10-29 | A short note (3 pages) and the README headline; prior art read | ✅ |
 | 2026-10-29 | Mock interview #1 | ⬜ |
 | 2026-10-30 | Freeze: results final; the note on the site (the book after the application) | ✅ |
-| 2026-11-03 | Upstream fix merged into tsim ([#234](https://github.com/QuEraComputing/tsim/pull/234)) | ✅ |
+| 2026-11-03 | Upstream fix merged into tsim (#234) | ✅ |
 | 2026-11-10 | Application submitted (the deadline) | ⬜ |
 
 ## Log
